@@ -330,3 +330,43 @@ export const computeSplit = createServerFn({ method: "POST" })
       allTiers: sorted,
     };
   });
+
+const ConfirmSchema = z.object({
+  sessionId: z.union([z.string(), z.number()]),
+});
+
+/** Member confirms a logged session: set member_confirmed=true, status='verified'. */
+export const confirmSession = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => ConfirmSchema.parse(d))
+  .handler(async ({ data }) => {
+    const { getSupabaseAdmin } = await import("./supabase.server");
+    const sb = getSupabaseAdmin();
+    const { data: row, error } = await sb
+      .from("sessions")
+      .update({ member_confirmed: true, status: "verified" })
+      .eq("id", data.sessionId)
+      .select()
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return { session: row };
+  });
+
+const DisputeSchema = z.object({
+  sessionId: z.union([z.string(), z.number()]),
+});
+
+export const disputeSession = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => DisputeSchema.parse(d))
+  .handler(async ({ data }) => {
+    const { getSupabaseAdmin } = await import("./supabase.server");
+    const sb = getSupabaseAdmin();
+    const { data: row, error } = await sb
+      .from("sessions")
+      .update({ member_confirmed: false, status: "disputed" })
+      .eq("id", data.sessionId)
+      .select()
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return { session: row };
+  });
+
