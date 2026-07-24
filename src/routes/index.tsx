@@ -154,7 +154,16 @@ function DemoPage() {
     [packs, packId],
   );
   const packPrice =
-    selectedPack?.price_cents ?? selectedPack?.amount_cents ?? selectedPack?.price;
+    selectedPack?.total_amount ?? selectedPack?.price_cents ?? selectedPack?.amount_cents ?? selectedPack?.price;
+
+  const memberName = (id: any) => {
+    const m = members.find((x: any) => String(x.id) === String(id));
+    return m?.name ?? m?.full_name ?? m?.email ?? `#${id}`;
+  };
+  const trainerName = (id: any) => {
+    const t = trainers.find((x: any) => String(x.id) === String(id));
+    return t?.name ?? t?.full_name ?? t?.email ?? `#${id}`;
+  };
 
   return (
     <div className="min-h-screen bg-background">
