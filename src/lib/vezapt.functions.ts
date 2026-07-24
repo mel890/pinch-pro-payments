@@ -7,121 +7,58 @@ const SEED_PACKS = [
   {
     name: "6 Week Transformation",
     sessions: 18,
-    price_cents: 89700,
-    memberName: "Test Member Alex",
-    trainerName: "Test PT Sarah",
+    total_amount: 89700,
+    member_id: "00000000-0000-0000-0000-000000000004",
+    trainer_id: "00000000-0000-0000-0000-000000000002",
+    club_id: DEMO_CLUB_ID,
+    status: "active",
   },
   {
     name: "10 Session Starter",
     sessions: 10,
-    price_cents: 49700,
-    memberName: "Test Member Jordan",
-    trainerName: "Test PT James",
+    total_amount: 49700,
+    member_id: "00000000-0000-0000-0000-000000000005",
+    trainer_id: "00000000-0000-0000-0000-000000000003",
+    club_id: DEMO_CLUB_ID,
+    status: "active",
   },
   {
     name: "12 Week Elite",
     sessions: 36,
-    price_cents: 149700,
-    memberName: "Test Member Casey",
-    trainerName: "Test PT Sarah",
+    total_amount: 149700,
+    member_id: "00000000-0000-0000-0000-000000000006",
+    trainer_id: "00000000-0000-0000-0000-000000000002",
+    club_id: DEMO_CLUB_ID,
+    status: "active",
   },
 ];
 
-/** Seed the three demo PT packs. Idempotent-ish: skips packs whose name already exists. */
+/** Seed the three demo PT packs. Idempotent: skips packs whose name already exists. */
 export const seedDemoPacks = createServerFn({ method: "POST" }).handler(async () => {
   const { getSupabaseAdmin } = await import("./supabase.server");
   const sb = getSupabaseAdmin();
 
-  const [{ data: members }, { data: trainers }, { data: existing }] = await Promise.all([
-    sb.from("members").select("*"),
-    sb.from("trainers").select("*"),
-    sb.from("pt_packs").select("*"),
-  ]);
-  const findByName = (rows: any[] | null, name: string) =>
-    (rows ?? []).find((r) =>
-      [r.name, r.full_name, r.display_name]
-        .filter(Boolean)
-        .some((n: string) => n.toLowerCase() === name.toLowerCase()),
-    );
+  const { data: existing } = await sb.from("pt_packs").select("name");
   const existingNames = new Set(
-    (existing ?? []).map((r: any) => String(r.name ?? r.title ?? "").toLowerCase()),
+    (existing ?? []).map((r: any) => String(r.name ?? "").toLowerCase()),
   );
 
   const results: Array<{ name: string; status: string; detail?: string }> = [];
-
   for (const p of SEED_PACKS) {
     if (existingNames.has(p.name.toLowerCase())) {
       results.push({ name: p.name, status: "skipped (exists)" });
       continue;
     }
-    const member = findByName(members, p.memberName);
-    const trainer = findByName(trainers, p.trainerName);
-
-    // Try progressively simpler column shapes until one is accepted.
-    const attempts: Array<Record<string, any>> = [
-      {
-        club_id: DEMO_CLUB_ID,
-        trainer_id: trainer?.id ?? null,
-        member_id: member?.id ?? null,
-        name: p.name,
-        sessions: p.sessions,
-        sessions_included: p.sessions,
-        price_cents: p.price_cents,
-      },
-      {
-        club_id: DEMO_CLUB_ID,
-        trainer_id: trainer?.id ?? null,
-        member_id: member?.id ?? null,
-        name: p.name,
-        sessions: p.sessions,
-        price_cents: p.price_cents,
-      },
-      {
-        club_id: DEMO_CLUB_ID,
-        trainer_id: trainer?.id ?? null,
-        name: p.name,
-        sessions: p.sessions,
-        price_cents: p.price_cents,
-      },
-      {
-        club_id: DEMO_CLUB_ID,
-        name: p.name,
-        sessions: p.sessions,
-        price_cents: p.price_cents,
-      },
-      {
-        club_id: DEMO_CLUB_ID,
-        name: p.name,
-        session_count: p.sessions,
-        price_cents: p.price_cents,
-      },
-      {
-        club_id: DEMO_CLUB_ID,
-        name: p.name,
-        num_sessions: p.sessions,
-        amount_cents: p.price_cents,
-      },
-    ];
-
-    let inserted = false;
-    let lastErr = "";
-    for (const row of attempts) {
-      const { error } = await sb.from("pt_packs").insert(row);
-      if (!error) {
-        inserted = true;
-        break;
-      }
-      lastErr = error.message;
-    }
+    const { error } = await sb.from("pt_packs").insert(p);
     results.push({
       name: p.name,
-      status: inserted ? "inserted" : "failed",
-      detail: inserted ? undefined : lastErr,
+      status: error ? "failed" : "inserted",
+      detail: error?.message,
     });
   }
-
   return { results };
 });
+
 
 /** Load everything the demo page needs in one call. */
 export const getDemo = createServerFn({ method: "GET" }).handler(async () => {
