@@ -8,6 +8,7 @@ import {
   markPaid,
   logSession,
   computeSplit,
+  seedDemoPacks,
 } from "@/lib/vezapt.functions";
 
 const demoQuery = queryOptions({
