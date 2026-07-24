@@ -464,6 +464,55 @@ function DemoPage() {
         <section>
           <details className="rounded-md border border-border bg-card">
             <summary className="cursor-pointer px-4 py-3 text-sm font-medium">
+              Demo rules
+            </summary>
+            <div className="grid gap-4 p-4 text-xs md:grid-cols-2">
+              <div>
+                <div className="mb-1 font-semibold text-foreground">Payment cycle</div>
+                <p className="text-muted-foreground">
+                  Member pays up-front for the full pack via Pinch hosted checkout.
+                  Funds settle to the club account; trainer payouts are calculated
+                  per verified session and released on the fortnightly payout run.
+                </p>
+              </div>
+              <div>
+                <div className="mb-1 font-semibold text-foreground">Current thresholds</div>
+                <p className="text-muted-foreground">
+                  Split tiers are keyed on sessions delivered this calendar month.
+                  Default tiers: 0–20 sessions = base tier, 21–40 = mid tier,
+                  41+ = top tier. Live values come from the{" "}
+                  <code className="font-mono">split_tiers</code> table per club.
+                </p>
+              </div>
+              <div>
+                <div className="mb-1 font-semibold text-foreground">Confirmation requirement</div>
+                <p className="text-muted-foreground">
+                  Every logged session must be confirmed by the member before it
+                  counts toward payout. Confirmed sessions flip to{" "}
+                  <code className="font-mono">status = "verified"</code> with{" "}
+                  <code className="font-mono">member_confirmed = true</code>.
+                  Disputed sessions are held for club review and excluded from
+                  the split until resolved.
+                </p>
+              </div>
+              <div>
+                <div className="mb-1 font-semibold text-foreground">Split behaviour</div>
+                <p className="text-muted-foreground">
+                  Trainer share = matched tier %, applied to each verified
+                  session's pro-rata value (pack price ÷ sessions_total).
+                  Remainder goes to the club. Tier is re-evaluated on every
+                  confirmation, so crossing a threshold mid-month lifts payout
+                  for subsequent sessions only.
+                </p>
+              </div>
+            </div>
+          </details>
+        </section>
+
+
+        <section>
+          <details className="rounded-md border border-border bg-card">
+            <summary className="cursor-pointer px-4 py-3 text-sm font-medium">
               Diagnostics · raw table dumps
             </summary>
             <div className="p-4 space-y-4 text-xs">
