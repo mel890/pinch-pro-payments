@@ -113,9 +113,8 @@ export const createCheckout = createServerFn({ method: "POST" })
     if (!pack) throw new Error("Pack not found");
 
     const amountCents: number =
-      pack.price_cents ?? pack.amount_cents ?? pack.price ?? 0;
-    if (!amountCents)
-      throw new Error("Pack has no price_cents/amount_cents/price column");
+      pack.total_amount ?? pack.price_cents ?? pack.amount_cents ?? pack.price ?? 0;
+    if (!amountCents) throw new Error("Pack has no price column");
 
     const packName: string = pack.name ?? pack.title ?? `Pack ${pack.id}`;
     const memberName: string =
