@@ -147,6 +147,35 @@ function DemoPage() {
           </div>
         )}
 
+        {packs.length === 0 && (
+          <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm flex items-center justify-between gap-4">
+            <div>
+              <div className="font-medium">No PT packs yet.</div>
+              <div className="text-xs text-muted-foreground">
+                Seed the three demo packs (6-Week Transformation, 10-Session
+                Starter, 12-Week Elite) to enable the checkout flow.
+              </div>
+            </div>
+            <button
+              className="inline-flex shrink-0 items-center justify-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              disabled={seed.isPending}
+              onClick={() => seed.mutate()}
+            >
+              {seed.isPending ? "Seeding…" : "Seed demo packs"}
+            </button>
+          </div>
+        )}
+        {seedResult && (
+          <div className="rounded-md border border-border bg-muted/40 p-3 text-xs font-mono">
+            {seedResult.map((r: any, i: number) => (
+              <div key={i}>
+                {r.name}: <b>{r.status}</b>
+                {r.detail && <span className="text-destructive"> — {r.detail}</span>}
+              </div>
+            ))}
+          </div>
+        )}
+
         <section className="grid gap-6 md:grid-cols-3">
           {/* Step 1: Checkout */}
           <StepCard step={1} title="Member buys a pack">
