@@ -368,7 +368,89 @@ function DemoPage() {
               </div>
             )}
           </StepCard>
+
+          {/* Step 4: Member confirms */}
+          <StepCard step={4} title="Member confirms session">
+            {!lastSession ? (
+              <p className="text-xs text-muted-foreground">
+                Log a session in Step 3, then the member can confirm it here.
+              </p>
+            ) : (
+              <div className="space-y-2 text-xs">
+                <div>
+                  Member:{" "}
+                  <b className="text-foreground">
+                    {memberName(lastSession.member_id)}
+                  </b>
+                </div>
+                <div>
+                  Trainer:{" "}
+                  <b className="text-foreground">
+                    {trainerName(lastSession.trainer_id)}
+                  </b>
+                </div>
+                <div>
+                  Date:{" "}
+                  <span className="font-mono">
+                    {new Date(
+                      lastSession.occurred_at ??
+                        lastSession.session_date ??
+                        lastSession.created_at ??
+                        Date.now(),
+                    ).toLocaleString()}
+                  </span>
+                </div>
+                <div>
+                  Status:{" "}
+                  <span className="font-mono">
+                    {lastSession.status ?? "logged"}
+                  </span>
+                </div>
+                {lastSession.status !== "verified" &&
+                  lastSession.status !== "disputed" && (
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        className="flex-1 rounded-md bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                        disabled={confirmM.isPending}
+                        onClick={() =>
+                          confirmM.mutate({ sessionId: lastSession.id })
+                        }
+                      >
+                        {confirmM.isPending ? "…" : "Confirm session ✓"}
+                      </button>
+                      <button
+                        className="flex-1 rounded-md bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                        disabled={disputeM.isPending}
+                        onClick={() =>
+                          disputeM.mutate({ sessionId: lastSession.id })
+                        }
+                      >
+                        {disputeM.isPending ? "…" : "Dispute"}
+                      </button>
+                    </div>
+                  )}
+                {lastSession.status === "verified" && (
+                  <div className="mt-2 rounded-md border border-emerald-500/30 bg-emerald-500/10 p-2 text-emerald-700 dark:text-emerald-400">
+                    Verified ✓ · trainer payout unlocked.
+                    {split?.trainerPct != null && (
+                      <div className="mt-1">
+                        Updated split · sessions:{" "}
+                        <b>{split.sessionsCount}</b> · trainer share{" "}
+                        <b>{split.trainerPct}%</b>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {lastSession.status === "disputed" && (
+                  <div className="mt-2 rounded-md border border-red-500/30 bg-red-500/10 p-2 text-red-700 dark:text-red-400">
+                    Disputed · payout held for review.
+                  </div>
+                )}
+              </div>
+            )}
+          </StepCard>
         </section>
+
 
         <section className="grid gap-6 md:grid-cols-2">
           <TablePanel title="payments_log (recent)" rows={payments.slice(-10).reverse()} />
