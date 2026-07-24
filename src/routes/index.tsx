@@ -1,7 +1,7 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useSuspenseQuery, queryOptions } from "@tanstack/react-query";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   getDemo,
   createCheckout,
@@ -9,6 +9,8 @@ import {
   logSession,
   computeSplit,
   seedDemoPacks,
+  confirmSession,
+  disputeSession,
 } from "@/lib/vezapt.functions";
 
 const demoQuery = queryOptions({
