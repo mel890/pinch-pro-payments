@@ -61,6 +61,7 @@ function DemoPage() {
   const [lastPayment, setLastPayment] = useState<any>(null);
   const [pinchInfo, setPinchInfo] = useState<any>(null);
   const [split, setSplit] = useState<any>(null);
+  const [lastSession, setLastSession] = useState<any>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const checkoutFn = useServerFn(createCheckout);
@@ -68,6 +69,8 @@ function DemoPage() {
   const logFn = useServerFn(logSession);
   const splitFn = useServerFn(computeSplit);
   const seedFn = useServerFn(seedDemoPacks);
+  const confirmFn = useServerFn(confirmSession);
+  const disputeFn = useServerFn(disputeSession);
   const [seedResult, setSeedResult] = useState<any>(null);
   const seed = useMutation({
     mutationFn: () => seedFn(),
@@ -79,6 +82,15 @@ function DemoPage() {
   });
 
   const refresh = () => router.invalidate();
+
+  // Auto-seed on load if the pt_packs table is empty.
+  const autoSeededRef = useRef(false);
+  useEffect(() => {
+    if (!autoSeededRef.current && packs.length === 0 && !seed.isPending) {
+      autoSeededRef.current = true;
+      seed.mutate();
+    }
+  }, [packs.length]);
 
   const checkout = useMutation({
     mutationFn: (v: { memberId: string; packId: string }) =>
@@ -104,7 +116,10 @@ function DemoPage() {
   const log = useMutation({
     mutationFn: (v: { trainerId: string; memberId: string; packId?: string }) =>
       logFn({ data: v }),
-    onSuccess: () => refresh(),
+    onSuccess: (res) => {
+      setLastSession(res.session);
+      refresh();
+    },
     onError: (e) => setErrorMsg(e instanceof Error ? e.message : String(e)),
   });
 
@@ -113,6 +128,26 @@ function DemoPage() {
     onSuccess: (res) => setSplit(res),
     onError: (e) => setErrorMsg(e instanceof Error ? e.message : String(e)),
   });
+
+  const confirmM = useMutation({
+    mutationFn: (v: { sessionId: string | number }) => confirmFn({ data: v }),
+    onSuccess: (res) => {
+      setLastSession(res.session);
+      if (trainerId) showSplit.mutate({ trainerId });
+      refresh();
+    },
+    onError: (e) => setErrorMsg(e instanceof Error ? e.message : String(e)),
+  });
+
+  const disputeM = useMutation({
+    mutationFn: (v: { sessionId: string | number }) => disputeFn({ data: v }),
+    onSuccess: (res) => {
+      setLastSession(res.session);
+      refresh();
+    },
+    onError: (e) => setErrorMsg(e instanceof Error ? e.message : String(e)),
+  });
+
 
   const selectedPack = useMemo(
     () => packs.find((p: any) => String(p.id) === packId),
