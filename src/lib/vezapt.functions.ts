@@ -6,7 +6,8 @@ const DEMO_CLUB_ID = "00000000-0000-0000-0000-000000000001";
 const SEED_PACKS = [
   {
     name: "6 Week Transformation",
-    sessions: 18,
+    sessions_total: 18,
+    sessions_completed: 0,
     total_amount: 89700,
     member_id: "00000000-0000-0000-0000-000000000004",
     trainer_id: "00000000-0000-0000-0000-000000000002",
@@ -15,7 +16,8 @@ const SEED_PACKS = [
   },
   {
     name: "10 Session Starter",
-    sessions: 10,
+    sessions_total: 10,
+    sessions_completed: 0,
     total_amount: 49700,
     member_id: "00000000-0000-0000-0000-000000000005",
     trainer_id: "00000000-0000-0000-0000-000000000003",
@@ -24,7 +26,8 @@ const SEED_PACKS = [
   },
   {
     name: "12 Week Elite",
-    sessions: 36,
+    sessions_total: 36,
+    sessions_completed: 0,
     total_amount: 149700,
     member_id: "00000000-0000-0000-0000-000000000006",
     trainer_id: "00000000-0000-0000-0000-000000000002",
@@ -32,6 +35,7 @@ const SEED_PACKS = [
     status: "active",
   },
 ];
+
 
 /** Seed the three demo PT packs. Idempotent: skips packs whose name already exists. */
 export const seedDemoPacks = createServerFn({ method: "POST" }).handler(async () => {
