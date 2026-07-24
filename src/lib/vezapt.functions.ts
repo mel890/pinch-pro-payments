@@ -1,6 +1,128 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+const DEMO_CLUB_ID = "00000000-0000-0000-0000-000000000001";
+
+const SEED_PACKS = [
+  {
+    name: "6 Week Transformation",
+    sessions: 18,
+    price_cents: 89700,
+    memberName: "Test Member Alex",
+    trainerName: "Test PT Sarah",
+  },
+  {
+    name: "10 Session Starter",
+    sessions: 10,
+    price_cents: 49700,
+    memberName: "Test Member Jordan",
+    trainerName: "Test PT James",
+  },
+  {
+    name: "12 Week Elite",
+    sessions: 36,
+    price_cents: 149700,
+    memberName: "Test Member Casey",
+    trainerName: "Test PT Sarah",
+  },
+];
+
+/** Seed the three demo PT packs. Idempotent-ish: skips packs whose name already exists. */
+export const seedDemoPacks = createServerFn({ method: "POST" }).handler(async () => {
+  const { getSupabaseAdmin } = await import("./supabase.server");
+  const sb = getSupabaseAdmin();
+
+  const [{ data: members }, { data: trainers }, { data: existing }] = await Promise.all([
+    sb.from("members").select("*"),
+    sb.from("trainers").select("*"),
+    sb.from("pt_packs").select("*"),
+  ]);
+  const findByName = (rows: any[] | null, name: string) =>
+    (rows ?? []).find((r) =>
+      [r.name, r.full_name, r.display_name]
+        .filter(Boolean)
+        .some((n: string) => n.toLowerCase() === name.toLowerCase()),
+    );
+  const existingNames = new Set(
+    (existing ?? []).map((r: any) => String(r.name ?? r.title ?? "").toLowerCase()),
+  );
+
+  const results: Array<{ name: string; status: string; detail?: string }> = [];
+
+  for (const p of SEED_PACKS) {
+    if (existingNames.has(p.name.toLowerCase())) {
+      results.push({ name: p.name, status: "skipped (exists)" });
+      continue;
+    }
+    const member = findByName(members, p.memberName);
+    const trainer = findByName(trainers, p.trainerName);
+
+    // Try progressively simpler column shapes until one is accepted.
+    const attempts: Array<Record<string, any>> = [
+      {
+        club_id: DEMO_CLUB_ID,
+        trainer_id: trainer?.id ?? null,
+        member_id: member?.id ?? null,
+        name: p.name,
+        sessions: p.sessions,
+        sessions_included: p.sessions,
+        price_cents: p.price_cents,
+      },
+      {
+        club_id: DEMO_CLUB_ID,
+        trainer_id: trainer?.id ?? null,
+        member_id: member?.id ?? null,
+        name: p.name,
+        sessions: p.sessions,
+        price_cents: p.price_cents,
+      },
+      {
+        club_id: DEMO_CLUB_ID,
+        trainer_id: trainer?.id ?? null,
+        name: p.name,
+        sessions: p.sessions,
+        price_cents: p.price_cents,
+      },
+      {
+        club_id: DEMO_CLUB_ID,
+        name: p.name,
+        sessions: p.sessions,
+        price_cents: p.price_cents,
+      },
+      {
+        club_id: DEMO_CLUB_ID,
+        name: p.name,
+        session_count: p.sessions,
+        price_cents: p.price_cents,
+      },
+      {
+        club_id: DEMO_CLUB_ID,
+        name: p.name,
+        num_sessions: p.sessions,
+        amount_cents: p.price_cents,
+      },
+    ];
+
+    let inserted = false;
+    let lastErr = "";
+    for (const row of attempts) {
+      const { error } = await sb.from("pt_packs").insert(row);
+      if (!error) {
+        inserted = true;
+        break;
+      }
+      lastErr = error.message;
+    }
+    results.push({
+      name: p.name,
+      status: inserted ? "inserted" : "failed",
+      detail: inserted ? undefined : lastErr,
+    });
+  }
+
+  return { results };
+});
+
 /** Load everything the demo page needs in one call. */
 export const getDemo = createServerFn({ method: "GET" }).handler(async () => {
   const { getSupabaseAdmin } = await import("./supabase.server");
