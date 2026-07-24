@@ -78,12 +78,15 @@ function DemoPage() {
       setSeedResult(res.results);
       refresh();
     },
-    onError: (e) => setErrorMsg(e instanceof Error ? e.message : String(e)),
+    onError: (e) => {
+      autoSeededRef.current = false;
+      setErrorMsg(e instanceof Error ? e.message : String(e));
+    },
   });
 
   const refresh = () => router.invalidate();
 
-  // Auto-seed on load if the pt_packs table is empty.
+  // Auto-seed on load if the pt_packs table is empty; retries on refresh.
   const autoSeededRef = useRef(false);
   useEffect(() => {
     if (!autoSeededRef.current && packs.length === 0 && !seed.isPending) {
@@ -91,6 +94,7 @@ function DemoPage() {
       seed.mutate();
     }
   }, [packs.length]);
+
 
   const checkout = useMutation({
     mutationFn: (v: { memberId: string; packId: string }) =>
