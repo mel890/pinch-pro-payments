@@ -237,9 +237,9 @@ function DemoPage() {
             <Select value={packId} onChange={setPackId}>
               {packs.map((p: any) => (
                 <option key={p.id} value={String(p.id)}>
-                  {(p.name ?? p.title ?? `Pack #${p.id}`) +
+                  {(p.name ?? `Pack #${p.id}`) +
                     " — " +
-                    fmt(p.price_cents ?? p.amount_cents ?? p.price)}
+                    fmt(p.total_amount ?? p.price_cents ?? p.amount_cents ?? p.price)}
                 </option>
               ))}
             </Select>
