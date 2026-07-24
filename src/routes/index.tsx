@@ -65,6 +65,16 @@ function DemoPage() {
   const paidFn = useServerFn(markPaid);
   const logFn = useServerFn(logSession);
   const splitFn = useServerFn(computeSplit);
+  const seedFn = useServerFn(seedDemoPacks);
+  const [seedResult, setSeedResult] = useState<any>(null);
+  const seed = useMutation({
+    mutationFn: () => seedFn(),
+    onSuccess: (res) => {
+      setSeedResult(res.results);
+      refresh();
+    },
+    onError: (e) => setErrorMsg(e instanceof Error ? e.message : String(e)),
+  });
 
   const refresh = () => router.invalidate();
 
