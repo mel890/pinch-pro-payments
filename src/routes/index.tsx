@@ -222,7 +222,7 @@ function DemoPage() {
           </div>
         )}
 
-        <section className="grid gap-6 md:grid-cols-3">
+        <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {/* Step 1: Checkout */}
           <StepCard step={1} title="Member buys a pack">
             <Label>Member</Label>
