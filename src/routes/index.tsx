@@ -8,6 +8,7 @@ import {
   markPaid,
   logSession,
   computeSplit,
+  seedDemoPacks,
 } from "@/lib/vezapt.functions";
 
 const demoQuery = queryOptions({
@@ -64,6 +65,16 @@ function DemoPage() {
   const paidFn = useServerFn(markPaid);
   const logFn = useServerFn(logSession);
   const splitFn = useServerFn(computeSplit);
+  const seedFn = useServerFn(seedDemoPacks);
+  const [seedResult, setSeedResult] = useState<any>(null);
+  const seed = useMutation({
+    mutationFn: () => seedFn(),
+    onSuccess: (res) => {
+      setSeedResult(res.results);
+      refresh();
+    },
+    onError: (e) => setErrorMsg(e instanceof Error ? e.message : String(e)),
+  });
 
   const refresh = () => router.invalidate();
 
@@ -133,6 +144,35 @@ function DemoPage() {
         {errorMsg && (
           <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
             {errorMsg}
+          </div>
+        )}
+
+        {packs.length === 0 && (
+          <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm flex items-center justify-between gap-4">
+            <div>
+              <div className="font-medium">No PT packs yet.</div>
+              <div className="text-xs text-muted-foreground">
+                Seed the three demo packs (6-Week Transformation, 10-Session
+                Starter, 12-Week Elite) to enable the checkout flow.
+              </div>
+            </div>
+            <button
+              className="inline-flex shrink-0 items-center justify-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              disabled={seed.isPending}
+              onClick={() => seed.mutate()}
+            >
+              {seed.isPending ? "Seeding…" : "Seed demo packs"}
+            </button>
+          </div>
+        )}
+        {seedResult && (
+          <div className="rounded-md border border-border bg-muted/40 p-3 text-xs font-mono">
+            {seedResult.map((r: any, i: number) => (
+              <div key={i}>
+                {r.name}: <b>{r.status}</b>
+                {r.detail && <span className="text-destructive"> — {r.detail}</span>}
+              </div>
+            ))}
           </div>
         )}
 
