@@ -95,6 +95,8 @@ export type PinchFetchResult = {
   raw: string;
   url: string;
   method: string;
+  sentBody?: string;
+  sentContentType?: string | null;
 };
 
 export async function pinchFetch(
@@ -111,6 +113,7 @@ export async function pinchFetch(
   if (init.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
+  const bodyStr = typeof init.body === "string" ? init.body : undefined;
   const res = await fetch(url, { ...init, headers, method });
   const raw = await res.text();
   let data: any = null;
@@ -119,7 +122,16 @@ export async function pinchFetch(
   } catch {
     data = raw;
   }
-  return { ok: res.ok, status: res.status, data, raw, url, method };
+  return {
+    ok: res.ok,
+    status: res.status,
+    data,
+    raw,
+    url,
+    method,
+    sentBody: bodyStr,
+    sentContentType: headers.get("Content-Type"),
+  };
 }
 
 export type PinchPaymentLink = {
