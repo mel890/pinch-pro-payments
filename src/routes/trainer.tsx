@@ -20,22 +20,28 @@ import {
   CheckCircle2,
   Play,
   Plus,
+  Heart,
+  Users,
+  QrCode,
+  CalendarPlus,
+  Quote,
 } from "lucide-react";
+import { CoachMe } from "@/components/coach-me";
 
 export const Route = createFileRoute("/trainer")({
   head: () => ({
     meta: [
-      { title: "Sarah — Trainer screen · VezaPT Pay" },
+      { title: "Sarah — Trainer dashboard · VezaPT Pay" },
       {
         name: "description",
         content:
-          "Sarah's live trainer view: earnings this cycle, current split, tier progress, and the queue of sessions to acknowledge and complete.",
+          "Sarah's coaching-led dashboard: earnings, verified sessions, client impact and the next coaching focus for the week.",
       },
-      { property: "og:title", content: "Sarah — Trainer screen · VezaPT Pay" },
+      { property: "og:title", content: "Sarah — Trainer dashboard · VezaPT Pay" },
       {
         property: "og:description",
         content:
-          "Live trainer dashboard for the VezaPT Pay hackathon demo.",
+          "Coaching, income and impact — Sarah's trainer view for the VezaPT Pay hackathon demo.",
       },
     ],
   }),
@@ -47,6 +53,36 @@ export const Route = createFileRoute("/trainer")({
     }),
   component: TrainerScreen,
 });
+
+// Human context for known demo members. Illustrative only.
+const CLIENT_CONTEXT: Record<
+  string,
+  { goal: string; plan: string; focus: string; nextSession: string }
+> = {
+  Alex: {
+    goal: "Build confidence using free weights",
+    plan: "2× weekly",
+    focus: "Lower-body strength",
+    nextSession: "Not booked",
+  },
+  Casey: {
+    goal: "Improve strength and energy",
+    plan: "12 Week Elite",
+    focus: "Completed a new movement confidently",
+    nextSession: "Booked · Friday 6:30am",
+  },
+  Jordan: {
+    goal: "Return to consistent training",
+    plan: "10 Session Starter",
+    focus: "Rebuild aerobic base",
+    nextSession: "Not booked",
+  },
+};
+
+function shortName(name?: string) {
+  if (!name) return "Client";
+  return name.replace("Test Member ", "").replace("Test PT ", "");
+}
 
 function TrainerScreen() {
   const { data: snap } = useSuspenseQuery({
@@ -62,6 +98,7 @@ function TrainerScreen() {
     snap.trainers.find((t: any) => t.name?.toLowerCase().includes("sarah"))
       ?.id ?? DEMO_TRAINER_SARAH;
   const trainer = snap.trainers.find((t: any) => t.id === trainerId);
+  const trainerFirst = shortName(trainer?.name) || "Sarah";
 
   const mySessions = snap.sessions.filter((s: any) => s.trainer_id === trainerId);
   const verified = mySessions.filter((s: any) => s.status === "confirmed");
@@ -75,6 +112,9 @@ function TrainerScreen() {
     0,
   );
   const verifiedCount = verified.length;
+  const clientsSupported = new Set(
+    mySessions.map((s: any) => s.member_id),
+  ).size;
 
   const currentTier = tierFor(Math.max(verifiedCount, 1), snap.tiers as any);
   const nextTier = (snap.tiers as any[])
@@ -100,16 +140,17 @@ function TrainerScreen() {
   return (
     <div className="min-h-screen bg-background text-foreground pb-16">
       <div className="mx-auto max-w-3xl px-5 pt-8 sm:px-8">
+        {/* 1. Greeting */}
         <header className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
               Trainer · VezaPT Pay
             </p>
             <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">
-              Good morning, {trainer?.name?.replace("Test PT ", "") ?? "Sarah"}
+              Good morning, {trainerFirst}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Here's how your coaching is compounding.
+              Here's what your coaching is helping people achieve.
             </p>
           </div>
           <Badge className="border border-warm/40 bg-warm/10 text-[color:var(--warm)]">
@@ -117,77 +158,97 @@ function TrainerScreen() {
           </Badge>
         </header>
 
+        {/* 2. Earnings & production */}
         <Card className="mt-6 overflow-hidden border-border bg-[image:var(--gradient-hero)] p-6 sm:p-8">
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            Earnings this cycle
+            Your work this cycle
           </p>
           <p className="mt-1 font-mono text-5xl font-semibold tracking-tight tabular-nums sm:text-6xl">
             {formatAUD(earnedCents)}
           </p>
-          <div className="mt-5 grid grid-cols-2 gap-3">
-            <MiniStat label="Verified sessions" value={String(verifiedCount)} />
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <MiniStat label="Confirmed sessions" value={String(verifiedCount)} />
             <MiniStat
               label="Current PT share"
               value={`${currentTier?.pt_split_pct ?? 40}%`}
             />
+            <MiniStat label="Clients supported" value={String(clientsSupported)} />
+            <MiniStat
+              label="Held (awaiting confirm)"
+              value={formatAUD(estimateHeld(held, currentTier?.pt_split_pct ?? 40))}
+            />
           </div>
+          <p className="mt-4 text-xs text-muted-foreground">
+            Grow your production while keeping clients engaged, supported and
+            progressing.
+          </p>
         </Card>
 
-        <Card className="mt-4 border-border p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="size-4 text-primary" />
-              <h2 className="text-base font-semibold">Tier progress</h2>
-            </div>
-            {toNext > 0 ? (
-              <Badge variant="secondary">
-                {toNext} to unlock {nextTier?.pt_split_pct}%
-              </Badge>
-            ) : (
-              <Badge className="border border-primary/40 bg-primary/10 text-primary">
-                <Trophy className="mr-1 size-3" /> Peak tier
-              </Badge>
-            )}
-          </div>
-          <div className="mt-4">
-            <Progress value={progress} className="h-2.5" />
-            <div className="mt-2 flex justify-between font-mono text-[10px] text-muted-foreground">
-              <span>0</span>
-              <span>10</span>
-              <span>20</span>
-              <span>30+</span>
-            </div>
-          </div>
-          <div className="mt-4 grid gap-2 sm:grid-cols-3">
-            {(snap.tiers as any[]).map((t) => (
-              <TierChip
-                key={t.id}
-                min={t.sessions_min}
-                max={t.sessions_max}
-                pct={t.pt_split_pct}
-                active={verifiedCount >= t.sessions_min && (t.sessions_max == null || verifiedCount <= t.sessions_max)}
-              />
-            ))}
-          </div>
-        </Card>
+        {/* 3. Coach Me */}
+        <CoachMe />
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          <StatCard
-            label="Held (awaiting confirm)"
-            value={formatAUD(estimateHeld(held, currentTier?.pt_split_pct ?? 40))}
-            hint={`${held.length} session${held.length === 1 ? "" : "s"} awaiting your client`}
-            tint="warm"
-          />
-          <StatCard
-            label="In queue"
-            value={String(queue.length)}
-            hint="assigned + acknowledged"
-          />
-        </div>
+        {/* 4. Impact */}
+        <section className="mt-8">
+          <div className="flex items-center gap-2">
+            <Heart className="size-4 text-primary" />
+            <h2 className="text-base font-semibold">Your impact this cycle</h2>
+            <Badge variant="secondary" className="ml-1 text-[10px] uppercase tracking-wider">
+              Client impact demo data
+            </Badge>
+          </div>
 
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <Card className="border-primary/25 bg-primary/5 p-5">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                Clients reported
+              </p>
+              <ul className="mt-3 space-y-2 text-sm">
+                <ImpactRow label="Clients supported" value="8" />
+                <ImpactRow label="Training consistently" value="5" />
+                <ImpactRow label="Greater confidence" value="4" />
+                <ImpactRow label="More energy" value="3" />
+                <ImpactRow label="Returned after losing momentum" value="2" />
+                <ImpactRow
+                  label="Average client support rating"
+                  value="4.7 / 5"
+                />
+              </ul>
+            </Card>
+
+            <Card className="border-border bg-card p-5">
+              <div className="flex items-center gap-2">
+                <div className="grid size-9 place-items-center rounded-full bg-primary/15 text-sm font-semibold text-primary">
+                  A
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                    Alex's win
+                  </p>
+                  <p className="text-sm font-semibold">Alex Morgan</p>
+                </div>
+              </div>
+              <div className="mt-4 flex gap-2 text-sm italic text-foreground/90">
+                <Quote className="mt-0.5 size-4 shrink-0 text-primary" />
+                <p>
+                  "I used the weights area by myself for the first time this
+                  week."
+                </p>
+              </div>
+              <p className="mt-4 text-xs text-muted-foreground">
+                This is the difference your coaching is making beyond the
+                session.
+              </p>
+            </Card>
+          </div>
+        </section>
+
+        {/* 5. Session queue */}
         <section className="mt-8">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold">Session queue</h2>
+            <div className="flex items-center gap-2">
+              <Users className="size-4 text-primary" />
+              <h2 className="text-base font-semibold">Session queue</h2>
+            </div>
             <Button asChild size="sm" variant="ghost">
               <Link to="/">← Start</Link>
             </Button>
@@ -203,17 +264,31 @@ function TrainerScreen() {
             {queue.map((s: any) => {
               const member = snap.members.find((m: any) => m.id === s.member_id);
               const pack = snap.packs.find((p: any) => p.id === s.pack_id);
+              const first = shortName(member?.name).split(" ")[0];
+              const ctx = CLIENT_CONTEXT[first];
               return (
                 <Card key={s.id} className="border-border p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="font-semibold">{member?.name ?? "Client"}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="font-semibold">
+                        {shortName(member?.name)}
+                      </p>
+                      {ctx && (
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          Goal: {ctx.goal} · {ctx.plan}
+                        </p>
+                      )}
+                      <p className="mt-0.5 text-xs text-muted-foreground">
                         {pack?.name} · session {s.session_number_in_pack ?? "?"} /{" "}
                         {pack?.sessions_total}
                       </p>
+                      {ctx && (
+                        <p className="mt-1 text-xs text-foreground/80">
+                          Today's focus: {ctx.focus}
+                        </p>
+                      )}
                     </div>
-                    <p className="font-mono text-sm tabular-nums">
+                    <p className="font-mono text-xs tabular-nums text-muted-foreground">
                       {formatAUD(s.session_value_cents)}
                     </p>
                   </div>
@@ -235,9 +310,14 @@ function TrainerScreen() {
                         onClick={() => complete.mutate(s.id)}
                         disabled={complete.isPending}
                       >
-                        <Play className="mr-1 size-3.5" /> Mark complete
+                        <Play className="mr-1 size-3.5" /> Complete session
                       </Button>
                     )}
+                    <Button asChild size="sm" variant="ghost">
+                      <Link to="/complete-session">
+                        <QrCode className="mr-1 size-3.5" /> Confirmation QR
+                      </Link>
+                    </Button>
                   </div>
                 </Card>
               );
@@ -245,6 +325,7 @@ function TrainerScreen() {
 
             {held.map((s: any) => {
               const member = snap.members.find((m: any) => m.id === s.member_id);
+              const first = shortName(member?.name).split(" ")[0];
               return (
                 <Card
                   key={s.id}
@@ -252,18 +333,25 @@ function TrainerScreen() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="font-semibold">{member?.name ?? "Client"}</p>
+                      <p className="font-semibold">{shortName(member?.name)}</p>
                       <p className="text-xs text-[color:var(--warm)]">
-                        Awaiting {member?.name?.split(" ").pop() ?? "client"}'s
-                        confirmation
+                        Awaiting {first}'s confirmation
                       </p>
                     </div>
-                    <p className="font-mono text-sm tabular-nums text-muted-foreground">
+                    <p className="font-mono text-xs tabular-nums text-muted-foreground">
                       + {formatAUD(Math.round(Number(s.session_value_cents) * (currentTier?.pt_split_pct ?? 40) / 100))}
                     </p>
                   </div>
-                  <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <Clock className="size-3" /> Held — earned but not yet released
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <Clock className="size-3" /> Awaiting client confirmation
+                    <Button asChild size="sm" variant="ghost" className="ml-auto">
+                      <Link to="/complete-session">
+                        <QrCode className="mr-1 size-3.5" /> Confirmation QR
+                      </Link>
+                    </Button>
+                    <Button size="sm" variant="ghost" disabled>
+                      <CalendarPlus className="mr-1 size-3.5" /> Book next session
+                    </Button>
                   </div>
                 </Card>
               );
@@ -299,19 +387,23 @@ function TrainerScreen() {
             })}
         </section>
 
+        {/* 6. Recent client wins */}
         <section className="mt-10">
-          <h2 className="text-base font-semibold">Recent verified</h2>
+          <h2 className="text-base font-semibold">Recent client wins</h2>
           <div className="mt-3 space-y-2">
             {verified.slice(0, 5).map((s: any) => {
               const member = snap.members.find((m: any) => m.id === s.member_id);
+              const first = shortName(member?.name).split(" ")[0];
               return (
                 <Card key={s.id} className="flex items-center justify-between border-border p-4">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="size-4 text-primary" />
                     <div>
-                      <p className="text-sm">{member?.name ?? "Client"}</p>
-                      <p className="font-mono text-[11px] text-muted-foreground">
-                        {s.pt_split_pct_at_time}% · {formatAUD(s.session_value_cents)}
+                      <p className="text-sm">
+                        {first} confirmed a session
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {s.pt_split_pct_at_time}% share applied
                       </p>
                     </div>
                   </div>
@@ -323,11 +415,54 @@ function TrainerScreen() {
             })}
             {verified.length === 0 && (
               <p className="text-sm text-muted-foreground">
-                Once a client verifies, sessions land here.
+                Once a client confirms, their win lands here.
               </p>
             )}
           </div>
         </section>
+
+        {/* 7. Tier progress — moved lower */}
+        <Card className="mt-8 border-border p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="size-4 text-primary" />
+              <h2 className="text-base font-semibold">Tier progress</h2>
+            </div>
+            {toNext > 0 ? (
+              <Badge variant="secondary">
+                {toNext} more confirmed sessions to reach your next earnings tier
+              </Badge>
+            ) : (
+              <Badge className="border border-primary/40 bg-primary/10 text-primary">
+                <Trophy className="mr-1 size-3" /> Peak tier
+              </Badge>
+            )}
+          </div>
+          <div className="mt-4">
+            <Progress value={progress} className="h-2.5" />
+            <div className="mt-2 flex justify-between font-mono text-[10px] text-muted-foreground">
+              <span>0</span>
+              <span>10</span>
+              <span>20</span>
+              <span>30+</span>
+            </div>
+          </div>
+          <div className="mt-4 grid gap-2 sm:grid-cols-3">
+            {(snap.tiers as any[]).map((t) => (
+              <TierChip
+                key={t.id}
+                min={t.sessions_min}
+                max={t.sessions_max}
+                pct={t.pt_split_pct}
+                active={verifiedCount >= t.sessions_min && (t.sessions_max == null || verifiedCount <= t.sessions_max)}
+              />
+            ))}
+          </div>
+          <p className="mt-4 text-xs text-muted-foreground">
+            Your higher rate applies only to sessions delivered after each
+            threshold.
+          </p>
+        </Card>
       </div>
     </div>
   );
@@ -354,6 +489,17 @@ function MiniStat({ label, value }: { label: string; value: string }) {
         {value}
       </p>
     </div>
+  );
+}
+
+function ImpactRow({ label, value }: { label: string; value: string }) {
+  return (
+    <li className="flex items-center justify-between border-b border-border/30 pb-1.5 last:border-0 last:pb-0">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-mono font-semibold tabular-nums text-foreground">
+        {value}
+      </span>
+    </li>
   );
 }
 
@@ -385,33 +531,14 @@ function TierChip({
   );
 }
 
-function StatCard({
-  label,
-  value,
-  hint,
-  tint,
-}: {
-  label: string;
-  value: string;
-  hint: string;
-  tint?: "warm";
-}) {
-  return (
-    <Card
-      className={`border-border p-5 ${tint === "warm" ? "border-warm/30 bg-warm/5" : ""}`}
-    >
-      <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
-        {label}
-      </p>
-      <p className="mt-1 font-mono text-3xl font-semibold tabular-nums">
-        {value}
-      </p>
-      <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
-    </Card>
-  );
-}
-
 function StatusPill({ status }: { status: string }) {
+  const label: Record<string, string> = {
+    pending: "Assigned",
+    acknowledged: "Acknowledged",
+    completed: "Awaiting confirmation",
+    confirmed: "Confirmed",
+    disputed: "Disputed",
+  };
   const map: Record<string, string> = {
     pending: "border-muted-foreground/40 bg-secondary text-muted-foreground",
     acknowledged: "border-warm/40 bg-warm/10 text-[color:var(--warm)]",
@@ -423,7 +550,7 @@ function StatusPill({ status }: { status: string }) {
     <span
       className={`rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wider ${map[status] ?? map.pending}`}
     >
-      {status}
+      {label[status] ?? status}
     </span>
   );
 }
