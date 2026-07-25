@@ -143,6 +143,18 @@ export const createCheckout = createServerFn({ method: "POST" })
     const { getRequest } = await import("@tanstack/react-start/server");
     const sb = getSupabaseAdmin();
 
+    const hasClientId = !!(process.env.PINCH_CLIENT_ID ?? process.env.PINCH_MERCHANT_ID);
+    const hasClientSecret = !!(
+      process.env.PINCH_CLIENT_SECRET ??
+      process.env.PINCH_SECRET_KEY ??
+      process.env.PINCH_API_KEY
+    );
+    if (!hasClientId || !hasClientSecret) {
+      throw new Error(
+        `Pinch credentials missing on server (PINCH_CLIENT_ID present: ${hasClientId}, PINCH_CLIENT_SECRET present: ${hasClientSecret}). Add them in Lovable Cloud project secrets and republish.`,
+      );
+    }
+
     const [{ data: member, error: memErr }, { data: pack, error: packErr }] =
       await Promise.all([
         sb.from("members").select("*").eq("id", data.memberId).maybeSingle(),
