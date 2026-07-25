@@ -76,12 +76,14 @@ export const getDemo = createServerFn({ method: "GET" }).handler(async () => {
     "split_tiers",
     "pt_packs",
     "sessions",
-    "payments_log",
   ] as const;
 
+  const PAYMENTS_LOG_COLS =
+    "id, pack_id, session_id, pinch_payment_id, amount_cents, pt_amount_cents, club_amount_cents, pt_split_pct, status, pinch_event_type, created_at";
+
   const out: Record<string, { rows: any[]; error: string | null }> = {};
-  await Promise.all(
-    tables.map(async (t) => {
+  await Promise.all([
+    ...tables.map(async (t) => {
       const { data, error } = await sb
         .from(t)
         .select("*")
@@ -89,7 +91,15 @@ export const getDemo = createServerFn({ method: "GET" }).handler(async () => {
         .limit(50);
       out[t] = { rows: data ?? [], error: error?.message ?? null };
     }),
-  );
+    (async () => {
+      const { data, error } = await sb
+        .from("payments_log")
+        .select(PAYMENTS_LOG_COLS)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      out["payments_log"] = { rows: data ?? [], error: error?.message ?? null };
+    })(),
+  ]);
   return out;
 });
 
