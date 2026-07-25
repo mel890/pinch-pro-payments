@@ -370,6 +370,14 @@ function DemoPage() {
             >
               {checkout.isPending ? "Creating…" : "Create Pinch checkout"}
             </button>
+            <button
+              className="mt-2 inline-flex w-full items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-xs font-medium hover:bg-accent disabled:opacity-50"
+              disabled={!memberId || !packId || serverCheckout.isPending}
+              onClick={() => serverCheckout.mutate({ memberId, packId })}
+              title="Bypass the edge function — call Pinch directly from our TanStack server fn (fully instrumented)."
+            >
+              {serverCheckout.isPending ? "Debugging…" : "Debug via server (bypass edge fn)"}
+            </button>
             {lastPayment && (
               <div className="mt-3 rounded-md border border-border bg-muted/30 p-2 text-xs space-y-1">
                 <div>payment #{String(lastPayment.id)}</div>
