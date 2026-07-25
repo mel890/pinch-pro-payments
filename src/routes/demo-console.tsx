@@ -124,6 +124,12 @@ function DemoPage() {
 
   const refresh = () => router.invalidate();
 
+  // Debug log — captures each phase of the Pinch flow.
+  const [debugLog, setDebugLog] = useState<DebugEntry[]>([]);
+  const pushDebug = (e: Omit<DebugEntry, "ts">) =>
+    setDebugLog((prev) => [...prev, { ...e, ts: Date.now() }]);
+  const clearDebug = () => setDebugLog([]);
+
   // Auto-seed on load if the pt_packs table is empty; retries on refresh.
   const autoSeededRef = useRef(false);
   useEffect(() => {
@@ -136,23 +142,40 @@ function DemoPage() {
 
   const checkout = useMutation({
     mutationFn: async (v: { memberId: string; packId: string }) => {
+      pushDebug({ phase: "1. cfg", level: "info", title: "Fetching Supabase config", detail: v });
       const cfg = await cfgFn();
       if (!cfg.url || !cfg.anonKey) {
+        pushDebug({ phase: "1. cfg", level: "error", title: "Missing URL or anon key", detail: { hasUrl: !!cfg.url, hasAnonKey: !!cfg.anonKey } });
         throw new Error("Supabase config unavailable (missing URL or publishable key).");
       }
       const endpoint = `${cfg.url.replace(/\/$/, "")}/functions/v1/pinch-buy-pack`;
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: cfg.anonKey,
-          Authorization: `Bearer ${cfg.anonKey}`,
-        },
-        body: JSON.stringify(v),
+      const headers = {
+        "Content-Type": "application/json",
+        apikey: cfg.anonKey,
+        Authorization: `Bearer ${cfg.anonKey}`,
+      };
+      pushDebug({
+        phase: "2. edge fn request",
+        level: "info",
+        title: `POST ${endpoint}`,
+        detail: { headers: redactHeaders(headers), body: v },
       });
+      let res: Response;
+      try {
+        res = await fetch(endpoint, { method: "POST", headers, body: JSON.stringify(v) });
+      } catch (err) {
+        pushDebug({ phase: "2. edge fn request", level: "error", title: "Network/CORS error", detail: err instanceof Error ? err.message : String(err) });
+        throw err;
+      }
       const raw = await res.text();
       let json: any = null;
       try { json = raw ? JSON.parse(raw) : null; } catch { json = { raw }; }
+      pushDebug({
+        phase: "3. edge fn response",
+        level: res.ok ? "success" : "error",
+        title: `${res.status} ${res.statusText}`,
+        detail: { status: res.status, ok: res.ok, body: json ?? raw.slice(0, 600) },
+      });
       if (!res.ok) {
         const msg = json?.error ?? json?.message ?? raw?.slice(0, 300) ?? `HTTP ${res.status}`;
         throw new Error(`pinch-buy-pack ${res.status}: ${msg}`);
@@ -162,11 +185,51 @@ function DemoPage() {
     onSuccess: (res: any) => {
       const url = res?.paymentUrl ?? res?.payment_url ?? res?.url ?? null;
       setPinchInfo({ pinch: { url, id: res?.paymentId ?? res?.id ?? null }, response: res });
+      pushDebug({ phase: "4. hosted url", level: url ? "success" : "error", title: url ? "Received hosted checkout URL" : "No paymentUrl in response", detail: { url, id: res?.paymentId ?? res?.id ?? null } });
       setErrorMsg(null);
       if (url) window.open(url, "_blank", "noopener,noreferrer");
       refresh();
     },
-    onError: (e) => setErrorMsg(e instanceof Error ? e.message : String(e)),
+    onError: (e) => {
+      pushDebug({ phase: "!! failure", level: "error", title: "Checkout mutation rejected", detail: e instanceof Error ? e.message : String(e) });
+      setErrorMsg(e instanceof Error ? e.message : String(e));
+    },
+  });
+
+  // Alternate path: bypass edge function and call Pinch directly via our TanStack server fn.
+  // This route has full server-side instrumentation and returns redacted diagnostics.
+  const serverCheckoutFn = useServerFn(createCheckout);
+  const serverCheckout = useMutation({
+    mutationFn: async (v: { memberId: string; packId: string }) => {
+      pushDebug({ phase: "S1. server fn", level: "info", title: "Calling createCheckout (TanStack server fn → Pinch)", detail: v });
+      const res = await serverCheckoutFn({ data: v });
+      return res;
+    },
+    onSuccess: (res: any) => {
+      pushDebug({
+        phase: "S2. pinch diagnostics",
+        level: res?.pinchError ? "error" : "success",
+        title: res?.pinchError ? "Pinch call failed" : "Pinch call ok",
+        detail: res?.diagnostics,
+      });
+      if (res?.pinchError) {
+        pushDebug({ phase: "S3. pinch error", level: "error", title: "Verbatim Pinch error", detail: res.pinchError });
+      }
+      if (res?.insertError) {
+        pushDebug({ phase: "S4. payments_log", level: "error", title: "Insert into payments_log failed", detail: res.insertError });
+      } else if (res?.payment) {
+        pushDebug({ phase: "S4. payments_log", level: "success", title: "Inserted payments_log row", detail: { id: res.payment.id, status: res.payment.status } });
+      }
+      if (res?.pinch?.url) {
+        setPinchInfo({ pinch: res.pinch, response: res });
+        window.open(res.pinch.url, "_blank", "noopener,noreferrer");
+      }
+      refresh();
+    },
+    onError: (e) => {
+      pushDebug({ phase: "!! server fn threw", level: "error", title: "createCheckout rejected", detail: e instanceof Error ? e.message : String(e) });
+      setErrorMsg(e instanceof Error ? e.message : String(e));
+    },
   });
 
   const pay = useMutation({
