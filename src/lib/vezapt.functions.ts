@@ -233,10 +233,19 @@ export const createCheckout = createServerFn({ method: "POST" })
     const [firstName, ...rest] = memberFullName.trim().split(/\s+/);
     const lastName = rest.join(" ") || "Demo";
 
-    let payerId: string | null = member.pinch_payer_id ?? null;
+    // Fixed sandbox payer supplied by the demo owner. Used unless the member
+    // row already has its own cached pinch_payer_id.
+    const DEMO_PAYER_ID = "pyr_cD59b4ld61yQfH";
+
+    let payerId: string | null = member.pinch_payer_id ?? DEMO_PAYER_ID;
     let payerError: string | null = null;
     let payerStatus: number | null = null;
     let payerBodyPreview: string | null = null;
+    let payerSource: "member_row" | "demo_default" | "created" =
+      member.pinch_payer_id ? "member_row" : "demo_default";
+
+    // Only create a new payer if we somehow don't have one (defensive; won't
+    // happen while DEMO_PAYER_ID is set).
     if (!payerId) {
       const payerRes = await createPayer({
         firstName: firstName || "Demo",
@@ -247,7 +256,7 @@ export const createCheckout = createServerFn({ method: "POST" })
       payerBodyPreview = payerRes.raw.slice(0, 400);
       if (payerRes.ok) {
         payerId = extractPayerId(payerRes.data);
-        // Best-effort cache on the member row (silently ignored if column absent).
+        payerSource = "created";
         if (payerId) {
           await sb
             .from("members")
