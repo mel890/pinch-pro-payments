@@ -4,12 +4,12 @@ import { useMutation, useSuspenseQuery, useQuery, queryOptions } from "@tanstack
 import { useState, useMemo, useEffect, useRef } from "react";
 import {
   getDemo,
-  createCheckout,
   markPaid,
   seedDemoPacks,
   logPtSession,
   confirmPtSession,
   pinchEnvCheck,
+  getSupabaseConfig,
 } from "@/lib/vezapt.functions";
 
 const demoQuery = queryOptions({
