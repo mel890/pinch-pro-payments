@@ -374,3 +374,41 @@ export const disputeSession = createServerFn({ method: "POST" })
     return { session: row };
   });
 
+const LogPtSchema = z.object({
+  packId: z.union([z.string(), z.number()]),
+  sessionDate: z.string().optional(),
+});
+
+/** Call the log_pt_session Supabase RPC. */
+export const logPtSession = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => LogPtSchema.parse(d))
+  .handler(async ({ data }) => {
+    const { getSupabaseAdmin } = await import("./supabase.server");
+    const sb = getSupabaseAdmin();
+    const { data: rows, error } = await sb.rpc("log_pt_session", {
+      p_pack_id: data.packId,
+      p_session_date: data.sessionDate ?? new Date().toISOString(),
+    });
+    if (error) throw new Error(error.message);
+    const row = Array.isArray(rows) ? rows[0] : rows;
+    return { row };
+  });
+
+const ConfirmPtSchema = z.object({
+  confirmationToken: z.string(),
+});
+
+/** Call the confirm_pt_session Supabase RPC. */
+export const confirmPtSession = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => ConfirmPtSchema.parse(d))
+  .handler(async ({ data }) => {
+    const { getSupabaseAdmin } = await import("./supabase.server");
+    const sb = getSupabaseAdmin();
+    const { data: rows, error } = await sb.rpc("confirm_pt_session", {
+      p_confirmation_token: data.confirmationToken,
+    });
+    if (error) throw new Error(error.message);
+    const row = Array.isArray(rows) ? rows[0] : rows;
+    return { row };
+  });
+
