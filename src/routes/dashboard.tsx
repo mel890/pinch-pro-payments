@@ -116,49 +116,53 @@ function Dashboard() {
           </Badge>
         </header>
 
-        {/* KPI row */}
+        {/* KPI row — campaign momentum */}
         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Kpi icon={<Users className="size-4" />} label="Team size" value={String(teamSize)} />
-          <Kpi icon={<Users className="size-4" />} label="Active clients" value={String(activeClients)} />
-          <Kpi icon={<Wallet className="size-4" />} label="PT revenue" value={formatAUD(gross)} mono />
-          <Kpi icon={<CheckCircle2 className="size-4" />} label="Confirmed sessions" value={String(totalVerified)} />
+          <Kpi icon={<Megaphone className="size-4" />} label="Campaigns live" value="2" />
+          <Kpi icon={<ShoppingBag className="size-4" />} label="Products sold this month" value="18" />
+          <Kpi icon={<Users className="size-4" />} label="Clients activated" value="15" />
+          <Kpi icon={<Repeat className="size-4" />} label="Converted to ongoing" value="7" />
         </div>
 
-        {/* Revenue split trio */}
+        {/* Campaign performance */}
         <section className="mt-6 rounded-2xl border border-border bg-card p-5">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Revenue split
+              Campaign performance
             </h2>
             <Badge className="border border-warm/40 bg-warm/10 text-[color:var(--warm)]">
-              VezaPT Pay · Sandbox
+              This month
             </Badge>
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-3">
             <SplitCard
               tone="primary"
-              label="Earned payouts"
-              value={formatAUD(totalEarned)}
-              sub={`${totalVerified} confirmed sessions`}
-              why="Released to trainers on member-confirmed sessions."
+              label="Sales generated"
+              value="$9,482"
+              sub="Total member purchases this month"
+              why="Gross member spend across live campaigns."
             />
             <SplitCard
               tone="warm"
-              label="Held (unearned)"
-              value={formatAUD(totalHeld)}
-              sub={`${totalHeldCount} logged, awaiting confirm`}
-              why="Logged but not yet member-confirmed, so not releasable."
+              label="Trainer payouts"
+              value="$7,632"
+              sub="Paid or reserved for accepted delivery"
+              why="Committed to trainers once opportunities are accepted."
             />
             <SplitCard
               tone="default"
-              label="Club margin"
-              value={formatAUD(clubMargin)}
-              sub={`${marginPct}% of gross · after ${formatAUD(totalPinchFee)} Pinch fee (est.)`}
-              why="What the club keeps after trainer comp and fees."
+              label="Club campaign revenue"
+              value="$1,850"
+              sub="Fees earned for campaigns, payments and matching"
+              why="What the club keeps for running the offer and platform."
             />
           </div>
         </section>
+
+        {/* Campaign funnel */}
+        <CampaignFunnel />
+
 
         {/* Team health — demo signals */}
         <section className="mt-6">
