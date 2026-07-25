@@ -165,17 +165,37 @@ export async function createPaymentLink(input: {
   allowedPaymentMethods?: Array<"credit-card" | "bank-account">;
   metadata?: Record<string, string | number | null | undefined>;
 }): Promise<PinchFetchResult> {
+  // Pinch sandbox validator uses PascalCase property names — send both cases
+  // for safety across API versions.
+  const amount = input.amountCents;
+  const currency = input.currency ?? "AUD";
+  const allowed = input.allowedPaymentMethods ?? ["credit-card", "bank-account"];
   const body: Record<string, any> = {
-    amount: input.amountCents,
+    Amount: amount,
+    amount,
+    Description: input.description,
     description: input.description,
-    currency: input.currency ?? "AUD",
-    allowedPaymentMethods:
-      input.allowedPaymentMethods ?? ["credit-card", "bank-account"],
+    Currency: currency,
+    currency,
+    AllowedPaymentMethods: allowed,
+    allowedPaymentMethods: allowed,
   };
-  if (input.reference) body.reference = input.reference;
-  if (input.returnUrl) body.returnUrl = input.returnUrl;
-  if (input.payerId) body.payerId = input.payerId;
-  if (input.metadata) body.metadata = input.metadata;
+  if (input.reference) {
+    body.Reference = input.reference;
+    body.reference = input.reference;
+  }
+  if (input.returnUrl) {
+    body.ReturnUrl = input.returnUrl;
+    body.returnUrl = input.returnUrl;
+  }
+  if (input.payerId) {
+    body.PayerId = input.payerId;
+    body.payerId = input.payerId;
+  }
+  if (input.metadata) {
+    body.Metadata = input.metadata;
+    body.metadata = input.metadata;
+  }
 
   return pinchFetch("payment-links", {
     method: "POST",
