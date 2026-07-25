@@ -234,9 +234,17 @@ function PayScreen() {
           </Badge>
         </header>
 
-        <h1 className="mt-4 text-2xl font-semibold tracking-tight">
+        <button
+          onClick={() => { setChosenPackId(undefined); setDone(null); }}
+          className="mt-4 text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
+        >
+          ← Change plan
+        </button>
+
+        <h1 className="mt-3 text-2xl font-semibold tracking-tight">
           {pack.name}
         </h1>
+
         <p className="mt-1 text-sm text-muted-foreground">
           With {trainer?.name ?? "your trainer"}
           {member ? ` · Paying as ${member.name}` : ""}
