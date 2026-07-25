@@ -233,16 +233,15 @@ export const createCheckout = createServerFn({ method: "POST" })
     const [firstName, ...rest] = memberFullName.trim().split(/\s+/);
     const lastName = rest.join(" ") || "Demo";
 
-    // Fixed sandbox payer supplied by the demo owner. Used unless the member
-    // row already has its own cached pinch_payer_id.
+    // Fixed sandbox payer supplied by the demo owner — always used for the
+    // hackathon demo so every checkout is deterministic.
     const DEMO_PAYER_ID = "pyr_cD59b4ld61yQfH";
 
-    let payerId: string | null = member.pinch_payer_id ?? DEMO_PAYER_ID;
+    let payerId: string | null = DEMO_PAYER_ID;
     let payerError: string | null = null;
     let payerStatus: number | null = null;
     let payerBodyPreview: string | null = null;
-    let payerSource: "member_row" | "demo_default" | "created" =
-      member.pinch_payer_id ? "member_row" : "demo_default";
+    let payerSource: "member_row" | "demo_default" | "created" = "demo_default";
 
     // Only create a new payer if we somehow don't have one (defensive; won't
     // happen while DEMO_PAYER_ID is set).
