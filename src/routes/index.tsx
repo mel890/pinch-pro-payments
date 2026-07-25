@@ -286,8 +286,8 @@ function DemoPage() {
             )}
           </StepCard>
 
-          {/* Step 3: Log session + split */}
-          <StepCard step={3} title="Trainer logs session · split">
+          {/* Step 3: Log session via RPC */}
+          <StepCard step={3} title="Trainer logs session">
             <Label>Trainer</Label>
             <Select value={trainerId} onChange={setTrainerId}>
               {trainers.map((t: any) => (
@@ -296,150 +296,70 @@ function DemoPage() {
                 </option>
               ))}
             </Select>
-            <div className="mt-3 flex gap-2">
-              <button
-                className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-xs font-medium hover:bg-accent disabled:opacity-50"
-                disabled={!trainerId || !memberId || log.isPending}
-                onClick={() =>
-                  log.mutate({ trainerId, memberId, packId })
-                }
-              >
-                {log.isPending ? "…" : "Log session"}
-              </button>
-              <button
-                className="flex-1 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                disabled={!trainerId || showSplit.isPending}
-                onClick={() => showSplit.mutate({ trainerId })}
-              >
-                {showSplit.isPending ? "…" : "Compute split"}
-              </button>
-            </div>
-            {split && (
+            <button
+              className="mt-3 inline-flex w-full items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-accent disabled:opacity-50"
+              disabled={!packId || logPt.isPending}
+              onClick={() => logPt.mutate({ packId })}
+            >
+              {logPt.isPending ? "Logging…" : "Log session"}
+            </button>
+            {logPt.isError && (
+              <div className="mt-2 rounded-md border border-destructive/30 bg-destructive/10 p-2 text-xs text-destructive">
+                {logPt.error instanceof Error ? logPt.error.message : String(logPt.error)}
+              </div>
+            )}
+            {logResult && (
               <div className="mt-3 rounded-md border border-border bg-muted/30 p-2 text-xs space-y-1">
-                <div>Sessions this month: <b>{split.sessionsCount}</b></div>
+                <div className="font-semibold text-foreground">Session logged</div>
+                <div>Status: <span className="font-mono">Awaiting member confirmation</span></div>
                 <div>
-                  Tier:{" "}
-                  <span className="font-mono">
-                    {split.matchedTier
-                      ? split.matchedTier.tier_name ??
-                        split.matchedTier.name ??
-                        `#${split.matchedTier.id}`
-                      : "no match"}
-                  </span>
+                  Session #<b>{logResult.session_number_in_pack ?? "—"}</b> in pack
                 </div>
                 <div>
-                  Trainer share:{" "}
-                  <b className="text-primary">
-                    {split.trainerPct != null ? `${split.trainerPct}%` : "—"}
-                  </b>
+                  Session value:{" "}
+                  <b>{fmt(logResult.session_value_cents)} AUD</b>
                 </div>
-                {lastPayment?.amount_cents && split.trainerPct != null && (
-                  <div className="pt-1 border-t border-border">
-                    On last payment {fmt(lastPayment.amount_cents)}:{" "}
-                    trainer{" "}
-                    <b>
-                      {fmt(
-                        Math.round(
-                          (lastPayment.amount_cents * split.trainerPct) / 100,
-                        ),
-                      )}
-                    </b>
-                    , club{" "}
-                    <b>
-                      {fmt(
-                        lastPayment.amount_cents -
-                          Math.round(
-                            (lastPayment.amount_cents * split.trainerPct) / 100,
-                          ),
-                      )}
-                    </b>
-                  </div>
-                )}
+                <div className="pt-1 text-[10px] text-muted-foreground break-all">
+                  session_id: {String(logResult.session_id ?? "—")}
+                </div>
               </div>
             )}
           </StepCard>
 
-          {/* Step 4: Member confirms */}
+          {/* Step 4: Confirm via RPC */}
           <StepCard step={4} title="Member confirms session">
-            {!lastSession ? (
-              <p className="text-xs text-muted-foreground">
-                Log a session in Step 3, then the member can confirm it here.
-              </p>
-            ) : (
-              <div className="space-y-2 text-xs">
-                <div>
-                  Member:{" "}
-                  <b className="text-foreground">
-                    {memberName(lastSession.member_id)}
-                  </b>
-                </div>
-                <div>
-                  Trainer:{" "}
-                  <b className="text-foreground">
-                    {trainerName(lastSession.trainer_id)}
-                  </b>
-                </div>
-                <div>
-                  Date:{" "}
-                  <span className="font-mono">
-                    {new Date(
-                      lastSession.occurred_at ??
-                        lastSession.session_date ??
-                        lastSession.created_at ??
-                        Date.now(),
-                    ).toLocaleString()}
-                  </span>
-                </div>
-                <div>
-                  Status:{" "}
-                  <span className="font-mono">
-                    {lastSession.status ?? "logged"}
-                  </span>
-                </div>
-                {lastSession.status !== "verified" &&
-                  lastSession.status !== "disputed" && (
-                    <div className="mt-3 flex gap-2">
-                      <button
-                        className="flex-1 rounded-md bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-                        disabled={confirmM.isPending}
-                        onClick={() =>
-                          confirmM.mutate({ sessionId: lastSession.id })
-                        }
-                      >
-                        {confirmM.isPending ? "…" : "Confirm session ✓"}
-                      </button>
-                      <button
-                        className="flex-1 rounded-md bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50"
-                        disabled={disputeM.isPending}
-                        onClick={() =>
-                          disputeM.mutate({ sessionId: lastSession.id })
-                        }
-                      >
-                        {disputeM.isPending ? "…" : "Dispute"}
-                      </button>
-                    </div>
-                  )}
-                {lastSession.status === "verified" && (
-                  <div className="mt-2 rounded-md border border-emerald-500/30 bg-emerald-500/10 p-2 text-emerald-700 dark:text-emerald-400">
-                    Verified ✓ · trainer payout unlocked.
-                    {split?.trainerPct != null && (
-                      <div className="mt-1">
-                        Updated split · sessions:{" "}
-                        <b>{split.sessionsCount}</b> · trainer share{" "}
-                        <b>{split.trainerPct}%</b>
-                      </div>
-                    )}
-                  </div>
-                )}
-                {lastSession.status === "disputed" && (
-                  <div className="mt-2 rounded-md border border-red-500/30 bg-red-500/10 p-2 text-red-700 dark:text-red-400">
-                    Disputed · payout held for review.
-                  </div>
-                )}
+            <Label>Confirmation token</Label>
+            <input
+              className="mt-1 w-full rounded-md border border-input bg-background px-2 py-1.5 text-xs font-mono"
+              value={confirmationToken}
+              onChange={(e) => setConfirmationToken(e.target.value)}
+              placeholder="log a session in Step 3"
+            />
+            <button
+              className="mt-3 inline-flex w-full items-center justify-center rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+              disabled={!confirmationToken || confirmPt.isPending || !!confirmResult}
+              onClick={() => confirmPt.mutate({ confirmationToken })}
+            >
+              {confirmPt.isPending ? "Confirming…" : "Confirm session"}
+            </button>
+            {confirmPt.isError && (
+              <div className="mt-2 rounded-md border border-destructive/30 bg-destructive/10 p-2 text-xs text-destructive">
+                {confirmPt.error instanceof Error ? confirmPt.error.message : String(confirmPt.error)}
+              </div>
+            )}
+            {confirmResult && (
+              <div className="mt-3 rounded-md border border-emerald-500/30 bg-emerald-500/10 p-2 text-xs space-y-1 text-emerald-800 dark:text-emerald-300">
+                <div className="font-semibold">Session confirmed</div>
+                <div>Status: <span className="font-mono">{String(confirmResult.status ?? "—")}</span></div>
+                <div>Session # in cycle: <b>{confirmResult.session_number_in_cycle ?? "—"}</b></div>
+                <div>PT split: <b>{confirmResult.pt_split_pct ?? "—"}%</b> · Club split: <b>{confirmResult.club_split_pct ?? "—"}%</b></div>
+                <div>PT payout: <b>{fmt(confirmResult.pt_amount_cents)} AUD</b></div>
+                <div>Club payout: <b>{fmt(confirmResult.club_amount_cents)} AUD</b></div>
               </div>
             )}
           </StepCard>
         </section>
+
 
 
         <section className="grid gap-6 md:grid-cols-2">
