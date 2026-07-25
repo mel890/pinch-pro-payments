@@ -214,12 +214,14 @@ function StartScreen() {
 function JourneyCard({
   step,
   title,
+  body,
   to,
   search,
   highlight,
 }: {
   step: string;
   title: string;
+  body?: string;
   to: string;
   search?: Record<string, string> | undefined;
   highlight?: boolean;
@@ -240,12 +242,14 @@ function JourneyCard({
         >
           {step}
         </p>
-        <p className="mt-2 text-sm leading-snug text-foreground">{title}</p>
+        <p className="mt-2 text-sm font-semibold leading-snug text-foreground">{title}</p>
+        {body && <p className="mt-1 text-xs leading-snug text-muted-foreground">{body}</p>}
         <ArrowRight className="mt-4 size-4 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary" />
       </Card>
     </Link>
   );
 }
+
 
 function RoleCard({
   to,
