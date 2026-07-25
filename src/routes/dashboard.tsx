@@ -205,61 +205,88 @@ function Dashboard() {
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             Trainer roster
           </h2>
-          <div className="mt-3 space-y-2">
-            {trainerAgg.map(({ trainer, verifiedCount, earnedCents, tier, nextTier }, i) => {
-              const toNext = nextTier ? nextTier.sessions_min - verifiedCount : 0;
-              const tierName =
-                (tier?.pt_split_pct ?? 40) >= 60
-                  ? "Peak"
-                  : (tier?.pt_split_pct ?? 40) >= 50
-                    ? "Established"
-                    : "Starter";
-              const progress = nextTier
-                ? Math.min(
-                    100,
-                    ((verifiedCount - (tier?.sessions_min ?? 0)) /
-                      Math.max(1, nextTier.sessions_min - (tier?.sessions_min ?? 0))) *
-                      100,
-                  )
-                : 100;
-              const activeClients = new Set(
-                snap.sessions
-                  .filter((s: any) => s.trainer_id === trainer.id)
-                  .map((s: any) => s.member_id),
-              ).size;
-              // Illustrative per-trainer coaching signals
-              const signals = TRAINER_SIGNALS[i % TRAINER_SIGNALS.length];
+          <p className="mt-1 text-xs text-muted-foreground">
+            Participation, capacity and coaching signals — richer than volume-based tiers.
+          </p>
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            {trainerAgg.map(({ trainer, earnedCents }, i) => {
+              const profile = TRAINER_PROFILES[i % TRAINER_PROFILES.length];
+              const displayName = i === 0 ? "Sarah Nguyen" : trainer.name;
               return (
-                <Card key={trainer.id} className="border-border p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
+                <Card key={trainer.id} className="border-border p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <p className="font-semibold">{trainer.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {tierName} · {tier?.pt_split_pct}% · {verifiedCount} confirmed sessions · {activeClients} active clients
+                      <p className="text-base font-semibold">{displayName}</p>
+                      <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                        Personal trainer
                       </p>
                     </div>
-                    <p className="font-mono text-lg tabular-nums text-primary">
-                      {formatAUD(earnedCents)}
-                    </p>
+                    <div className="text-right">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        Earned this month
+                      </p>
+                      <p className="font-mono text-lg font-semibold tabular-nums text-primary">
+                        {formatAUD(earnedCents || profile.earningsCents.earned)}
+                      </p>
+                    </div>
                   </div>
-                  <div className="mt-3">
-                    <Progress value={progress} className="h-1.5" />
-                    <p className="mt-1 text-[11px] text-muted-foreground">
-                      {toNext > 0
-                        ? `${toNext} more confirmed sessions to reach the next earnings tier`
-                        : "At top tier"}
-                    </p>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <RosterBlock label="Accepting">
+                      <ul className="space-y-1 text-sm">
+                        {profile.accepting.map((a) => (
+                          <li key={a} className="text-foreground/80">· {a}</li>
+                        ))}
+                      </ul>
+                    </RosterBlock>
+                    <RosterBlock label="Capacity this month">
+                      <ul className="space-y-1 text-sm">
+                        {profile.capacity.map((c) => (
+                          <li key={c.label} className="flex items-center justify-between">
+                            <span className="text-foreground/80">{c.label}</span>
+                            <span className="font-mono tabular-nums text-muted-foreground">
+                              {c.filled} of {c.total} filled
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </RosterBlock>
+                    <RosterBlock label="Current coaching clients">
+                      <ul className="space-y-1 text-sm text-foreground/80">
+                        <li>{profile.clients.active} active</li>
+                        <li>{profile.clients.completing} completing a pack this week</li>
+                        <li>{profile.clients.continuation} ready for a continuation conversation</li>
+                      </ul>
+                    </RosterBlock>
+                    <RosterBlock label="Earnings">
+                      <ul className="space-y-1 text-sm">
+                        <EarningsRow label="Earned this month" value={formatAUD(profile.earningsCents.earned)} tone="primary" />
+                        <EarningsRow label="Pending delivery" value={formatAUD(profile.earningsCents.pending)} tone="warm" />
+                        <EarningsRow label="Potential from accepted" value={formatAUD(profile.earningsCents.potential)} tone="muted" />
+                      </ul>
+                    </RosterBlock>
                   </div>
-                  <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
-                    <span className={`rounded-full border px-2 py-0.5 ${signals.retentionTone}`}>
-                      Retention: {signals.retention}
-                    </span>
-                    <span className="rounded-full border border-primary/30 bg-primary/5 px-2 py-0.5 text-primary">
-                      Support: {signals.support}
-                    </span>
-                    <span className="rounded-full border border-border bg-secondary/40 px-2 py-0.5 text-muted-foreground">
-                      Coaching focus: {signals.focus}
-                    </span>
+
+                  <div className="mt-4 rounded-xl border border-border bg-secondary/30 p-3">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      Signals
+                    </p>
+                    <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
+                      <SignalRow label="Acceptance reliability" value={profile.signals.acceptance} />
+                      <SignalRow label="Pack completion" value={profile.signals.packCompletion} />
+                      <SignalRow label="Ongoing conversion" value={profile.signals.ongoing} />
+                      <SignalRow label="Client support" value={profile.signals.support} />
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex justify-end">
+                    <Link
+                      to="/trainer"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/15"
+                    >
+                      View {displayName.split(" ")[0]}’s client journeys
+                      <ArrowRight className="size-3" />
+                    </Link>
                   </div>
                 </Card>
               );
@@ -383,6 +410,104 @@ const TRAINER_SIGNALS = [
   { retention: "Stable", retentionTone: "border-primary/30 bg-primary/5 text-primary", support: "4.5 / 5", focus: "Flow in Function" },
   { retention: "Needs attention", retentionTone: "border-destructive/40 bg-destructive/10 text-destructive", support: "4.3 / 5", focus: "Movement Mastery" },
 ];
+
+type TrainerProfile = {
+  accepting: string[];
+  capacity: { label: string; filled: number; total: number }[];
+  clients: { active: number; completing: number; continuation: number };
+  earningsCents: { earned: number; pending: number; potential: number };
+  signals: { acceptance: string; packCompletion: string; ongoing: string; support: string };
+};
+
+const TRAINER_PROFILES: TrainerProfile[] = [
+  {
+    accepting: ["Kickstart Packs", "6-Week Momentum", "Online coaching"],
+    capacity: [
+      { label: "Kickstart", filled: 2, total: 4 },
+      { label: "Challenge", filled: 3, total: 5 },
+    ],
+    clients: { active: 7, completing: 2, continuation: 1 },
+    earningsCents: { earned: 248600, pending: 79800, potential: 328400 },
+    signals: {
+      acceptance: "Strong",
+      packCompletion: "92%",
+      ongoing: "46%",
+      support: "4.5 / 5",
+    },
+  },
+  {
+    accepting: ["6-Week Momentum", "12-Week Transformation"],
+    capacity: [
+      { label: "Momentum", filled: 3, total: 4 },
+      { label: "Transformation", filled: 1, total: 3 },
+    ],
+    clients: { active: 9, completing: 1, continuation: 2 },
+    earningsCents: { earned: 312400, pending: 64200, potential: 289500 },
+    signals: {
+      acceptance: "Reliable",
+      packCompletion: "88%",
+      ongoing: "51%",
+      support: "4.7 / 5",
+    },
+  },
+  {
+    accepting: ["Kickstart Packs", "Online coaching"],
+    capacity: [
+      { label: "Kickstart", filled: 1, total: 4 },
+      { label: "Online", filled: 4, total: 6 },
+    ],
+    clients: { active: 5, completing: 0, continuation: 1 },
+    earningsCents: { earned: 178300, pending: 42500, potential: 196400 },
+    signals: {
+      acceptance: "Watch",
+      packCompletion: "81%",
+      ongoing: "38%",
+      support: "4.3 / 5",
+    },
+  },
+];
+
+function RosterBlock({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
+      <div className="mt-1.5">{children}</div>
+    </div>
+  );
+}
+
+function EarningsRow({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: "primary" | "warm" | "muted";
+}) {
+  const cls =
+    tone === "primary"
+      ? "text-primary"
+      : tone === "warm"
+        ? "text-[color:var(--warm)]"
+        : "text-foreground/80";
+  return (
+    <li className="flex items-center justify-between">
+      <span className="text-muted-foreground">{label}</span>
+      <span className={`font-mono font-semibold tabular-nums ${cls}`}>{value}</span>
+    </li>
+  );
+}
+
+function SignalRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between border-b border-border/30 pb-1 last:border-0 last:pb-0">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium text-foreground/90">{value}</span>
+    </div>
+  );
+}
+
 
 function HealthRow({ label, value, tone }: { label: string; value: string; tone: "good" | "warn" }) {
   const cls = tone === "good" ? "text-primary" : "text-[color:var(--warm)]";
