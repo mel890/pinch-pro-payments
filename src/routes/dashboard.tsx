@@ -377,6 +377,38 @@ function Kpi({
   );
 }
 
+
+const TRAINER_SIGNALS = [
+  { retention: "Watch", retentionTone: "border-warm/40 bg-warm/10 text-[color:var(--warm)]", support: "4.7 / 5", focus: "Client Connection" },
+  { retention: "Stable", retentionTone: "border-primary/30 bg-primary/5 text-primary", support: "4.5 / 5", focus: "Flow in Function" },
+  { retention: "Needs attention", retentionTone: "border-destructive/40 bg-destructive/10 text-destructive", support: "4.3 / 5", focus: "Movement Mastery" },
+];
+
+function HealthRow({ label, value, tone }: { label: string; value: string; tone: "good" | "warn" }) {
+  const cls = tone === "good" ? "text-primary" : "text-[color:var(--warm)]";
+  return (
+    <li className="flex items-center justify-between border-b border-border/30 pb-1.5 last:border-0 last:pb-0">
+      <span className="text-muted-foreground">{label}</span>
+      <span className={`font-mono font-semibold tabular-nums ${cls}`}>{value}</span>
+    </li>
+  );
+}
+
+function DimensionRow({ name, state, tone }: { name: string; state: string; tone: "good" | "warn" | "ok" }) {
+  const cls =
+    tone === "good"
+      ? "text-primary"
+      : tone === "warn"
+        ? "text-[color:var(--warm)]"
+        : "text-muted-foreground";
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-foreground/80">{name}</span>
+      <span className={`text-xs font-medium ${cls}`}>{state}</span>
+    </div>
+  );
+}
+
 function SplitCard({
   tone,
   label,
