@@ -103,6 +103,14 @@ export const getDemo = createServerFn({ method: "GET" }).handler(async () => {
   return out;
 });
 
+/** Returns the Supabase URL + publishable (anon) key for the browser to call edge functions. */
+export const getSupabaseConfig = createServerFn({ method: "GET" }).handler(async () => {
+  return {
+    url: process.env.VEZAPT_SUPABASE_URL ?? "",
+    anonKey: process.env.VEZAPT_SUPABASE_PUBLISHABLE_KEY ?? "",
+  };
+});
+
 /** Reports presence flags for Pinch env vars (never values). */
 export const pinchEnvCheck = createServerFn({ method: "GET" }).handler(async () => {
   return {
