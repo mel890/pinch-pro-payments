@@ -9,21 +9,45 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TrainerRouteImport } from './routes/trainer'
 import { Route as SessionQrRouteImport } from './routes/session-qr'
+import { Route as PayRouteImport } from './routes/pay'
+import { Route as MeRouteImport } from './routes/me'
 import { Route as DemoConsoleRouteImport } from './routes/demo-console'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CompleteSessionRouteImport } from './routes/complete-session'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ConfirmSessionDemoRouteImport } from './routes/confirm-session.demo'
 import { Route as ApiPublicPinchWebhookRouteImport } from './routes/api/public/pinch-webhook'
 
+const TrainerRoute = TrainerRouteImport.update({
+  id: '/trainer',
+  path: '/trainer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SessionQrRoute = SessionQrRouteImport.update({
   id: '/session-qr',
   path: '/session-qr',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PayRoute = PayRouteImport.update({
+  id: '/pay',
+  path: '/pay',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MeRoute = MeRouteImport.update({
+  id: '/me',
+  path: '/me',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DemoConsoleRoute = DemoConsoleRouteImport.update({
   id: '/demo-console',
   path: '/demo-console',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompleteSessionRoute = CompleteSessionRouteImport.update({
@@ -50,16 +74,24 @@ const ApiPublicPinchWebhookRoute = ApiPublicPinchWebhookRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/complete-session': typeof CompleteSessionRoute
+  '/dashboard': typeof DashboardRoute
   '/demo-console': typeof DemoConsoleRoute
+  '/me': typeof MeRoute
+  '/pay': typeof PayRoute
   '/session-qr': typeof SessionQrRoute
+  '/trainer': typeof TrainerRoute
   '/confirm-session/demo': typeof ConfirmSessionDemoRoute
   '/api/public/pinch-webhook': typeof ApiPublicPinchWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/complete-session': typeof CompleteSessionRoute
+  '/dashboard': typeof DashboardRoute
   '/demo-console': typeof DemoConsoleRoute
+  '/me': typeof MeRoute
+  '/pay': typeof PayRoute
   '/session-qr': typeof SessionQrRoute
+  '/trainer': typeof TrainerRoute
   '/confirm-session/demo': typeof ConfirmSessionDemoRoute
   '/api/public/pinch-webhook': typeof ApiPublicPinchWebhookRoute
 }
@@ -67,8 +99,12 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/complete-session': typeof CompleteSessionRoute
+  '/dashboard': typeof DashboardRoute
   '/demo-console': typeof DemoConsoleRoute
+  '/me': typeof MeRoute
+  '/pay': typeof PayRoute
   '/session-qr': typeof SessionQrRoute
+  '/trainer': typeof TrainerRoute
   '/confirm-session/demo': typeof ConfirmSessionDemoRoute
   '/api/public/pinch-webhook': typeof ApiPublicPinchWebhookRoute
 }
@@ -77,24 +113,36 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/complete-session'
+    | '/dashboard'
     | '/demo-console'
+    | '/me'
+    | '/pay'
     | '/session-qr'
+    | '/trainer'
     | '/confirm-session/demo'
     | '/api/public/pinch-webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/complete-session'
+    | '/dashboard'
     | '/demo-console'
+    | '/me'
+    | '/pay'
     | '/session-qr'
+    | '/trainer'
     | '/confirm-session/demo'
     | '/api/public/pinch-webhook'
   id:
     | '__root__'
     | '/'
     | '/complete-session'
+    | '/dashboard'
     | '/demo-console'
+    | '/me'
+    | '/pay'
     | '/session-qr'
+    | '/trainer'
     | '/confirm-session/demo'
     | '/api/public/pinch-webhook'
   fileRoutesById: FileRoutesById
@@ -102,14 +150,25 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CompleteSessionRoute: typeof CompleteSessionRoute
+  DashboardRoute: typeof DashboardRoute
   DemoConsoleRoute: typeof DemoConsoleRoute
+  MeRoute: typeof MeRoute
+  PayRoute: typeof PayRoute
   SessionQrRoute: typeof SessionQrRoute
+  TrainerRoute: typeof TrainerRoute
   ConfirmSessionDemoRoute: typeof ConfirmSessionDemoRoute
   ApiPublicPinchWebhookRoute: typeof ApiPublicPinchWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/trainer': {
+      id: '/trainer'
+      path: '/trainer'
+      fullPath: '/trainer'
+      preLoaderRoute: typeof TrainerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/session-qr': {
       id: '/session-qr'
       path: '/session-qr'
@@ -117,11 +176,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SessionQrRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pay': {
+      id: '/pay'
+      path: '/pay'
+      fullPath: '/pay'
+      preLoaderRoute: typeof PayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/me': {
+      id: '/me'
+      path: '/me'
+      fullPath: '/me'
+      preLoaderRoute: typeof MeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/demo-console': {
       id: '/demo-console'
       path: '/demo-console'
       fullPath: '/demo-console'
       preLoaderRoute: typeof DemoConsoleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/complete-session': {
@@ -158,8 +238,12 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CompleteSessionRoute: CompleteSessionRoute,
+  DashboardRoute: DashboardRoute,
   DemoConsoleRoute: DemoConsoleRoute,
+  MeRoute: MeRoute,
+  PayRoute: PayRoute,
   SessionQrRoute: SessionQrRoute,
+  TrainerRoute: TrainerRoute,
   ConfirmSessionDemoRoute: ConfirmSessionDemoRoute,
   ApiPublicPinchWebhookRoute: ApiPublicPinchWebhookRoute,
 }

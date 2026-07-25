@@ -1,240 +1,157 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useDemoState, demoStore, TIER, formatAUD } from "@/lib/demo-store";
-import { Button } from "@/components/ui/button";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Sparkles,
-  TrendingUp,
-  Users,
-  Heart,
-  Zap,
-  Star,
-  RotateCcw,
-  ArrowRight,
-  Trophy,
-} from "lucide-react";
-import { CoachMe } from "@/components/coach-me";
+  getSnapshot,
+  DEMO_TRAINER_SARAH,
+  DEMO_MEMBER_ALEX,
+  DEFAULT_DEMO_PACK_NAME,
+} from "@/lib/vezapt-live.functions";
+import { QrCode, ArrowRight, Smartphone, LayoutDashboard } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Sarah's dashboard — VezaPT Pay" },
+      { title: "VezaPT Pay · Sandbox" },
       {
         name: "description",
         content:
-          "Sarah Williams' VezaPT Pay dashboard: earnings, tier progress, and client impact at a glance.",
+          "VezaPT Pay hackathon demo. Scan the QR to pay on the client's phone, then verify from the same handset to release the trainer's split.",
       },
-      { property: "og:title", content: "Sarah's dashboard — VezaPT Pay" },
+      { property: "og:title", content: "VezaPT Pay · Sandbox" },
       {
         property: "og:description",
-        content: "Earnings, tier progress and client impact for PTs.",
+        content:
+          "Performance-based PT compensation demo: pay by QR, complete on the trainer screen, verify on the phone.",
       },
     ],
   }),
-  component: Dashboard,
+  loader: async ({ context }) =>
+    context.queryClient.ensureQueryData({
+      queryKey: ["snapshot"],
+      queryFn: () => getSnapshot(),
+      staleTime: 0,
+    }),
+  component: StartScreen,
 });
 
-function Dashboard() {
-  const s = useDemoState();
-  const nextTierGap = Math.max(0, TIER.unlockAt - s.confirmedSessions);
-  const tierUnlocked = s.confirmedSessions >= TIER.unlockAt;
+function StartScreen() {
+  const { data: snap } = useSuspenseQuery({
+    queryKey: ["snapshot"],
+    queryFn: () => getSnapshot(),
+    staleTime: 0,
+  });
 
-  const tierProgress = Math.min(100, (s.confirmedSessions / 30) * 100);
+  const pack =
+    snap.packs.find((p: any) => p.name === DEFAULT_DEMO_PACK_NAME) ??
+    snap.packs[0];
+  const trainerId = pack?.trainer_id ?? DEMO_TRAINER_SARAH;
+  const memberId = pack?.member_id ?? DEMO_MEMBER_ALEX;
+
+  const [origin, setOrigin] = useState("");
+  useEffect(() => setOrigin(window.location.origin), []);
+
+  const payUrl = pack
+    ? `${origin}/pay?pack=${pack.id}&trainer=${trainerId}&member=${memberId}`
+    : "";
+  const qrSrc = payUrl
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=8&color=EAF1F2&bgcolor=151E22&data=${encodeURIComponent(payUrl)}`
+    : "";
 
   return (
-    <div className="min-h-screen bg-background pb-16">
-      <div className="mx-auto max-w-3xl px-5 pt-8 sm:px-8 sm:pt-12">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4">
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="mx-auto max-w-4xl px-5 pt-10 pb-16 sm:px-8">
+        <header className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-muted-foreground">
+            <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
               VezaPT Pay
             </p>
-            <h1 className="mt-1 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-              Good morning, Sarah
+            <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">
+              Start the demo
             </h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Here's how your coaching is compounding.
+          </div>
+          <Badge className="border border-warm/40 bg-warm/10 text-[color:var(--warm)] hover:bg-warm/10">
+            Pinch · Sandbox
+          </Badge>
+        </header>
+
+        <p className="mt-3 max-w-xl text-sm text-muted-foreground">
+          Scan the QR on the client's phone to buy a pack, then complete on the
+          trainer screen, then verify back on the phone. Money moves only when
+          the client releases it.
+        </p>
+
+        <div className="mt-8 grid gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+          <Card className="overflow-hidden border-border bg-[image:var(--gradient-hero)] p-6">
+            <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+              <QrCode className="size-3.5" /> Client checkout
+            </div>
+            <p className="mt-2 text-lg font-semibold">
+              {pack?.name ?? "No pack seeded"}
             </p>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => demoStore.reset()}
-            className="text-muted-foreground"
-          >
-            <RotateCcw className="mr-1.5 size-3.5" /> Reset demo
-          </Button>
-        </div>
+            <p className="font-mono text-sm text-muted-foreground">
+              {pack ? `$${(Number(pack.total_amount) / 100).toFixed(2)} · ${pack.sessions_total} sessions` : "—"}
+            </p>
 
-        {/* Celebration */}
-        {s.celebration && (
-          <Card className="mt-6 overflow-hidden border-0 bg-[image:var(--gradient-soft)] p-5 shadow-[var(--shadow-soft)]">
-            <div className="flex items-start gap-3">
-              <div className="rounded-full bg-primary/15 p-2 text-primary">
-                <Sparkles className="size-5" />
-              </div>
-              <div>
-                <p className="font-semibold text-foreground">
-                  {tierUnlocked ? "60% tier unlocked" : "Nice work"}
-                </p>
-                <p className="mt-0.5 text-sm text-muted-foreground">
-                  {s.celebration}
+            {qrSrc && (
+              <div className="mt-5 flex flex-col items-center gap-3 rounded-xl bg-card p-4">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={qrSrc}
+                  alt="Scan to open the client checkout"
+                  width={240}
+                  height={240}
+                  className="rounded-md"
+                />
+                <p className="break-all text-center font-mono text-[10px] text-muted-foreground">
+                  {payUrl}
                 </p>
               </div>
-            </div>
-          </Card>
-        )}
-
-        {/* Hero earnings card */}
-        <Card className="mt-6 overflow-hidden border-0 bg-[image:var(--gradient-hero)] p-6 text-primary-foreground shadow-[var(--shadow-soft)] sm:p-8">
-          <p className="text-sm font-medium uppercase tracking-wide opacity-80">
-            Earnings this cycle
-          </p>
-          <p className="mt-1 text-5xl font-semibold tracking-tight sm:text-6xl">
-            {formatAUD(s.earningsCents)}
-          </p>
-          <div className="mt-5 grid grid-cols-2 gap-3">
-            <MiniStat
-              label="Confirmed sessions"
-              value={String(s.confirmedSessions)}
-            />
-            <MiniStat
-              label="Current PT share"
-              value={`${s.currentSplitPct}%`}
-            />
-          </div>
-        </Card>
-
-        {/* Tier progress */}
-        <Card className="mt-4 p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="size-4 text-primary" />
-              <h2 className="text-base font-semibold text-foreground">
-                Tier progress
-              </h2>
-            </div>
-            {tierUnlocked ? (
-              <Badge className="bg-success/15 text-[color:var(--success)] hover:bg-success/15">
-                <Trophy className="mr-1 size-3" /> 60% tier unlocked
-              </Badge>
-            ) : (
-              <Badge variant="secondary">
-                {nextTierGap} session to unlock 60%
-              </Badge>
             )}
-          </div>
 
-          <div className="mt-5">
-            <Progress value={tierProgress} className="h-2.5" />
-            <div className="mt-2 flex justify-between text-xs text-muted-foreground">
-              <span>0</span>
-              <span>10</span>
-              <span>20</span>
-              <span>30+</span>
-            </div>
-          </div>
-
-          <div className="mt-5 grid gap-2 text-sm sm:grid-cols-3">
-            <TierRow range="Sessions 1–10" pct="40%" active={s.confirmedSessions <= 10} />
-            <TierRow
-              range="Sessions 11–20"
-              pct="50%"
-              active={s.confirmedSessions > 10 && s.confirmedSessions < 21}
-            />
-            <TierRow
-              range="Sessions 21+"
-              pct="60%"
-              active={s.confirmedSessions >= 21}
-            />
-          </div>
-
-          <p className="mt-4 rounded-lg bg-muted/60 p-3 text-xs text-muted-foreground">
-            Your higher rate applies to sessions delivered after you reach each tier.
-          </p>
-        </Card>
-
-        {/* CTA */}
-        <div className="mt-6">
-          <Button
-            asChild
-            size="lg"
-            className="h-14 w-full text-base font-semibold shadow-[var(--shadow-soft)]"
-          >
-            <Link to="/complete-session">
-              Complete a session
-              <ArrowRight className="ml-1.5 size-4" />
-            </Link>
-          </Button>
-        </div>
-
-        {/* Impact section */}
-        <div className="mt-10">
-          <div className="flex items-center gap-2">
-            <Heart className="size-4 text-primary" />
-            <h2 className="text-base font-semibold text-foreground">
-              Your impact
-            </h2>
-          </div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            What clients reported over the last 30 days.
-          </p>
-
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <ImpactCard
-              icon={<Users className="size-4" />}
-              label="Clients supported"
-              value="8"
-            />
-            <ImpactCard
-              icon={<TrendingUp className="size-4" />}
-              label="Training consistently"
-              value="5"
-            />
-            <ImpactCard
-              icon={<Heart className="size-4" />}
-              label="Clients reported improved confidence"
-              value={String(s.clientsConfidence)}
-              highlight={s.clientsConfidence > 4}
-            />
-            <ImpactCard
-              icon={<Zap className="size-4" />}
-              label="Clients reported more energy"
-              value={String(s.clientsEnergy)}
-            />
-          </div>
-
-          <Card className="mt-3 flex items-center justify-between p-5">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-warm/20 p-2 text-[color:var(--warm)]">
-                <Star className="size-4" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-foreground">
-                  Average support
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  How supported clients felt
-                </p>
-              </div>
-            </div>
-            <p className="text-2xl font-semibold text-foreground">
-              4.7<span className="text-sm text-muted-foreground">/5</span>
-            </p>
+            {pack && (
+              <Button asChild className="mt-5 w-full" size="lg">
+                <Link
+                  to="/pay"
+                  search={{ pack: pack.id, trainer: trainerId, member: memberId }}
+                >
+                  Open client view <ArrowRight className="ml-1.5 size-4" />
+                </Link>
+              </Button>
+            )}
           </Card>
-        </div>
 
-        <CoachMe />
+          <div className="flex flex-col gap-5">
+            <RoleCard
+              to="/trainer"
+              icon={<Smartphone className="size-4" />}
+              title="Trainer screen"
+              subtitle="Sarah's queue: acknowledge, complete, watch tier climb."
+            />
+            <RoleCard
+              to="/me"
+              icon={<Smartphone className="size-4" />}
+              title="Client screen"
+              subtitle="Verify a completed session — releases the split live."
+            />
+            <RoleCard
+              to="/dashboard"
+              icon={<LayoutDashboard className="size-4" />}
+              title="Manager dashboard"
+              subtitle="Earned vs held vs club margin, live from the same tables."
+            />
+          </div>
+        </div>
 
         <div className="mt-10 flex justify-center">
           <Link
             to="/demo-console"
             className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
           >
-            Open technical demo console
+            Open technical integration console
           </Link>
         </div>
       </div>
@@ -242,62 +159,28 @@ function Dashboard() {
   );
 }
 
-function MiniStat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl bg-white/15 p-3 backdrop-blur">
-      <p className="text-xs opacity-80">{label}</p>
-      <p className="mt-0.5 text-xl font-semibold">{value}</p>
-    </div>
-  );
-}
-
-function TierRow({
-  range,
-  pct,
-  active,
-}: {
-  range: string;
-  pct: string;
-  active: boolean;
-}) {
-  return (
-    <div
-      className={`flex items-center justify-between rounded-lg border px-3 py-2 text-xs ${
-        active
-          ? "border-primary/40 bg-primary/5 text-foreground"
-          : "border-border bg-background text-muted-foreground"
-      }`}
-    >
-      <span>{range}</span>
-      <span className="font-semibold">{pct}</span>
-    </div>
-  );
-}
-
-function ImpactCard({
+function RoleCard({
+  to,
   icon,
-  label,
-  value,
-  highlight,
+  title,
+  subtitle,
 }: {
+  to: string;
   icon: React.ReactNode;
-  label: string;
-  value: string;
-  highlight?: boolean;
+  title: string;
+  subtitle: string;
 }) {
   return (
-    <Card
-      className={`flex items-center justify-between p-5 transition ${
-        highlight ? "border-primary/40 bg-primary/5" : ""
-      }`}
-    >
-      <div className="flex items-center gap-3">
-        <div className="rounded-full bg-primary/10 p-2 text-primary">
-          {icon}
+    <Link to={to} className="group">
+      <Card className="flex items-center justify-between border-border p-5 transition hover:border-primary/60">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+            {icon} {title}
+          </div>
+          <p className="mt-1 text-sm text-foreground/80">{subtitle}</p>
         </div>
-        <p className="text-sm text-muted-foreground">{label}</p>
-      </div>
-      <p className="text-2xl font-semibold text-foreground">{value}</p>
-    </Card>
+        <ArrowRight className="size-4 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary" />
+      </Card>
+    </Link>
   );
 }
