@@ -6,11 +6,9 @@ import {
   getDemo,
   createCheckout,
   markPaid,
-  logSession,
-  computeSplit,
   seedDemoPacks,
-  confirmSession,
-  disputeSession,
+  logPtSession,
+  confirmPtSession,
 } from "@/lib/vezapt.functions";
 
 const demoQuery = queryOptions({
