@@ -32,6 +32,7 @@ const IMPACTS = [
   "Stress",
   "Consistency",
   "Progress toward my goal",
+  "I learned something useful",
 ];
 
 type Step = "confirm" | "impact" | "support" | "done";
@@ -42,6 +43,8 @@ function ConfirmSession() {
   const [step, setStep] = useState<Step>("confirm");
   const [impact, setImpact] = useState<string | null>("Confidence");
   const [support, setSupport] = useState<number | null>(5);
+  const [win, setWin] = useState("");
+
 
   const session = s.pendingSession ?? {
     client: "Alex Morgan",
