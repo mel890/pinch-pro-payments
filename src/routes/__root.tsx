@@ -11,6 +11,8 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { FlowSidebar } from "@/components/flow-sidebar";
 
 function NotFoundComponent() {
   return (
@@ -127,8 +129,21 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full">
+          <FlowSidebar />
+          <div className="flex flex-1 flex-col min-w-0">
+            <header className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border/60 bg-background/80 px-2 backdrop-blur">
+              <SidebarTrigger />
+              <span className="text-xs text-muted-foreground">VezaPT Pay demo</span>
+            </header>
+            <main className="flex-1 min-w-0">
+              {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+              <Outlet />
+            </main>
+          </div>
+        </div>
+      </SidebarProvider>
     </QueryClientProvider>
   );
 }
