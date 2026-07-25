@@ -78,10 +78,25 @@ function CompleteSession() {
           Complete a session
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Confirm the details, then share the QR with your client.
+          Confirm the details, then generate a confirmation QR for {SESSION.client.split(" ")[0]}.
         </p>
 
-        <Card className="mt-6 divide-y divide-border p-0">
+        <Card className="mt-6 border-primary/25 bg-primary/5 p-5">
+          <p className="text-xs uppercase tracking-wider text-primary">
+            Client context
+          </p>
+          <p className="mt-2 text-sm font-semibold text-foreground">
+            {SESSION.client}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Goal: Build confidence using free weights
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Plan: {SESSION.plan} · Today's focus: Lower-body strength
+          </p>
+        </Card>
+
+        <Card className="mt-4 divide-y divide-border p-0">
           <Row
             icon={<User className="size-4" />}
             label="Client"
@@ -97,11 +112,10 @@ function CompleteSession() {
             label="Date"
             value={date}
           />
-          <Row label="Session" value={SESSION.title} />
+          <Row label="Session" value={`45-minute ${SESSION.title}`} />
           <Row
             label="Session value"
             value={formatAUD(SESSION.valueCents)}
-            emphasize
           />
         </Card>
 
@@ -114,7 +128,7 @@ function CompleteSession() {
             id="win"
             value={win}
             onChange={(e) => setWin(e.target.value)}
-            placeholder="e.g. Alex hit a new deadlift PB."
+            placeholder="e.g. Alex used the weights area confidently for the first time."
             className="mt-2 min-h-24"
           />
         </div>
@@ -127,6 +141,11 @@ function CompleteSession() {
           <QrCode className="mr-2 size-5" />
           Generate confirmation QR
         </Button>
+        <p className="mt-3 text-center text-xs text-muted-foreground">
+          {SESSION.client.split(" ")[0]}'s confirmation verifies the session and
+          captures what the coaching helped with.
+        </p>
+
       </div>
     </div>
   );
