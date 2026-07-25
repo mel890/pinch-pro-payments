@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 
 /** One complete member journey: Alex Morgan @ Northside Club with Sarah Nguyen. */
 
@@ -170,6 +170,7 @@ export const journey = {
   },
   reset: () => {
     state = structuredClone(INITIAL);
+    save();
     emit();
   },
   submitIntake: () => patch({ intakeSubmitted: true }),
@@ -200,6 +201,7 @@ export const journey = {
 };
 
 export function useJourney(): JourneyState {
+  useEffect(hydrate, []);
   return useSyncExternalStore(journey.subscribe, journey.get, journey.get);
 }
 
