@@ -24,16 +24,13 @@ export const Route = createFileRoute("/confirm-session/demo")({
   component: ConfirmSession,
 });
 
-const IMPACTS = [
-  "Confidence",
-  "Energy",
-  "Strength",
-  "Mobility",
-  "Stress",
-  "Consistency",
-  "Progress toward my goal",
-  "I learned something useful",
-];
+const CHECKLIST = [
+  { id: "completed", label: "Session completed" },
+  { id: "clarity", label: "I understand what to do next" },
+  { id: "supported", label: "I felt supported" },
+  { id: "booked", label: "Next session booked" },
+] as const;
+type CheckId = (typeof CHECKLIST)[number]["id"];
 
 type Step = "confirm" | "impact" | "support" | "done";
 
