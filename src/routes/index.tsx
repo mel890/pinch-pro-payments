@@ -258,11 +258,31 @@ function DemoPage() {
             </div>
             <button
               className="mt-3 inline-flex w-full items-center justify-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-              disabled={!memberId || !packId || checkout.isPending}
+              disabled={!memberId || !packId || checkout.isPending || !envReady}
               onClick={() => checkout.mutate({ memberId, packId })}
+              title={!envReady ? "Pinch credentials missing on server" : undefined}
             >
               {checkout.isPending ? "Creating…" : "Create Pinch checkout"}
             </button>
+            {envQuery.isLoading && (
+              <div className="mt-2 text-xs text-muted-foreground">
+                Checking Pinch credentials…
+              </div>
+            )}
+            {envQuery.data && !envReady && (
+              <div className="mt-2 rounded border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
+                Payment link creation is blocked. Server env is missing:
+                {!envQuery.data.resolvedClientIdPresent && (
+                  <div>• PINCH_CLIENT_ID (present: false)</div>
+                )}
+                {!envQuery.data.resolvedClientSecretPresent && (
+                  <div>• PINCH_CLIENT_SECRET (present: false)</div>
+                )}
+                <div className="mt-1 text-destructive/80">
+                  Add them in Lovable Cloud project secrets, then republish.
+                </div>
+              </div>
+            )}
             {lastPayment && (
               <div className="mt-3 rounded-md border border-border bg-muted/30 p-2 text-xs space-y-1">
                 <div>payment #{String(lastPayment.id)}</div>
