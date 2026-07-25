@@ -64,7 +64,7 @@ function DemoPage() {
   const [confirmationToken, setConfirmationToken] = useState<string>("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const checkoutFn = useServerFn(createCheckout);
+  const cfgFn = useServerFn(getSupabaseConfig);
   const paidFn = useServerFn(markPaid);
   const logPtFn = useServerFn(logPtSession);
   const confirmPtFn = useServerFn(confirmPtSession);
@@ -106,20 +106,35 @@ function DemoPage() {
 
 
   const checkout = useMutation({
-    mutationFn: (v: { memberId: string; packId: string }) =>
-      checkoutFn({ data: v }),
-    onSuccess: (res: any) => {
-      setLastPayment(res.payment);
-      setPinchInfo({
-        pinch: res.pinch,
-        pinchError: res.pinchError,
-        insertError: res.insertError,
-        diagnostics: res.diagnostics,
-      });
-      setErrorMsg(res.pinchError ?? res.insertError ?? null);
-      if (res.pinch?.url) {
-        window.open(res.pinch.url, "_blank", "noopener,noreferrer");
+    mutationFn: async (v: { memberId: string; packId: string }) => {
+      const cfg = await cfgFn();
+      if (!cfg.url || !cfg.anonKey) {
+        throw new Error("Supabase config unavailable (missing URL or publishable key).");
       }
+      const endpoint = `${cfg.url.replace(/\/$/, "")}/functions/v1/pinch-buy-pack`;
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: cfg.anonKey,
+          Authorization: `Bearer ${cfg.anonKey}`,
+        },
+        body: JSON.stringify(v),
+      });
+      const raw = await res.text();
+      let json: any = null;
+      try { json = raw ? JSON.parse(raw) : null; } catch { json = { raw }; }
+      if (!res.ok) {
+        const msg = json?.error ?? json?.message ?? raw?.slice(0, 300) ?? `HTTP ${res.status}`;
+        throw new Error(`pinch-buy-pack ${res.status}: ${msg}`);
+      }
+      return json ?? {};
+    },
+    onSuccess: (res: any) => {
+      const url = res?.paymentUrl ?? res?.payment_url ?? res?.url ?? null;
+      setPinchInfo({ pinch: { url, id: res?.paymentId ?? res?.id ?? null }, response: res });
+      setErrorMsg(null);
+      if (url) window.open(url, "_blank", "noopener,noreferrer");
       refresh();
     },
     onError: (e) => setErrorMsg(e instanceof Error ? e.message : String(e)),
