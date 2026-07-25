@@ -594,6 +594,61 @@ function DemoPage() {
   );
 }
 
+function DebugPanel({ entries, onClear }: { entries: DebugEntry[]; onClear: () => void }) {
+  const t0 = entries[0]?.ts;
+  return (
+    <section>
+      <details className="rounded-md border border-border bg-card" open={entries.length > 0}>
+        <summary className="cursor-pointer px-4 py-3 text-sm font-medium flex items-center justify-between">
+          <span>Pinch flow debug ({entries.length} events)</span>
+          {entries.length > 0 && (
+            <button
+              className="text-xs text-muted-foreground hover:text-foreground underline"
+              onClick={(e) => { e.preventDefault(); onClear(); }}
+            >
+              clear
+            </button>
+          )}
+        </summary>
+        <div className="p-4 space-y-2 text-xs">
+          {entries.length === 0 ? (
+            <p className="text-muted-foreground">
+              No events yet. Click <b>Create Pinch checkout</b> or <b>Debug via server</b> in Step 1
+              to capture each request / response (secrets redacted).
+            </p>
+          ) : (
+            entries.map((e, i) => {
+              const colour =
+                e.level === "error"
+                  ? "border-destructive/40 bg-destructive/5"
+                  : e.level === "success"
+                  ? "border-emerald-500/30 bg-emerald-500/5"
+                  : "border-border bg-muted/30";
+              const dot =
+                e.level === "error" ? "bg-destructive" : e.level === "success" ? "bg-emerald-500" : "bg-muted-foreground";
+              return (
+                <div key={i} className={`rounded-md border ${colour} p-2`}>
+                  <div className="flex items-center gap-2 font-mono text-[11px]">
+                    <span className={`inline-block h-2 w-2 rounded-full ${dot}`} />
+                    <span className="text-muted-foreground">+{t0 ? e.ts - t0 : 0}ms</span>
+                    <span className="font-semibold">{e.phase}</span>
+                    <span className="text-foreground">{e.title}</span>
+                  </div>
+                  {e.detail !== undefined && (
+                    <pre className="mt-1 overflow-x-auto whitespace-pre-wrap break-words rounded bg-background/60 p-2 text-[10px]">
+{typeof e.detail === "string" ? e.detail : JSON.stringify(e.detail, null, 2)}
+                    </pre>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+      </details>
+    </section>
+  );
+}
+
 function PinchEnvPanel() {
   const check = useServerFn(pinchEnvCheck);
   const [info, setInfo] = useState<any>(null);
