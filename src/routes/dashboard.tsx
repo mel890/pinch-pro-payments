@@ -5,7 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { getSnapshot, tierFor } from "@/lib/vezapt-live.functions";
 import { formatAUD } from "@/lib/money";
 import { Progress } from "@/components/ui/progress";
-import { Users, Activity, Wallet, CheckCircle2, ArrowRight } from "lucide-react";
+import { Users, Wallet, CheckCircle2, ArrowRight, Megaphone, ShoppingBag, Repeat, ChevronRight } from "lucide-react";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -116,49 +118,53 @@ function Dashboard() {
           </Badge>
         </header>
 
-        {/* KPI row */}
+        {/* KPI row — campaign momentum */}
         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Kpi icon={<Users className="size-4" />} label="Team size" value={String(teamSize)} />
-          <Kpi icon={<Users className="size-4" />} label="Active clients" value={String(activeClients)} />
-          <Kpi icon={<Wallet className="size-4" />} label="PT revenue" value={formatAUD(gross)} mono />
-          <Kpi icon={<CheckCircle2 className="size-4" />} label="Confirmed sessions" value={String(totalVerified)} />
+          <Kpi icon={<Megaphone className="size-4" />} label="Campaigns live" value="2" />
+          <Kpi icon={<ShoppingBag className="size-4" />} label="Products sold this month" value="18" />
+          <Kpi icon={<Users className="size-4" />} label="Clients activated" value="15" />
+          <Kpi icon={<Repeat className="size-4" />} label="Converted to ongoing" value="7" />
         </div>
 
-        {/* Revenue split trio */}
+        {/* Campaign performance */}
         <section className="mt-6 rounded-2xl border border-border bg-card p-5">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Revenue split
+              Campaign performance
             </h2>
             <Badge className="border border-warm/40 bg-warm/10 text-[color:var(--warm)]">
-              VezaPT Pay · Sandbox
+              This month
             </Badge>
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-3">
             <SplitCard
               tone="primary"
-              label="Earned payouts"
-              value={formatAUD(totalEarned)}
-              sub={`${totalVerified} confirmed sessions`}
-              why="Released to trainers on member-confirmed sessions."
+              label="Sales generated"
+              value="$9,482"
+              sub="Total member purchases this month"
+              why="Gross member spend across live campaigns."
             />
             <SplitCard
               tone="warm"
-              label="Held (unearned)"
-              value={formatAUD(totalHeld)}
-              sub={`${totalHeldCount} logged, awaiting confirm`}
-              why="Logged but not yet member-confirmed, so not releasable."
+              label="Trainer payouts"
+              value="$7,632"
+              sub="Paid or reserved for accepted delivery"
+              why="Committed to trainers once opportunities are accepted."
             />
             <SplitCard
               tone="default"
-              label="Club margin"
-              value={formatAUD(clubMargin)}
-              sub={`${marginPct}% of gross · after ${formatAUD(totalPinchFee)} Pinch fee (est.)`}
-              why="What the club keeps after trainer comp and fees."
+              label="Club campaign revenue"
+              value="$1,850"
+              sub="Fees earned for campaigns, payments and matching"
+              why="What the club keeps for running the offer and platform."
             />
           </div>
         </section>
+
+        {/* Campaign funnel */}
+        <CampaignFunnel />
+
 
         {/* Team health — demo signals */}
         <section className="mt-6">
@@ -588,5 +594,129 @@ function StatusPill({ status }: { status: string }) {
     >
       {status}
     </span>
+  );
+}
+
+type FunnelStage = {
+  key: string;
+  label: string;
+  value: number;
+  clients: { name: string; note: string }[];
+};
+
+const FUNNEL_STAGES: FunnelStage[] = [
+  { key: "targeted", label: "Members targeted", value: 620, clients: [
+    { name: "Segment: Off-peak members", note: "412 in segment" },
+    { name: "Segment: Lapsed 30–90 days", note: "208 in segment" },
+  ]},
+  { key: "visits", label: "Landing-page visits", value: 118, clients: [
+    { name: "Anonymous visitors", note: "97 sessions, no account link" },
+    { name: "21 known members", note: "Viewed but not purchased" },
+  ]},
+  { key: "purchased", label: "Products purchased", value: 21, clients: [
+    { name: "Alex Morgan", note: "PT Kickstart · awaiting match" },
+    { name: "Priya Shah", note: "6-Week Momentum · matched" },
+    { name: "Ben Carter", note: "PT Kickstart · matched" },
+  ]},
+  { key: "accepted", label: "Trainer accepted", value: 20, clients: [
+    { name: "Ben Carter", note: "Accepted by Sarah Nguyen" },
+    { name: "Priya Shah", note: "Accepted by Marcus Lee" },
+    { name: "1 opportunity", note: "Awaiting trainer response" },
+  ]},
+  { key: "booked", label: "First session booked", value: 17, clients: [
+    { name: "3 members", note: "Accepted but no booking yet — follow up" },
+  ]},
+  { key: "started", label: "Started", value: 15, clients: [
+    { name: "2 members", note: "Booked but no-show at first session" },
+  ]},
+  { key: "completed", label: "Completed pack", value: 9, clients: [
+    { name: "6 members", note: "Mid-pack — not yet completed" },
+  ]},
+  { key: "ongoing", label: "Ongoing coaching", value: 6, clients: [
+    { name: "3 members", note: "Completed but no continuation conversation" },
+  ]},
+];
+
+function CampaignFunnel() {
+  const [openStage, setOpenStage] = useState<FunnelStage | null>(null);
+  const max = FUNNEL_STAGES[0].value;
+
+  return (
+    <section className="mt-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          Campaign funnel
+        </h2>
+        <Badge variant="secondary" className="text-[10px] uppercase tracking-wider">
+          Winter Strength Campaign
+        </Badge>
+      </div>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Click any stage to see the clients currently there.
+      </p>
+
+      <Card className="mt-3 border-border p-4">
+        <ul className="space-y-1.5">
+          {FUNNEL_STAGES.map((stage, i) => {
+            const prev = i > 0 ? FUNNEL_STAGES[i - 1].value : stage.value;
+            const dropPct = i > 0 && prev > 0 ? Math.round(((prev - stage.value) / prev) * 100) : 0;
+            const widthPct = Math.max(6, Math.round((stage.value / max) * 100));
+            return (
+              <li key={stage.key}>
+                <button
+                  type="button"
+                  onClick={() => setOpenStage(stage)}
+                  className="group w-full rounded-lg border border-transparent p-2 text-left transition hover:border-border hover:bg-secondary/40"
+                >
+                  <div className="flex items-center justify-between gap-3 text-sm">
+                    <span className="font-medium text-foreground/90">{stage.label}</span>
+                    <span className="flex items-center gap-2 font-mono tabular-nums">
+                      <span className="text-lg font-semibold">{stage.value}</span>
+                      {i > 0 && dropPct > 0 && (
+                        <span className="text-[10px] font-normal text-[color:var(--warm)]">
+                          −{dropPct}%
+                        </span>
+                      )}
+                      <ChevronRight className="size-3.5 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-foreground" />
+                    </span>
+                  </div>
+                  <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-secondary/60">
+                    <div
+                      className="h-full rounded-full bg-primary/70"
+                      style={{ width: `${widthPct}%` }}
+                    />
+                  </div>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </Card>
+
+      <Dialog open={!!openStage} onOpenChange={(o) => !o && setOpenStage(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{openStage?.label}</DialogTitle>
+            <DialogDescription>
+              {openStage?.value} clients at this stage of the Winter Strength Campaign.
+            </DialogDescription>
+          </DialogHeader>
+          <ul className="mt-2 space-y-2">
+            {openStage?.clients.map((c) => (
+              <li
+                key={c.name}
+                className="flex items-start justify-between gap-3 rounded-lg border border-border bg-secondary/30 p-3 text-sm"
+              >
+                <div>
+                  <p className="font-medium text-foreground/90">{c.name}</p>
+                  <p className="text-xs text-muted-foreground">{c.note}</p>
+                </div>
+                <ArrowRight className="mt-1 size-4 text-muted-foreground" />
+              </li>
+            ))}
+          </ul>
+        </DialogContent>
+      </Dialog>
+    </section>
   );
 }
