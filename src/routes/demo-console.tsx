@@ -291,14 +291,16 @@ function DemoPage() {
               V
             </div>
             <div>
-              <h1 className="text-lg font-semibold tracking-tight">VezaPT Pay</h1>
+              <h1 className="text-lg font-semibold tracking-tight">
+                Pinch integration console
+              </h1>
               <p className="text-xs text-muted-foreground">
-                Hackathon demo · Pinch sandbox
+                Technical proof · Pinch sandbox
               </p>
             </div>
           </div>
           <div className="text-xs text-muted-foreground">
-            End-to-end PT payments · splits · payouts
+            Checkout · webhooks · payment, session and payout logs
           </div>
         </div>
       </header>
