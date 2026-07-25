@@ -9,11 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SessionQrRouteImport } from './routes/session-qr'
 import { Route as DemoConsoleRouteImport } from './routes/demo-console'
 import { Route as CompleteSessionRouteImport } from './routes/complete-session'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ConfirmSessionDemoRouteImport } from './routes/confirm-session.demo'
 import { Route as ApiPublicPinchWebhookRouteImport } from './routes/api/public/pinch-webhook'
 
+const SessionQrRoute = SessionQrRouteImport.update({
+  id: '/session-qr',
+  path: '/session-qr',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DemoConsoleRoute = DemoConsoleRouteImport.update({
   id: '/demo-console',
   path: '/demo-console',
@@ -29,6 +36,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConfirmSessionDemoRoute = ConfirmSessionDemoRouteImport.update({
+  id: '/confirm-session/demo',
+  path: '/confirm-session/demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPinchWebhookRoute = ApiPublicPinchWebhookRouteImport.update({
   id: '/api/public/pinch-webhook',
   path: '/api/public/pinch-webhook',
@@ -39,12 +51,16 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/complete-session': typeof CompleteSessionRoute
   '/demo-console': typeof DemoConsoleRoute
+  '/session-qr': typeof SessionQrRoute
+  '/confirm-session/demo': typeof ConfirmSessionDemoRoute
   '/api/public/pinch-webhook': typeof ApiPublicPinchWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/complete-session': typeof CompleteSessionRoute
   '/demo-console': typeof DemoConsoleRoute
+  '/session-qr': typeof SessionQrRoute
+  '/confirm-session/demo': typeof ConfirmSessionDemoRoute
   '/api/public/pinch-webhook': typeof ApiPublicPinchWebhookRoute
 }
 export interface FileRoutesById {
@@ -52,6 +68,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/complete-session': typeof CompleteSessionRoute
   '/demo-console': typeof DemoConsoleRoute
+  '/session-qr': typeof SessionQrRoute
+  '/confirm-session/demo': typeof ConfirmSessionDemoRoute
   '/api/public/pinch-webhook': typeof ApiPublicPinchWebhookRoute
 }
 export interface FileRouteTypes {
@@ -60,14 +78,24 @@ export interface FileRouteTypes {
     | '/'
     | '/complete-session'
     | '/demo-console'
+    | '/session-qr'
+    | '/confirm-session/demo'
     | '/api/public/pinch-webhook'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/complete-session' | '/demo-console' | '/api/public/pinch-webhook'
+  to:
+    | '/'
+    | '/complete-session'
+    | '/demo-console'
+    | '/session-qr'
+    | '/confirm-session/demo'
+    | '/api/public/pinch-webhook'
   id:
     | '__root__'
     | '/'
     | '/complete-session'
     | '/demo-console'
+    | '/session-qr'
+    | '/confirm-session/demo'
     | '/api/public/pinch-webhook'
   fileRoutesById: FileRoutesById
 }
@@ -75,11 +103,20 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CompleteSessionRoute: typeof CompleteSessionRoute
   DemoConsoleRoute: typeof DemoConsoleRoute
+  SessionQrRoute: typeof SessionQrRoute
+  ConfirmSessionDemoRoute: typeof ConfirmSessionDemoRoute
   ApiPublicPinchWebhookRoute: typeof ApiPublicPinchWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/session-qr': {
+      id: '/session-qr'
+      path: '/session-qr'
+      fullPath: '/session-qr'
+      preLoaderRoute: typeof SessionQrRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/demo-console': {
       id: '/demo-console'
       path: '/demo-console'
@@ -101,6 +138,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/confirm-session/demo': {
+      id: '/confirm-session/demo'
+      path: '/confirm-session/demo'
+      fullPath: '/confirm-session/demo'
+      preLoaderRoute: typeof ConfirmSessionDemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/pinch-webhook': {
       id: '/api/public/pinch-webhook'
       path: '/api/public/pinch-webhook'
@@ -115,6 +159,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CompleteSessionRoute: CompleteSessionRoute,
   DemoConsoleRoute: DemoConsoleRoute,
+  SessionQrRoute: SessionQrRoute,
+  ConfirmSessionDemoRoute: ConfirmSessionDemoRoute,
   ApiPublicPinchWebhookRoute: ApiPublicPinchWebhookRoute,
 }
 export const routeTree = rootRouteImport
