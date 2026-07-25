@@ -42,6 +42,54 @@ export const Route = createFileRoute("/pay")({
   component: PayScreen,
 });
 
+type Tier = {
+  id: string;
+  name: string;
+  bullets: string[];
+  priceLabel: string;
+  cta: string;
+  match: (p: any) => boolean;
+  highlight?: boolean;
+};
+
+const TIERS: Tier[] = [
+  {
+    id: "kickstart",
+    name: "PT Kickstart",
+    bullets: ["3 PT sessions", "Personalised starting programme", "Habit tracker"],
+    priceLabel: "$249",
+    cta: "Choose Kickstart",
+    match: (p) => Number(p.sessions_total) <= 5,
+  },
+  {
+    id: "momentum",
+    name: "6-Week Momentum",
+    bullets: [
+      "6 or 12 PT sessions",
+      "Workout templates",
+      "Weekly accountability",
+      "Progress review",
+    ],
+    priceLabel: "From $699",
+    cta: "Compare options",
+    match: (p) => Number(p.sessions_total) >= 6 && Number(p.sessions_total) < 20,
+    highlight: true,
+  },
+  {
+    id: "transformation",
+    name: "12-Week Transformation",
+    bullets: [
+      "12 or 24 PT sessions",
+      "Progressive programme",
+      "Habit coaching",
+      "Three progress reviews",
+    ],
+    priceLabel: "From $1,299",
+    cta: "Explore Transformation",
+    match: (p) => Number(p.sessions_total) >= 20,
+  },
+];
+
 function PayScreen() {
   const search = Route.useSearch();
   const { data: snap } = useSuspenseQuery({
@@ -52,13 +100,16 @@ function PayScreen() {
   const qc = useQueryClient();
   const navigate = useNavigate();
 
-  const pack =
-    snap.packs.find((p: any) => p.id === search.pack) ?? snap.packs[0];
+  const [chosenPackId, setChosenPackId] = useState<string | undefined>(search.pack);
+
+  const pack = chosenPackId
+    ? snap.packs.find((p: any) => p.id === chosenPackId)
+    : undefined;
   const trainerId = search.trainer ?? pack?.trainer_id;
   const memberId = search.member ?? pack?.member_id;
 
-  const trainer = snap.trainers.find((t: any) => t.id === trainerId);
-  const member = snap.members.find((m: any) => m.id === memberId);
+  const trainer = pack ? snap.trainers.find((t: any) => t.id === trainerId) : undefined;
+  const member = pack ? snap.members.find((m: any) => m.id === memberId) : undefined;
 
   const perSession = pack
     ? Math.round(
@@ -73,7 +124,7 @@ function PayScreen() {
     mutationFn: () =>
       purchasePack({
         data: {
-          packId: pack.id,
+          packId: pack!.id,
           trainerId: trainerId!,
           memberId: memberId!,
           method: "QR",
@@ -88,13 +139,88 @@ function PayScreen() {
     },
   });
 
+  function pickTier(tier: Tier) {
+    const match = snap.packs.find((p: any) => tier.match(p)) ?? snap.packs[0];
+    if (match) setChosenPackId(match.id);
+  }
+
   if (!pack) {
     return (
-      <div className="mx-auto max-w-md p-8 text-center">
-        <p>No pack available. Seed the demo packs from /demo-console.</p>
+      <div className="min-h-screen bg-background text-foreground">
+        <div className="mx-auto max-w-5xl px-5 pt-10 pb-16 sm:px-8">
+          <header className="flex items-center justify-between">
+            <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+              VezaPT Pay
+            </p>
+            <Badge className="border border-warm/40 bg-warm/10 text-[color:var(--warm)] hover:bg-warm/10">
+              Pinch · Sandbox
+            </Badge>
+          </header>
+
+          <h1 className="mt-6 max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
+            Choose the support that fits your goal
+          </h1>
+          <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
+            Every option is delivered by a matched trainer. Pick the level that
+            feels right — you can always step up later.
+          </p>
+
+          <div className="mt-8 grid gap-5 md:grid-cols-3">
+            {TIERS.map((t) => (
+              <Card
+                key={t.id}
+                className={`flex h-full flex-col p-6 transition ${
+                  t.highlight
+                    ? "border-primary/50 bg-primary/5"
+                    : "border-border hover:border-primary/40"
+                }`}
+              >
+                {t.highlight && (
+                  <span className="mb-3 inline-flex w-fit rounded-full bg-primary/15 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
+                    Most popular
+                  </span>
+                )}
+                <h3 className="text-lg font-semibold text-foreground">{t.name}</h3>
+                <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
+                  {t.bullets.map((b) => (
+                    <li key={b} className="flex items-start gap-2">
+                      <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
+                      <span>{b}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-5 font-mono text-2xl font-semibold tracking-tight text-foreground">
+                  {t.priceLabel}
+                </div>
+                <Button
+                  size="lg"
+                  className="mt-5 h-12 w-full font-semibold"
+                  variant={t.highlight ? "default" : "secondary"}
+                  onClick={() => pickTier(t)}
+                >
+                  {t.cta}
+                </Button>
+              </Card>
+            ))}
+          </div>
+
+          <Card className="mt-8 border-border/80 bg-secondary/30 p-5">
+            <p className="text-sm font-medium text-foreground">
+              Not sure which level is right?
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Answer three questions and we'll recommend a starting point.
+            </p>
+            <Button variant="outline" size="sm" className="mt-4">
+              Help me choose
+            </Button>
+          </Card>
+        </div>
       </div>
     );
   }
+
+
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -108,9 +234,17 @@ function PayScreen() {
           </Badge>
         </header>
 
-        <h1 className="mt-4 text-2xl font-semibold tracking-tight">
+        <button
+          onClick={() => { setChosenPackId(undefined); setDone(null); }}
+          className="mt-4 text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
+        >
+          ← Change plan
+        </button>
+
+        <h1 className="mt-3 text-2xl font-semibold tracking-tight">
           {pack.name}
         </h1>
+
         <p className="mt-1 text-sm text-muted-foreground">
           With {trainer?.name ?? "your trainer"}
           {member ? ` · Paying as ${member.name}` : ""}
