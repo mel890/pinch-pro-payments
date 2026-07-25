@@ -32,6 +32,7 @@ const IMPACTS = [
   "Stress",
   "Consistency",
   "Progress toward my goal",
+  "I learned something useful",
 ];
 
 type Step = "confirm" | "impact" | "support" | "done";
@@ -42,6 +43,8 @@ function ConfirmSession() {
   const [step, setStep] = useState<Step>("confirm");
   const [impact, setImpact] = useState<string | null>("Confidence");
   const [support, setSupport] = useState<number | null>(5);
+  const [win, setWin] = useState("");
+
 
   const session = s.pendingSession ?? {
     client: "Alex Morgan",
@@ -182,9 +185,29 @@ function ConfirmSession() {
                 </button>
               ))}
             </div>
+
+            <div className="mt-8">
+              <label
+                htmlFor="win"
+                className="text-sm font-medium text-foreground"
+              >
+                What was one win from today?{" "}
+                <span className="font-normal text-muted-foreground">
+                  (optional)
+                </span>
+              </label>
+              <textarea
+                id="win"
+                value={win}
+                onChange={(e) => setWin(e.target.value)}
+                placeholder="e.g. I used the weights area by myself for the first time."
+                className="mt-2 min-h-20 w-full rounded-xl border border-border bg-card p-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+              />
+            </div>
+
             <Button
               size="lg"
-              className="mt-10 h-14 w-full text-base font-semibold shadow-[var(--shadow-soft)]"
+              className="mt-6 h-14 w-full text-base font-semibold shadow-[var(--shadow-soft)]"
               onClick={handleSubmit}
               disabled={support === null}
             >
@@ -205,6 +228,11 @@ function ConfirmSession() {
               Thanks, Alex. Your feedback helps Sarah see the difference her
               coaching is making.
             </p>
+            <p className="text-xs text-muted-foreground">
+              Your confirmed session has now been added to Sarah's verified
+              production.
+            </p>
+
             <Button
               size="lg"
               className="mt-4 h-12 w-full"

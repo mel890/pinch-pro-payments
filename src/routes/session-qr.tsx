@@ -58,13 +58,14 @@ function SessionQR() {
         </Button>
 
         <h1 className="mt-4 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-          Ask Alex to scan and confirm
+          Ask {session.client.split(" ")[0]} to scan and confirm
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Session with Sarah · {session.date}
+          {session.client.split(" ")[0]}'s confirmation verifies the session
+          and captures what the coaching helped with.
         </p>
 
-        <Card className="mt-6 flex flex-col items-center gap-6 p-8 shadow-[var(--shadow-soft)]">
+        <Card className="mt-6 flex flex-col items-center gap-5 p-8 shadow-[var(--shadow-soft)]">
           <div className="rounded-2xl bg-white p-5 ring-1 ring-border">
             {origin ? (
               <QRCodeSVG
@@ -78,16 +79,18 @@ function SessionQR() {
             )}
           </div>
 
-          <div className="w-full space-y-2 text-center">
-            <p className="text-sm text-muted-foreground">Session value</p>
-            <p className="text-3xl font-semibold text-foreground">
-              {formatAUD(session.valueCents)}
-            </p>
+          <div className="w-full space-y-1.5 rounded-xl border border-border/60 bg-background/40 p-4 text-sm">
+            <SessionRow label="Trainer" value="Sarah Williams" />
+            <SessionRow label="Date" value={session.date} />
+            <SessionRow label="Session type" value={session.title} />
+            <SessionRow label="Duration" value="45 minutes" />
+            <SessionRow label="Plan" value={session.plan} />
+            <SessionRow label="Value" value={formatAUD(session.valueCents)} />
           </div>
 
           <div className="flex items-center gap-2 rounded-full bg-muted px-4 py-2 text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin text-primary" />
-            Waiting for Alex…
+            Waiting for {session.client.split(" ")[0]}…
           </div>
         </Card>
 
@@ -101,9 +104,19 @@ function SessionQR() {
         </Button>
 
         <p className="mt-4 text-center text-xs text-muted-foreground">
-          Or share this link: <span className="font-mono">{url || "…"}</span>
+          Falls back to a preview if the camera or venue Wi-Fi fails.
         </p>
       </div>
     </div>
   );
 }
+
+function SessionRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium text-foreground">{value}</span>
+    </div>
+  );
+}
+
