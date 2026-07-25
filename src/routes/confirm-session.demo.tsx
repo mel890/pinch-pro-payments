@@ -32,20 +32,23 @@ const CHECKLIST = [
 ] as const;
 type CheckId = (typeof CHECKLIST)[number]["id"];
 
-type Step = "confirm" | "impact" | "support" | "done";
+type Step = "confirm" | "checklist" | "win" | "done";
 
 function ConfirmSession() {
   const s = useDemoState();
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>("confirm");
-  const [impact, setImpact] = useState<string | null>("Confidence");
-  const [support, setSupport] = useState<number | null>(5);
+  const [checked, setChecked] = useState<Record<CheckId, boolean>>({
+    completed: true,
+    clarity: true,
+    supported: true,
+    booked: false,
+  });
   const [win, setWin] = useState("");
-
 
   const session = s.pendingSession ?? {
     client: "Alex Morgan",
-    plan: "2× Weekly PT",
+    plan: "PT Kickstart · session 1 of 3",
     date: new Intl.DateTimeFormat("en-AU", {
       weekday: "long",
       day: "numeric",
@@ -56,28 +59,23 @@ function ConfirmSession() {
     win: "",
   };
 
+  const toggle = (id: CheckId) =>
+    setChecked((c) => ({ ...c, [id]: !c[id] }));
+
   const handleSubmit = () => {
-    // Apply demo state updates
     const newSessions = 21;
     const newSplit = 60;
-    const increaseCents = Math.round(session.valueCents * 0.6); // 60% of $74.85 = $44.91
+    const increaseCents = Math.round(session.valueCents * 0.6);
     demoStore.set({
       confirmedSessions: newSessions,
       currentSplitPct: newSplit,
       earningsCents: demoStore.get().earningsCents + increaseCents,
-      clientsConfidence:
-        impact === "Confidence"
-          ? demoStore.get().clientsConfidence + 1
-          : demoStore.get().clientsConfidence,
-      clientsEnergy:
-        impact === "Energy"
-          ? demoStore.get().clientsEnergy + 1
-          : demoStore.get().clientsEnergy,
-      lastConfirmedImpact: impact,
-      lastSupport: support,
-      celebration: `Alex confirmed the session${
-        impact ? ` and reported improved ${impact.toLowerCase()}` : ""
-      }.`,
+      clientsConfidence: checked.supported
+        ? demoStore.get().clientsConfidence + 1
+        : demoStore.get().clientsConfidence,
+      lastConfirmedImpact: win || "Session confirmed",
+      lastSupport: checked.supported ? 5 : 3,
+      celebration: `Alex confirmed today's session${win ? ` — "${win}"` : ""}.`,
       pendingSession: null,
     });
     setStep("done");
@@ -93,29 +91,26 @@ function ConfirmSession() {
         {step === "confirm" && (
           <>
             <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">
-              Confirm your session
+              How did today's session go?
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Sarah logged a PT session with you today.
+              Sarah logged a PT session with you today. A quick check-in helps
+              your coaching stay on track.
             </p>
 
             <Card className="mt-6 space-y-3 p-6">
               <Field label="Date" value={session.date} />
               <Field label="Session" value={`45-minute ${session.title}`} />
-              <Field label="Value" value={formatAUD(session.valueCents)} />
+              <Field label="Plan" value={session.plan} />
             </Card>
 
-            <p className="mt-8 text-center text-base font-medium text-foreground">
-              Did this session take place?
-            </p>
-
-            <div className="mt-4 space-y-3">
+            <div className="mt-6 space-y-3">
               <Button
                 size="lg"
                 className="h-14 w-full text-base font-semibold shadow-[var(--shadow-soft)]"
-                onClick={() => setStep("impact")}
+                onClick={() => setStep("checklist")}
               >
-                <Check className="mr-2 size-5" /> Yes, confirm
+                <Check className="mr-2 size-5" /> Start check-in
               </Button>
               <Button
                 variant="outline"
@@ -128,87 +123,85 @@ function ConfirmSession() {
           </>
         )}
 
-        {step === "impact" && (
+        {step === "checklist" && (
           <>
             <h1 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
-              What did today's session help with most?
+              A quick check-in
             </h1>
-            <div className="mt-6 grid grid-cols-2 gap-2">
-              {IMPACTS.map((opt) => (
+            <p className="mt-2 text-sm text-muted-foreground">
+              Tick anything that's true for today.
+            </p>
+
+            <div className="mt-6 space-y-2">
+              {CHECKLIST.map((c) => (
                 <button
-                  key={opt}
-                  onClick={() => setImpact(opt)}
-                  className={`rounded-xl border p-4 text-left text-sm font-medium transition ${
-                    impact === opt
+                  key={c.id}
+                  type="button"
+                  onClick={() => toggle(c.id)}
+                  className={`flex w-full items-center gap-3 rounded-xl border p-4 text-left text-sm font-medium transition ${
+                    checked[c.id]
                       ? "border-primary bg-primary/10 text-foreground"
                       : "border-border bg-card text-muted-foreground hover:border-primary/40"
                   }`}
                 >
-                  {opt}
+                  <span
+                    className={`grid size-5 shrink-0 place-items-center rounded-md border ${
+                      checked[c.id]
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-background"
+                    }`}
+                  >
+                    {checked[c.id] && <Check className="size-3.5" />}
+                  </span>
+                  {c.label}
                 </button>
               ))}
             </div>
+
             <Button
               size="lg"
               className="mt-8 h-14 w-full text-base font-semibold shadow-[var(--shadow-soft)]"
-              onClick={() => setStep("support")}
-              disabled={!impact}
+              onClick={() => setStep("win")}
+              disabled={!checked.completed}
             >
               Continue <ArrowRight className="ml-1.5 size-4" />
             </Button>
+            <p className="mt-2 text-center text-xs text-muted-foreground">
+              You must confirm the session took place to continue.
+            </p>
           </>
         )}
 
-        {step === "support" && (
+        {step === "win" && (
           <>
             <h1 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
-              How supported did you feel today?
+              What was your biggest win today?
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              1 = not really, 5 = incredibly supported.
+              Optional — a sentence is plenty. Sarah reads these.
             </p>
-            <div className="mt-8 flex justify-between gap-2">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <button
-                  key={n}
-                  onClick={() => setSupport(n)}
-                  className={`flex h-16 flex-1 items-center justify-center rounded-2xl border text-xl font-semibold transition ${
-                    support === n
-                      ? "border-primary bg-primary text-primary-foreground shadow-[var(--shadow-soft)]"
-                      : "border-border bg-card text-muted-foreground hover:border-primary/40"
-                  }`}
-                >
-                  {n}
-                </button>
-              ))}
-            </div>
 
-            <div className="mt-8">
-              <label
-                htmlFor="win"
-                className="text-sm font-medium text-foreground"
-              >
-                What was one win from today?{" "}
-                <span className="font-normal text-muted-foreground">
-                  (optional)
-                </span>
-              </label>
-              <textarea
-                id="win"
-                value={win}
-                onChange={(e) => setWin(e.target.value)}
-                placeholder="e.g. I used the weights area by myself for the first time."
-                className="mt-2 min-h-20 w-full rounded-xl border border-border bg-card p-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
-              />
-            </div>
+            <textarea
+              value={win}
+              onChange={(e) => setWin(e.target.value)}
+              placeholder="e.g. I used the weights area by myself for the first time."
+              className="mt-6 min-h-28 w-full rounded-xl border border-border bg-card p-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
 
             <Button
               size="lg"
               className="mt-6 h-14 w-full text-base font-semibold shadow-[var(--shadow-soft)]"
               onClick={handleSubmit}
-              disabled={support === null}
             >
               Submit confirmation
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-2 w-full text-muted-foreground"
+              onClick={handleSubmit}
+            >
+              Skip and submit
             </Button>
           </>
         )}
@@ -222,12 +215,11 @@ function ConfirmSession() {
               Session confirmed
             </h2>
             <p className="text-sm text-muted-foreground">
-              Thanks, Alex. Your feedback helps Sarah see the difference her
-              coaching is making.
+              Thanks, Alex. Your trainer's payout has been released.
             </p>
             <p className="text-xs text-muted-foreground">
-              Your confirmed session has now been added to Sarah's verified
-              production.
+              Your check-in helps Sarah shape the next session around what
+              matters most to you.
             </p>
 
             <Button
