@@ -227,6 +227,8 @@ function Dashboard() {
           </Card>
         </div>
 
+        <CoachMe />
+
         <div className="mt-10 flex justify-center">
           <Link
             to="/demo-console"
