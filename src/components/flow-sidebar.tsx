@@ -1,15 +1,17 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  Home,
-  Rocket,
+  Users,
   ShoppingBag,
   Handshake,
   CheckCircle2,
-  Map,
+  Star,
+  RefreshCw,
   LayoutDashboard,
-  User,
-  Dumbbell,
   Wrench,
+  Home,
+  Dumbbell,
+  User,
+  Smartphone,
 } from "lucide-react";
 
 import {
@@ -26,19 +28,21 @@ import {
 } from "@/components/ui/sidebar";
 
 const flowItems = [
-  { title: "Landing", url: "/", icon: Home },
-  { title: "1. Trainer capacity", url: "/trainer-capacity", icon: Rocket },
-  { title: "2. Member checkout", url: "/pay", icon: ShoppingBag },
-  { title: "3. Trainer opportunity", url: "/opportunity", icon: Handshake },
-  { title: "4. Session confirmation", url: "/confirm-session/demo", icon: CheckCircle2 },
-  { title: "5. Client journey", url: "/journey/alex", icon: Map },
-  { title: "6. Manager dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Demo home", url: "/", icon: Home },
+  { title: "1. Launch campaign", url: "/trainer-capacity", icon: Users },
+  { title: "2. Alex buys Kickstart", url: "/pay", icon: ShoppingBag },
+  { title: "3. Sarah accepts", url: "/opportunity", icon: Handshake },
+  { title: "4. Deliver 3 sessions", url: "/journey/alex", icon: CheckCircle2 },
+  { title: "5. Review progress", url: "/review", icon: Star },
+  { title: "6. Convert to 2× weekly", url: "/ongoing", icon: RefreshCw },
+  { title: "7. Manager impact", url: "/dashboard", icon: LayoutDashboard },
+  { title: "8. Pinch console", url: "/demo-console", icon: Wrench },
 ];
 
 const otherItems = [
+  { title: "Member confirmation", url: "/confirm-session/demo", icon: Smartphone },
   { title: "Trainer home", url: "/trainer", icon: Dumbbell },
   { title: "Client home", url: "/me", icon: User },
-  { title: "Demo console", url: "/demo-console", icon: Wrench },
 ];
 
 export function FlowSidebar() {
@@ -54,13 +58,13 @@ export function FlowSidebar() {
         {!collapsed && (
           <div className="px-2 py-1.5">
             <div className="text-sm font-semibold">VezaPT Pay</div>
-            <div className="text-xs text-muted-foreground">Demo flow</div>
+            <div className="text-xs text-muted-foreground">Alex's journey</div>
           </div>
         )}
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Flow</SidebarGroupLabel>
+          <SidebarGroupLabel>Guided demo</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {flowItems.map((item) => (
