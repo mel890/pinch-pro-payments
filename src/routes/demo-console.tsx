@@ -17,7 +17,7 @@ const demoQuery = queryOptions({
   queryFn: () => getDemo(),
 });
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/demo-console")({
   head: () => ({
     meta: [
       { title: "VezaPT Pay — hackathon demo" },
