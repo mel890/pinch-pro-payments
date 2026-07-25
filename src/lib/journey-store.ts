@@ -128,8 +128,37 @@ let state: JourneyState = structuredClone(INITIAL);
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 
+const STORAGE_KEY = "vezapt-journey-v1";
+let hydrated = false;
+
+function save() {
+  try {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    /* demo-only persistence */
+  }
+}
+
+/** Client-only: restore demo progress so a page reload keeps the story going. */
+function hydrate() {
+  if (hydrated || typeof window === "undefined") return;
+  hydrated = true;
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw) as JourneyState;
+    if (parsed && Array.isArray(parsed.sessions)) {
+      state = { ...structuredClone(INITIAL), ...parsed };
+      emit();
+    }
+  } catch {
+    /* ignore corrupt demo state */
+  }
+}
+
 function patch(next: Partial<JourneyState>) {
   state = { ...state, ...next };
+  save();
   emit();
 }
 
