@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TrainerCapacityRouteImport } from './routes/trainer-capacity'
 import { Route as TrainerRouteImport } from './routes/trainer'
 import { Route as SessionQrRouteImport } from './routes/session-qr'
 import { Route as PayRouteImport } from './routes/pay'
@@ -18,9 +19,15 @@ import { Route as DemoConsoleRouteImport } from './routes/demo-console'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CompleteSessionRouteImport } from './routes/complete-session'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as JourneyAlexRouteImport } from './routes/journey.alex'
 import { Route as ConfirmSessionDemoRouteImport } from './routes/confirm-session.demo'
 import { Route as ApiPublicPinchWebhookRouteImport } from './routes/api/public/pinch-webhook'
 
+const TrainerCapacityRoute = TrainerCapacityRouteImport.update({
+  id: '/trainer-capacity',
+  path: '/trainer-capacity',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TrainerRoute = TrainerRouteImport.update({
   id: '/trainer',
   path: '/trainer',
@@ -66,6 +73,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const JourneyAlexRoute = JourneyAlexRouteImport.update({
+  id: '/journey/alex',
+  path: '/journey/alex',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ConfirmSessionDemoRoute = ConfirmSessionDemoRouteImport.update({
   id: '/confirm-session/demo',
   path: '/confirm-session/demo',
@@ -87,7 +99,9 @@ export interface FileRoutesByFullPath {
   '/pay': typeof PayRoute
   '/session-qr': typeof SessionQrRoute
   '/trainer': typeof TrainerRoute
+  '/trainer-capacity': typeof TrainerCapacityRoute
   '/confirm-session/demo': typeof ConfirmSessionDemoRoute
+  '/journey/alex': typeof JourneyAlexRoute
   '/api/public/pinch-webhook': typeof ApiPublicPinchWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -100,7 +114,9 @@ export interface FileRoutesByTo {
   '/pay': typeof PayRoute
   '/session-qr': typeof SessionQrRoute
   '/trainer': typeof TrainerRoute
+  '/trainer-capacity': typeof TrainerCapacityRoute
   '/confirm-session/demo': typeof ConfirmSessionDemoRoute
+  '/journey/alex': typeof JourneyAlexRoute
   '/api/public/pinch-webhook': typeof ApiPublicPinchWebhookRoute
 }
 export interface FileRoutesById {
@@ -114,7 +130,9 @@ export interface FileRoutesById {
   '/pay': typeof PayRoute
   '/session-qr': typeof SessionQrRoute
   '/trainer': typeof TrainerRoute
+  '/trainer-capacity': typeof TrainerCapacityRoute
   '/confirm-session/demo': typeof ConfirmSessionDemoRoute
+  '/journey/alex': typeof JourneyAlexRoute
   '/api/public/pinch-webhook': typeof ApiPublicPinchWebhookRoute
 }
 export interface FileRouteTypes {
@@ -129,7 +147,9 @@ export interface FileRouteTypes {
     | '/pay'
     | '/session-qr'
     | '/trainer'
+    | '/trainer-capacity'
     | '/confirm-session/demo'
+    | '/journey/alex'
     | '/api/public/pinch-webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -142,7 +162,9 @@ export interface FileRouteTypes {
     | '/pay'
     | '/session-qr'
     | '/trainer'
+    | '/trainer-capacity'
     | '/confirm-session/demo'
+    | '/journey/alex'
     | '/api/public/pinch-webhook'
   id:
     | '__root__'
@@ -155,7 +177,9 @@ export interface FileRouteTypes {
     | '/pay'
     | '/session-qr'
     | '/trainer'
+    | '/trainer-capacity'
     | '/confirm-session/demo'
+    | '/journey/alex'
     | '/api/public/pinch-webhook'
   fileRoutesById: FileRoutesById
 }
@@ -169,12 +193,21 @@ export interface RootRouteChildren {
   PayRoute: typeof PayRoute
   SessionQrRoute: typeof SessionQrRoute
   TrainerRoute: typeof TrainerRoute
+  TrainerCapacityRoute: typeof TrainerCapacityRoute
   ConfirmSessionDemoRoute: typeof ConfirmSessionDemoRoute
+  JourneyAlexRoute: typeof JourneyAlexRoute
   ApiPublicPinchWebhookRoute: typeof ApiPublicPinchWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/trainer-capacity': {
+      id: '/trainer-capacity'
+      path: '/trainer-capacity'
+      fullPath: '/trainer-capacity'
+      preLoaderRoute: typeof TrainerCapacityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/trainer': {
       id: '/trainer'
       path: '/trainer'
@@ -238,6 +271,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/journey/alex': {
+      id: '/journey/alex'
+      path: '/journey/alex'
+      fullPath: '/journey/alex'
+      preLoaderRoute: typeof JourneyAlexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/confirm-session/demo': {
       id: '/confirm-session/demo'
       path: '/confirm-session/demo'
@@ -265,7 +305,9 @@ const rootRouteChildren: RootRouteChildren = {
   PayRoute: PayRoute,
   SessionQrRoute: SessionQrRoute,
   TrainerRoute: TrainerRoute,
+  TrainerCapacityRoute: TrainerCapacityRoute,
   ConfirmSessionDemoRoute: ConfirmSessionDemoRoute,
+  JourneyAlexRoute: JourneyAlexRoute,
   ApiPublicPinchWebhookRoute: ApiPublicPinchWebhookRoute,
 }
 export const routeTree = rootRouteImport
