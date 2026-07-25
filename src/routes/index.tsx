@@ -9,6 +9,7 @@ import {
   seedDemoPacks,
   logPtSession,
   confirmPtSession,
+  pinchEnvCheck,
 } from "@/lib/vezapt.functions";
 
 const demoQuery = queryOptions({
