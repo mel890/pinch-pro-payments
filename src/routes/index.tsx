@@ -15,6 +15,7 @@ import {
   ArrowRight,
   Trophy,
 } from "lucide-react";
+import { CoachMe } from "@/components/coach-me";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -225,6 +226,8 @@ function Dashboard() {
             </p>
           </Card>
         </div>
+
+        <CoachMe />
 
         <div className="mt-10 flex justify-center">
           <Link
