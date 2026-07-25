@@ -596,3 +596,127 @@ function StatusPill({ status }: { status: string }) {
     </span>
   );
 }
+
+type FunnelStage = {
+  key: string;
+  label: string;
+  value: number;
+  clients: { name: string; note: string }[];
+};
+
+const FUNNEL_STAGES: FunnelStage[] = [
+  { key: "targeted", label: "Members targeted", value: 620, clients: [
+    { name: "Segment: Off-peak members", note: "412 in segment" },
+    { name: "Segment: Lapsed 30–90 days", note: "208 in segment" },
+  ]},
+  { key: "visits", label: "Landing-page visits", value: 118, clients: [
+    { name: "Anonymous visitors", note: "97 sessions, no account link" },
+    { name: "21 known members", note: "Viewed but not purchased" },
+  ]},
+  { key: "purchased", label: "Products purchased", value: 21, clients: [
+    { name: "Alex Morgan", note: "PT Kickstart · awaiting match" },
+    { name: "Priya Shah", note: "6-Week Momentum · matched" },
+    { name: "Ben Carter", note: "PT Kickstart · matched" },
+  ]},
+  { key: "accepted", label: "Trainer accepted", value: 20, clients: [
+    { name: "Ben Carter", note: "Accepted by Sarah Nguyen" },
+    { name: "Priya Shah", note: "Accepted by Marcus Lee" },
+    { name: "1 opportunity", note: "Awaiting trainer response" },
+  ]},
+  { key: "booked", label: "First session booked", value: 17, clients: [
+    { name: "3 members", note: "Accepted but no booking yet — follow up" },
+  ]},
+  { key: "started", label: "Started", value: 15, clients: [
+    { name: "2 members", note: "Booked but no-show at first session" },
+  ]},
+  { key: "completed", label: "Completed pack", value: 9, clients: [
+    { name: "6 members", note: "Mid-pack — not yet completed" },
+  ]},
+  { key: "ongoing", label: "Ongoing coaching", value: 6, clients: [
+    { name: "3 members", note: "Completed but no continuation conversation" },
+  ]},
+];
+
+function CampaignFunnel() {
+  const [openStage, setOpenStage] = useState<FunnelStage | null>(null);
+  const max = FUNNEL_STAGES[0].value;
+
+  return (
+    <section className="mt-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          Campaign funnel
+        </h2>
+        <Badge variant="secondary" className="text-[10px] uppercase tracking-wider">
+          Winter Strength Campaign
+        </Badge>
+      </div>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Click any stage to see the clients currently there.
+      </p>
+
+      <Card className="mt-3 border-border p-4">
+        <ul className="space-y-1.5">
+          {FUNNEL_STAGES.map((stage, i) => {
+            const prev = i > 0 ? FUNNEL_STAGES[i - 1].value : stage.value;
+            const dropPct = i > 0 && prev > 0 ? Math.round(((prev - stage.value) / prev) * 100) : 0;
+            const widthPct = Math.max(6, Math.round((stage.value / max) * 100));
+            return (
+              <li key={stage.key}>
+                <button
+                  type="button"
+                  onClick={() => setOpenStage(stage)}
+                  className="group w-full rounded-lg border border-transparent p-2 text-left transition hover:border-border hover:bg-secondary/40"
+                >
+                  <div className="flex items-center justify-between gap-3 text-sm">
+                    <span className="font-medium text-foreground/90">{stage.label}</span>
+                    <span className="flex items-center gap-2 font-mono tabular-nums">
+                      <span className="text-lg font-semibold">{stage.value}</span>
+                      {i > 0 && dropPct > 0 && (
+                        <span className="text-[10px] font-normal text-[color:var(--warm)]">
+                          −{dropPct}%
+                        </span>
+                      )}
+                      <ChevronRight className="size-3.5 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-foreground" />
+                    </span>
+                  </div>
+                  <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-secondary/60">
+                    <div
+                      className="h-full rounded-full bg-primary/70"
+                      style={{ width: `${widthPct}%` }}
+                    />
+                  </div>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </Card>
+
+      <Dialog open={!!openStage} onOpenChange={(o) => !o && setOpenStage(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{openStage?.label}</DialogTitle>
+            <DialogDescription>
+              {openStage?.value} clients at this stage of the Winter Strength Campaign.
+            </DialogDescription>
+          </DialogHeader>
+          <ul className="mt-2 space-y-2">
+            {openStage?.clients.map((c) => (
+              <li
+                key={c.name}
+                className="flex items-start justify-between gap-3 rounded-lg border border-border bg-secondary/30 p-3 text-sm"
+              >
+                <div>
+                  <p className="font-medium text-foreground/90">{c.name}</p>
+                  <p className="text-xs text-muted-foreground">{c.note}</p>
+                </div>
+                <ArrowRight className="mt-1 size-4 text-muted-foreground" />
+              </li>
+            ))}
+          </ul>
+        </DialogContent>
+      </Dialog>
+    </section>
+  );
+}
