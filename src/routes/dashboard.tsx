@@ -5,7 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { getSnapshot, tierFor } from "@/lib/vezapt-live.functions";
 import { formatAUD } from "@/lib/money";
 import { Progress } from "@/components/ui/progress";
-import { Users, Activity, Wallet, CheckCircle2, ArrowRight } from "lucide-react";
+import { Users, Wallet, CheckCircle2, ArrowRight, Megaphone, ShoppingBag, Repeat, ChevronRight } from "lucide-react";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
