@@ -15,6 +15,7 @@ import {
   ArrowRight,
   Trophy,
 } from "lucide-react";
+import { CoachMe } from "@/components/coach-me";
 
 export const Route = createFileRoute("/")({
   head: () => ({
