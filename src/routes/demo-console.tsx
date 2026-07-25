@@ -10,7 +10,36 @@ import {
   confirmPtSession,
   pinchEnvCheck,
   getSupabaseConfig,
+  createCheckout,
 } from "@/lib/vezapt.functions";
+
+type DebugEntry = {
+  ts: number;
+  phase: string;
+  level: "info" | "success" | "error";
+  title: string;
+  detail?: any;
+};
+
+function redact(v: string | null | undefined): string {
+  if (!v) return "";
+  const s = String(v);
+  if (s.length <= 8) return "•".repeat(s.length);
+  return `${s.slice(0, 4)}…${s.slice(-4)} (len=${s.length})`;
+}
+
+function redactHeaders(h: Record<string, string>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(h)) {
+    const key = k.toLowerCase();
+    if (key === "authorization" || key === "apikey" || key === "x-api-key") {
+      out[k] = redact(v.replace(/^Bearer\s+/i, ""));
+    } else {
+      out[k] = v;
+    }
+  }
+  return out;
+}
 
 const demoQuery = queryOptions({
   queryKey: ["vezapt-demo"],
