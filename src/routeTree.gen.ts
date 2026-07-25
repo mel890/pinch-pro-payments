@@ -10,11 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as DemoConsoleRouteImport } from './routes/demo-console'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicPinchWebhookRouteImport } from './routes/api/public/pinch-webhook'
 
 const DemoConsoleRoute = DemoConsoleRouteImport.update({
   id: '/demo-console',
   path: '/demo-console',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicPinchWebhookRoute = ApiPublicPinchWebhookRouteImport.update({
@@ -24,27 +30,31 @@ const ApiPublicPinchWebhookRoute = ApiPublicPinchWebhookRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
+  '/': typeof IndexRoute
   '/demo-console': typeof DemoConsoleRoute
   '/api/public/pinch-webhook': typeof ApiPublicPinchWebhookRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof IndexRoute
   '/demo-console': typeof DemoConsoleRoute
   '/api/public/pinch-webhook': typeof ApiPublicPinchWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
   '/demo-console': typeof DemoConsoleRoute
   '/api/public/pinch-webhook': typeof ApiPublicPinchWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/demo-console' | '/api/public/pinch-webhook'
+  fullPaths: '/' | '/demo-console' | '/api/public/pinch-webhook'
   fileRoutesByTo: FileRoutesByTo
-  to: '/demo-console' | '/api/public/pinch-webhook'
-  id: '__root__' | '/demo-console' | '/api/public/pinch-webhook'
+  to: '/' | '/demo-console' | '/api/public/pinch-webhook'
+  id: '__root__' | '/' | '/demo-console' | '/api/public/pinch-webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   DemoConsoleRoute: typeof DemoConsoleRoute
   ApiPublicPinchWebhookRoute: typeof ApiPublicPinchWebhookRoute
 }
@@ -58,6 +68,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoConsoleRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/pinch-webhook': {
       id: '/api/public/pinch-webhook'
       path: '/api/public/pinch-webhook'
@@ -69,6 +86,7 @@ declare module '@tanstack/react-router' {
 }
 
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   DemoConsoleRoute: DemoConsoleRoute,
   ApiPublicPinchWebhookRoute: ApiPublicPinchWebhookRoute,
 }
