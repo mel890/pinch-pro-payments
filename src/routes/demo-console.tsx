@@ -558,6 +558,8 @@ function DemoPage() {
           </details>
         </section>
 
+        <DebugPanel entries={debugLog} onClear={clearDebug} />
+
         <PinchEnvPanel />
 
 
