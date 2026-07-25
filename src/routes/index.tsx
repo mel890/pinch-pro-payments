@@ -69,6 +69,17 @@ function DemoPage() {
   const logPtFn = useServerFn(logPtSession);
   const confirmPtFn = useServerFn(confirmPtSession);
   const seedFn = useServerFn(seedDemoPacks);
+  const envFn = useServerFn(pinchEnvCheck);
+
+  const envQuery = useQuery({
+    queryKey: ["pinch-env"],
+    queryFn: () => envFn(),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+  const envReady =
+    !!envQuery.data?.resolvedClientIdPresent &&
+    !!envQuery.data?.resolvedClientSecretPresent;
   const [seedResult, setSeedResult] = useState<any>(null);
   const seed = useMutation({
     mutationFn: () => seedFn(),
