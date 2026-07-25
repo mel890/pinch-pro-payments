@@ -58,21 +58,20 @@ function DemoPage() {
   const [trainerId, setTrainerId] = useState<string>(String(trainers[0]?.id ?? ""));
   const [lastPayment, setLastPayment] = useState<any>(null);
   const [pinchInfo, setPinchInfo] = useState<any>(null);
-  const [split, setSplit] = useState<any>(null);
-  const [lastSession, setLastSession] = useState<any>(null);
+  const [logResult, setLogResult] = useState<any>(null);
+  const [confirmResult, setConfirmResult] = useState<any>(null);
+  const [confirmationToken, setConfirmationToken] = useState<string>("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const checkoutFn = useServerFn(createCheckout);
   const paidFn = useServerFn(markPaid);
-  const logFn = useServerFn(logSession);
-  const splitFn = useServerFn(computeSplit);
+  const logPtFn = useServerFn(logPtSession);
+  const confirmPtFn = useServerFn(confirmPtSession);
   const seedFn = useServerFn(seedDemoPacks);
-  const confirmFn = useServerFn(confirmSession);
-  const disputeFn = useServerFn(disputeSession);
   const [seedResult, setSeedResult] = useState<any>(null);
   const seed = useMutation({
     mutationFn: () => seedFn(),
-    onSuccess: (res) => {
+    onSuccess: (res: any) => {
       setSeedResult(res.results);
       refresh();
     },
@@ -97,7 +96,7 @@ function DemoPage() {
   const checkout = useMutation({
     mutationFn: (v: { memberId: string; packId: string }) =>
       checkoutFn({ data: v }),
-    onSuccess: (res) => {
+    onSuccess: (res: any) => {
       setLastPayment(res.payment);
       setPinchInfo({ pinch: res.pinch, pinchError: res.pinchError, insertError: res.insertError });
       setErrorMsg(res.insertError ?? null);
@@ -108,43 +107,32 @@ function DemoPage() {
 
   const pay = useMutation({
     mutationFn: (v: { paymentLogId: string | number }) => paidFn({ data: v }),
-    onSuccess: (res) => {
+    onSuccess: (res: any) => {
       setLastPayment(res.payment);
       refresh();
     },
     onError: (e) => setErrorMsg(e instanceof Error ? e.message : String(e)),
   });
 
-  const log = useMutation({
-    mutationFn: (v: { trainerId: string; memberId: string; packId?: string }) =>
-      logFn({ data: v }),
-    onSuccess: (res) => {
-      setLastSession(res.session);
+  const logPt = useMutation({
+    mutationFn: (v: { packId: string }) => logPtFn({ data: v }),
+    onSuccess: (res: any) => {
+      setErrorMsg(null);
+      setLogResult(res.row);
+      setConfirmResult(null);
+      if (res.row?.confirmation_token) {
+        setConfirmationToken(String(res.row.confirmation_token));
+      }
       refresh();
     },
     onError: (e) => setErrorMsg(e instanceof Error ? e.message : String(e)),
   });
 
-  const showSplit = useMutation({
-    mutationFn: (v: { trainerId: string }) => splitFn({ data: v }),
-    onSuccess: (res) => setSplit(res),
-    onError: (e) => setErrorMsg(e instanceof Error ? e.message : String(e)),
-  });
-
-  const confirmM = useMutation({
-    mutationFn: (v: { sessionId: string | number }) => confirmFn({ data: v }),
-    onSuccess: (res) => {
-      setLastSession(res.session);
-      if (trainerId) showSplit.mutate({ trainerId });
-      refresh();
-    },
-    onError: (e) => setErrorMsg(e instanceof Error ? e.message : String(e)),
-  });
-
-  const disputeM = useMutation({
-    mutationFn: (v: { sessionId: string | number }) => disputeFn({ data: v }),
-    onSuccess: (res) => {
-      setLastSession(res.session);
+  const confirmPt = useMutation({
+    mutationFn: (v: { confirmationToken: string }) => confirmPtFn({ data: v }),
+    onSuccess: (res: any) => {
+      setErrorMsg(null);
+      setConfirmResult(res.row);
       refresh();
     },
     onError: (e) => setErrorMsg(e instanceof Error ? e.message : String(e)),
