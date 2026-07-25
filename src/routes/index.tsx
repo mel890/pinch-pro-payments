@@ -98,8 +98,16 @@ function DemoPage() {
       checkoutFn({ data: v }),
     onSuccess: (res: any) => {
       setLastPayment(res.payment);
-      setPinchInfo({ pinch: res.pinch, pinchError: res.pinchError, insertError: res.insertError });
-      setErrorMsg(res.insertError ?? null);
+      setPinchInfo({
+        pinch: res.pinch,
+        pinchError: res.pinchError,
+        insertError: res.insertError,
+        diagnostics: res.diagnostics,
+      });
+      setErrorMsg(res.pinchError ?? res.insertError ?? null);
+      if (res.pinch?.url) {
+        window.open(res.pinch.url, "_blank", "noopener,noreferrer");
+      }
       refresh();
     },
     onError: (e) => setErrorMsg(e instanceof Error ? e.message : String(e)),
