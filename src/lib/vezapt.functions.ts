@@ -108,12 +108,14 @@ const CheckoutSchema = z.object({
   packId: z.union([z.string(), z.number()]),
 });
 
-/** Create a Pinch payment request and insert a payments_log row (pending). */
+/** Create a Pinch hosted Payment Link and insert a payments_log row (pending). */
 export const createCheckout = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => CheckoutSchema.parse(d))
   .handler(async ({ data }) => {
     const { getSupabaseAdmin } = await import("./supabase.server");
-    const { createPaymentRequest } = await import("./pinch.server");
+    const { createPaymentLink, extractHostedUrl, extractLinkId, sanitizedAuthInfo } =
+      await import("./pinch.server");
+    const { getRequest } = await import("@tanstack/react-start/server");
     const sb = getSupabaseAdmin();
 
     const [{ data: member, error: memErr }, { data: pack, error: packErr }] =
@@ -126,43 +128,113 @@ export const createCheckout = createServerFn({ method: "POST" })
     if (!member) throw new Error("Member not found");
     if (!pack) throw new Error("Pack not found");
 
+    let club: any = null;
+    if (pack.club_id) {
+      const { data: c } = await sb
+        .from("clubs")
+        .select("*")
+        .eq("id", pack.club_id)
+        .maybeSingle();
+      club = c;
+    }
+
     const amountCents: number =
       pack.total_amount ?? pack.price_cents ?? pack.amount_cents ?? pack.price ?? 0;
     if (!amountCents) throw new Error("Pack has no price column");
 
     const packName: string = pack.name ?? pack.title ?? `Pack ${pack.id}`;
-    const memberName: string =
-      member.name ?? member.full_name ?? member.email ?? `Member ${member.id}`;
-    const memberEmail: string | undefined = member.email;
 
-    // Attempt real Pinch call; fall back to a stub if the sandbox rejects the shape.
-    let pinch: any;
-    let pinchError: string | null = null;
+    // Build absolute returnUrl from the current request origin.
+    let origin = "";
     try {
-      pinch = await createPaymentRequest({
+      const req = getRequest();
+      origin = new URL(req.url).origin;
+    } catch {
+      /* getRequest unavailable outside a request */
+    }
+    const returnUrl = origin ? `${origin}/?pinch_return=1` : undefined;
+
+    // Diagnostics (safe — never includes tokens or PII payment data).
+    const authInfo = sanitizedAuthInfo();
+    const diagnostics: Record<string, any> = {
+      pinchApiBase: authInfo.apiBase,
+      authBase: authInfo.authBase,
+      hasClientId: authInfo.hasClientId,
+      hasClientSecret: authInfo.hasClientSecret,
+      clientIdPrefix: authInfo.clientIdPrefix,
+      merchantIdSupplied: authInfo.hasClientId,
+      payerIdSupplied: false,
+      packId: pack.id,
+      clubId: club?.id ?? null,
+      amountCents,
+      returnUrl: returnUrl ?? null,
+      method: "POST",
+      path: "payment-links",
+    };
+    console.log("[pinch checkout] pre-request diagnostics:", diagnostics);
+
+    let pinch: { id: string | null; url: string | null; status: string } = {
+      id: null,
+      url: null,
+      status: "pending",
+    };
+    let pinchError: string | null = null;
+    let responseStatus: number | null = null;
+    let responseBodyPreview: string | null = null;
+
+    try {
+      const res = await createPaymentLink({
         amountCents,
         description: `VezaPT Pay — ${packName}`,
-        reference: `pack-${pack.id}-member-${member.id}-${Date.now()}`,
-        payerEmail: memberEmail,
-        payerName: memberName,
+        reference: `pack-${pack.id}-${Date.now()}`,
+        returnUrl,
+        metadata: {
+          pack_id: String(pack.id),
+          member_id: String(member.id),
+          club_id: club?.id ? String(club.id) : "",
+        },
       });
+      responseStatus = res.status;
+      responseBodyPreview = res.raw.slice(0, 600);
+      console.log("[pinch checkout] response:", {
+        url: res.url,
+        method: res.method,
+        status: res.status,
+        ok: res.ok,
+        bodyPreview: responseBodyPreview,
+      });
+      if (!res.ok) {
+        const apiMsg =
+          res.data?.message ??
+          res.data?.error ??
+          res.data?.errors?.[0]?.message ??
+          res.raw?.slice(0, 300) ??
+          `HTTP ${res.status}`;
+        pinchError = `Pinch ${res.method} ${res.url} → ${res.status}: ${apiMsg}`;
+      } else {
+        pinch = {
+          id: extractLinkId(res.data),
+          url: extractHostedUrl(res.data),
+          status: res.data?.status ?? "pending",
+        };
+      }
     } catch (e) {
       pinchError = e instanceof Error ? e.message : String(e);
-      pinch = {
-        id: `sandbox_${Date.now()}`,
-        hosted_payment_url: null,
-        status: "pending",
-      };
+      console.error("[pinch checkout] threw:", pinchError);
     }
 
-    // Try inserting payments_log with flexible columns.
-    // Note: payments_log has no member_id column — the member is derived via pack_id.
+    diagnostics.responseStatus = responseStatus;
+    diagnostics.responseBodyPreview = responseBodyPreview;
+    diagnostics.pinchLinkId = pinch.id;
+    diagnostics.hostedUrl = pinch.url;
+
+    // Insert payments_log row (pending). Table has no member_id column.
     const baseRow: Record<string, any> = {
       pack_id: pack.id,
       amount_cents: amountCents,
       status: "pending",
-      pinch_payment_id: pinch.id,
-      pinch_hosted_url: pinch.hosted_payment_url ?? null,
+      pinch_payment_id: pinch.id ?? `local_${Date.now()}`,
+      pinch_hosted_url: pinch.url ?? null,
     };
 
     let inserted: any = null;
@@ -192,6 +264,7 @@ export const createCheckout = createServerFn({ method: "POST" })
       pinch,
       pinchError,
       insertError,
+      diagnostics,
     };
   });
 
