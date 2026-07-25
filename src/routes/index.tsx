@@ -432,6 +432,8 @@ function DemoPage() {
           </details>
         </section>
 
+        <PinchEnvPanel />
+
 
         <section>
           <details className="rounded-md border border-border bg-card">
