@@ -289,6 +289,7 @@ export const createCheckout = createServerFn({ method: "POST" })
       method: "POST",
       path: "payment-links",
     };
+    diagnostics.payerSource = payerSource;
     console.log("[pinch checkout] pre-request diagnostics:", diagnostics);
 
     let pinch: { id: string | null; url: string | null; status: string } = {
