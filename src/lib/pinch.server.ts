@@ -95,6 +95,8 @@ export type PinchFetchResult = {
   raw: string;
   url: string;
   method: string;
+  sentBody?: string;
+  sentContentType?: string | null;
 };
 
 export async function pinchFetch(
@@ -111,6 +113,7 @@ export async function pinchFetch(
   if (init.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
+  const bodyStr = typeof init.body === "string" ? init.body : undefined;
   const res = await fetch(url, { ...init, headers, method });
   const raw = await res.text();
   let data: any = null;
@@ -119,7 +122,16 @@ export async function pinchFetch(
   } catch {
     data = raw;
   }
-  return { ok: res.ok, status: res.status, data, raw, url, method };
+  return {
+    ok: res.ok,
+    status: res.status,
+    data,
+    raw,
+    url,
+    method,
+    sentBody: bodyStr,
+    sentContentType: headers.get("Content-Type"),
+  };
 }
 
 export type PinchPaymentLink = {
@@ -165,6 +177,9 @@ export async function createPaymentLink(input: {
   allowedPaymentMethods?: Array<"credit-card" | "bank-account">;
   metadata?: Record<string, string | number | null | undefined>;
 }): Promise<PinchFetchResult> {
+  // Pinch API (pinch-version: 2020.1) — camelCase fields.
+  // NOTE: `metadata` MUST be a string. Sending an object silently fails .NET
+  // model binding and nulls every field (Amount=0, PayerId=null, etc.).
   const body: Record<string, any> = {
     amount: input.amountCents,
     description: input.description,
@@ -175,10 +190,42 @@ export async function createPaymentLink(input: {
   if (input.reference) body.reference = input.reference;
   if (input.returnUrl) body.returnUrl = input.returnUrl;
   if (input.payerId) body.payerId = input.payerId;
-  if (input.metadata) body.metadata = input.metadata;
+  if (input.metadata) {
+    body.metadata =
+      typeof input.metadata === "string"
+        ? input.metadata
+        : JSON.stringify(input.metadata);
+  }
 
   return pinchFetch("payment-links", {
     method: "POST",
     body: JSON.stringify(body),
   });
+}
+
+/**
+ * Create a Pinch payer.
+ * See: https://docs.getpinch.com.au/reference/create-payer
+ * Sandbox accepts minimal payload; returns { id: "pyr_..." }.
+ */
+export async function createPayer(input: {
+  firstName: string;
+  lastName: string;
+  emailAddress: string;
+  mobileNumber?: string;
+}): Promise<PinchFetchResult> {
+  return pinchFetch("payers", {
+    method: "POST",
+    body: JSON.stringify({
+      firstName: input.firstName,
+      lastName: input.lastName,
+      emailAddress: input.emailAddress,
+      ...(input.mobileNumber ? { mobileNumber: input.mobileNumber } : {}),
+    }),
+  });
+}
+
+export function extractPayerId(payer: any): string | null {
+  if (!payer || typeof payer !== "object") return null;
+  return payer.id ?? payer.payerId ?? payer.data?.id ?? null;
 }

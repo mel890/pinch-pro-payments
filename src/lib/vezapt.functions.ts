@@ -146,8 +146,14 @@ export const createCheckout = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => CheckoutSchema.parse(d))
   .handler(async ({ data }) => {
     const { getSupabaseAdmin } = await import("./supabase.server");
-    const { createPaymentLink, extractHostedUrl, extractLinkId, sanitizedAuthInfo } =
-      await import("./pinch.server");
+    const {
+      createPaymentLink,
+      createPayer,
+      extractPayerId,
+      extractHostedUrl,
+      extractLinkId,
+      sanitizedAuthInfo,
+    } = await import("./pinch.server");
     const { getRequest } = await import("@tanstack/react-start/server");
     const sb = getSupabaseAdmin();
 
@@ -183,9 +189,27 @@ export const createCheckout = createServerFn({ method: "POST" })
       club = c;
     }
 
-    const amountCents: number =
-      pack.total_amount ?? pack.price_cents ?? pack.amount_cents ?? pack.price ?? 0;
-    if (!amountCents) throw new Error("Pack has no price column");
+    // Amount resolution — walk every plausible column, coerce to integer cents.
+    const amountCandidates = {
+      total_amount: pack.total_amount,
+      price_cents: pack.price_cents,
+      amount_cents: pack.amount_cents,
+      price: pack.price,
+      total_amount_cents: pack.total_amount_cents,
+    };
+    let amountCents = 0;
+    for (const v of Object.values(amountCandidates)) {
+      const n = Number(v);
+      if (Number.isFinite(n) && n > 0) {
+        amountCents = Math.round(n);
+        break;
+      }
+    }
+    if (amountCents < 100) {
+      throw new Error(
+        `Pack ${pack.id} has no valid price (need >= 100 cents). Columns seen: ${JSON.stringify(amountCandidates)}`,
+      );
+    }
 
     const packName: string = pack.name ?? pack.title ?? `Pack ${pack.id}`;
 
@@ -199,6 +223,42 @@ export const createCheckout = createServerFn({ method: "POST" })
     }
     const returnUrl = origin ? `${origin}/?pinch_return=1` : undefined;
 
+    // --- 1) Create (or reuse) a Pinch payer for this member --------------
+    const memberEmail: string =
+      member.email ??
+      member.email_address ??
+      `demo+${member.id}@vezapt.test`;
+    const memberFullName: string =
+      member.name ?? member.full_name ?? `Member ${member.id}`;
+    const [firstName, ...rest] = memberFullName.trim().split(/\s+/);
+    const lastName = rest.join(" ") || "Demo";
+
+    let payerId: string | null = member.pinch_payer_id ?? null;
+    let payerError: string | null = null;
+    let payerStatus: number | null = null;
+    let payerBodyPreview: string | null = null;
+    if (!payerId) {
+      const payerRes = await createPayer({
+        firstName: firstName || "Demo",
+        lastName,
+        emailAddress: memberEmail,
+      });
+      payerStatus = payerRes.status;
+      payerBodyPreview = payerRes.raw.slice(0, 400);
+      if (payerRes.ok) {
+        payerId = extractPayerId(payerRes.data);
+        // Best-effort cache on the member row (silently ignored if column absent).
+        if (payerId) {
+          await sb
+            .from("members")
+            .update({ pinch_payer_id: payerId })
+            .eq("id", member.id);
+        }
+      } else {
+        payerError = `Pinch payer create → ${payerRes.status}: ${payerRes.raw.slice(0, 300)}`;
+      }
+    }
+
     // Diagnostics (safe — never includes tokens or PII payment data).
     const authInfo = sanitizedAuthInfo();
     const diagnostics: Record<string, any> = {
@@ -207,9 +267,13 @@ export const createCheckout = createServerFn({ method: "POST" })
       hasClientId: authInfo.hasClientId,
       hasClientSecret: authInfo.hasClientSecret,
       clientIdPrefix: authInfo.clientIdPrefix,
-      merchantIdSupplied: authInfo.hasClientId,
-      payerIdSupplied: false,
+      payerIdSupplied: !!payerId,
+      payerId: payerId ?? null,
+      payerStatus,
+      payerBodyPreview,
+      payerError,
       packId: pack.id,
+      packRow: { id: pack.id, name: packName, amountCandidates },
       clubId: club?.id ?? null,
       amountCents,
       returnUrl: returnUrl ?? null,
@@ -223,49 +287,54 @@ export const createCheckout = createServerFn({ method: "POST" })
       url: null,
       status: "pending",
     };
-    let pinchError: string | null = null;
+    let pinchError: string | null = payerError;
     let responseStatus: number | null = null;
     let responseBodyPreview: string | null = null;
 
-    try {
-      const res = await createPaymentLink({
-        amountCents,
-        description: `VezaPT Pay — ${packName}`,
-        reference: `pack-${pack.id}-${Date.now()}`,
-        returnUrl,
-        metadata: {
-          pack_id: String(pack.id),
-          member_id: String(member.id),
-          club_id: club?.id ? String(club.id) : "",
-        },
-      });
-      responseStatus = res.status;
-      responseBodyPreview = res.raw.slice(0, 600);
-      console.log("[pinch checkout] response:", {
-        url: res.url,
-        method: res.method,
-        status: res.status,
-        ok: res.ok,
-        bodyPreview: responseBodyPreview,
-      });
-      if (!res.ok) {
-        const apiMsg =
-          res.data?.message ??
-          res.data?.error ??
-          res.data?.errors?.[0]?.message ??
-          res.raw?.slice(0, 300) ??
-          `HTTP ${res.status}`;
-        pinchError = `Pinch ${res.method} ${res.url} → ${res.status}: ${apiMsg}`;
-      } else {
-        pinch = {
-          id: extractLinkId(res.data),
-          url: extractHostedUrl(res.data),
-          status: res.data?.status ?? "pending",
-        };
+    if (payerId) {
+      try {
+        const res = await createPaymentLink({
+          amountCents,
+          description: `VezaPT Pay — ${packName}`,
+          reference: `pack-${pack.id}-${Date.now()}`,
+          returnUrl,
+          payerId,
+          metadata: {
+            pack_id: String(pack.id),
+            member_id: String(member.id),
+            club_id: club?.id ? String(club.id) : "",
+          },
+        });
+        responseStatus = res.status;
+        responseBodyPreview = res.raw.slice(0, 600);
+        diagnostics.sentBody = res.sentBody?.slice(0, 800) ?? null;
+        diagnostics.sentContentType = res.sentContentType ?? null;
+        console.log("[pinch checkout] response:", {
+          url: res.url,
+          method: res.method,
+          status: res.status,
+          ok: res.ok,
+          bodyPreview: responseBodyPreview,
+        });
+        if (!res.ok) {
+          const apiMsg =
+            res.data?.message ??
+            res.data?.error ??
+            res.data?.errors?.[0]?.message ??
+            res.raw?.slice(0, 400) ??
+            `HTTP ${res.status}`;
+          pinchError = `Pinch ${res.method} ${res.url} → ${res.status}: ${apiMsg}`;
+        } else {
+          pinch = {
+            id: extractLinkId(res.data),
+            url: extractHostedUrl(res.data),
+            status: res.data?.status ?? "pending",
+          };
+        }
+      } catch (e) {
+        pinchError = e instanceof Error ? e.message : String(e);
+        console.error("[pinch checkout] threw:", pinchError);
       }
-    } catch (e) {
-      pinchError = e instanceof Error ? e.message : String(e);
-      console.error("[pinch checkout] threw:", pinchError);
     }
 
     diagnostics.responseStatus = responseStatus;
