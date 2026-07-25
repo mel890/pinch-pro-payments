@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as DemoConsoleRouteImport } from './routes/demo-console'
+import { Route as CompleteSessionRouteImport } from './routes/complete-session'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicPinchWebhookRouteImport } from './routes/api/public/pinch-webhook'
 
 const DemoConsoleRoute = DemoConsoleRouteImport.update({
   id: '/demo-console',
   path: '/demo-console',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompleteSessionRoute = CompleteSessionRouteImport.update({
+  id: '/complete-session',
+  path: '/complete-session',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -31,30 +37,43 @@ const ApiPublicPinchWebhookRoute = ApiPublicPinchWebhookRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/complete-session': typeof CompleteSessionRoute
   '/demo-console': typeof DemoConsoleRoute
   '/api/public/pinch-webhook': typeof ApiPublicPinchWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/complete-session': typeof CompleteSessionRoute
   '/demo-console': typeof DemoConsoleRoute
   '/api/public/pinch-webhook': typeof ApiPublicPinchWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/complete-session': typeof CompleteSessionRoute
   '/demo-console': typeof DemoConsoleRoute
   '/api/public/pinch-webhook': typeof ApiPublicPinchWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/demo-console' | '/api/public/pinch-webhook'
+  fullPaths:
+    | '/'
+    | '/complete-session'
+    | '/demo-console'
+    | '/api/public/pinch-webhook'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/demo-console' | '/api/public/pinch-webhook'
-  id: '__root__' | '/' | '/demo-console' | '/api/public/pinch-webhook'
+  to: '/' | '/complete-session' | '/demo-console' | '/api/public/pinch-webhook'
+  id:
+    | '__root__'
+    | '/'
+    | '/complete-session'
+    | '/demo-console'
+    | '/api/public/pinch-webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CompleteSessionRoute: typeof CompleteSessionRoute
   DemoConsoleRoute: typeof DemoConsoleRoute
   ApiPublicPinchWebhookRoute: typeof ApiPublicPinchWebhookRoute
 }
@@ -66,6 +85,13 @@ declare module '@tanstack/react-router' {
       path: '/demo-console'
       fullPath: '/demo-console'
       preLoaderRoute: typeof DemoConsoleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/complete-session': {
+      id: '/complete-session'
+      path: '/complete-session'
+      fullPath: '/complete-session'
+      preLoaderRoute: typeof CompleteSessionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -87,9 +113,20 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CompleteSessionRoute: CompleteSessionRoute,
   DemoConsoleRoute: DemoConsoleRoute,
   ApiPublicPinchWebhookRoute: ApiPublicPinchWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
