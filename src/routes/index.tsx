@@ -181,10 +181,11 @@ function StartScreen() {
                 </Link>
               </Button>
               <Button asChild size="sm" variant="outline">
-                <Link to="/trainer">
+                <Link to="/opportunity">
                   View trainer opportunity <ArrowRight className="ml-1.5 size-4" />
                 </Link>
               </Button>
+
               <Button asChild size="sm" variant="ghost">
                 <Link
                   to="/pay"
