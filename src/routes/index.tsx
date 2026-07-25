@@ -63,14 +63,14 @@ function StartScreen() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-4xl px-5 pt-10 pb-16 sm:px-8">
+      <div className="mx-auto max-w-5xl px-5 pt-10 pb-16 sm:px-8">
         <header className="flex items-center justify-between">
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
               VezaPT Pay
             </p>
-            <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">
-              Start the demo
+            <h1 className="mt-2 max-w-3xl text-3xl font-semibold tracking-tight sm:text-4xl">
+              Pay trainers for sessions delivered. Show them the difference those sessions make.
             </h1>
           </div>
           <Badge className="border border-warm/40 bg-warm/10 text-[color:var(--warm)] hover:bg-warm/10">
@@ -78,42 +78,70 @@ function StartScreen() {
           </Badge>
         </header>
 
-        <p className="mt-3 max-w-xl text-sm text-muted-foreground">
-          Scan the QR on the client's phone to buy a pack, then complete on the
-          trainer screen, then verify back on the phone. Money moves only when
-          the client releases it.
+        <p className="mt-4 max-w-2xl text-sm text-muted-foreground">
+          VezaPT Pay connects client-confirmed coaching, progressive trainer
+          earnings and real client impact in one simple flow.
         </p>
 
-        <div className="mt-8 grid gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-          <Card className="overflow-hidden border-border bg-[image:var(--gradient-hero)] p-6">
+        <section className="mt-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            The session-confirmation journey
+          </p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <JourneyCard
+              step="Client"
+              title="Choose the support that fits your goals."
+              to="/pay"
+              search={pack ? { pack: pack.id, trainer: trainerId, member: memberId } : undefined}
+            />
+            <JourneyCard
+              step="Trainer"
+              title="Deliver coaching, confirm the session and build sustainable production."
+              to="/trainer"
+            />
+            <JourneyCard
+              step="Client confirmation"
+              title="Confirm the session and record what changed."
+              to="/me"
+              highlight
+            />
+            <JourneyCard
+              step="Manager"
+              title="See revenue, trainer performance, client momentum and coaching priorities."
+              to="/dashboard"
+            />
+          </div>
+        </section>
+
+        <section className="mt-8 grid gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+          <Card className="border-border bg-card p-6">
             <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-              <QrCode className="size-3.5" /> Client checkout
+              <QrCode className="size-3.5" /> Sandbox purchase QR
             </div>
-            <p className="mt-2 text-lg font-semibold">
+            <p className="mt-2 text-sm text-muted-foreground">
               {pack?.name ?? "No pack seeded"}
-            </p>
-            <p className="font-mono text-sm text-muted-foreground">
-              {pack ? `$${(Number(pack.total_amount) / 100).toFixed(2)} · ${pack.sessions_total} sessions` : "—"}
+              {pack && (
+                <span className="ml-1 font-mono">
+                  · ${(Number(pack.total_amount) / 100).toFixed(2)}
+                </span>
+              )}
             </p>
 
             {qrSrc && (
-              <div className="mt-5 flex flex-col items-center gap-3 rounded-xl bg-card p-4">
+              <div className="mt-4 flex flex-col items-center gap-3 rounded-xl bg-background/60 p-4">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={qrSrc}
                   alt="Scan to open the client checkout"
-                  width={240}
-                  height={240}
+                  width={200}
+                  height={200}
                   className="rounded-md"
                 />
-                <p className="break-all text-center font-mono text-[10px] text-muted-foreground">
-                  {payUrl}
-                </p>
               </div>
             )}
 
             {pack && (
-              <Button asChild className="mt-5 w-full" size="lg">
+              <Button asChild className="mt-4 w-full" size="sm" variant="secondary">
                 <Link
                   to="/pay"
                   search={{ pack: pack.id, trainer: trainerId, member: memberId }}
@@ -122,40 +150,86 @@ function StartScreen() {
                 </Link>
               </Button>
             )}
+            <p className="mt-3 text-[11px] text-muted-foreground">
+              The purchase step exists so we can run the full flow end-to-end.
+              The heart of the demo is what happens after: coaching, client
+              confirmation and impact.
+            </p>
           </Card>
 
-          <div className="flex flex-col gap-5">
-            <RoleCard
-              to="/trainer"
-              icon={<Smartphone className="size-4" />}
-              title="Trainer screen"
-              subtitle="Sarah's queue: acknowledge, complete, watch tier climb."
-            />
-            <RoleCard
-              to="/me"
-              icon={<Smartphone className="size-4" />}
-              title="Client screen"
-              subtitle="Verify a completed session — releases the split live."
-            />
-            <RoleCard
-              to="/dashboard"
-              icon={<LayoutDashboard className="size-4" />}
-              title="Manager dashboard"
-              subtitle="Earned vs held vs club margin, live from the same tables."
-            />
-          </div>
-        </div>
+          <Card className="border-primary/30 bg-[image:var(--gradient-hero)] p-6">
+            <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-primary">
+              <Smartphone className="size-3.5" /> Product promise
+            </div>
+            <p className="mt-3 text-lg font-semibold leading-snug text-foreground">
+              Payment is linked to verified service. Impact is captured at the
+              same moment.
+            </p>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Every confirmed session grows the trainer's income and creates
+              evidence of the difference they are making.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Button asChild size="sm">
+                <Link to="/trainer">
+                  Open Sarah's dashboard <ArrowRight className="ml-1.5 size-4" />
+                </Link>
+              </Button>
+              <Button asChild size="sm" variant="outline">
+                <Link to="/dashboard">
+                  <LayoutDashboard className="mr-1.5 size-4" /> Manager view
+                </Link>
+              </Button>
+            </div>
+          </Card>
+        </section>
 
         <div className="mt-10 flex justify-center">
           <Link
             to="/demo-console"
             className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
           >
-            Open technical integration console
+            Technical integration console
           </Link>
         </div>
       </div>
     </div>
+  );
+}
+
+function JourneyCard({
+  step,
+  title,
+  to,
+  search,
+  highlight,
+}: {
+  step: string;
+  title: string;
+  to: string;
+  search?: Record<string, string> | undefined;
+  highlight?: boolean;
+}) {
+  return (
+    <Link to={to} search={search as any} className="group">
+      <Card
+        className={`h-full p-5 transition ${
+          highlight
+            ? "border-primary/40 bg-primary/5 hover:border-primary/60"
+            : "border-border hover:border-primary/40"
+        }`}
+      >
+        <p
+          className={`text-[10px] font-semibold uppercase tracking-[0.18em] ${
+            highlight ? "text-primary" : "text-muted-foreground"
+          }`}
+        >
+          {step}
+        </p>
+        <p className="mt-2 text-sm leading-snug text-foreground">{title}</p>
+        <ArrowRight className="mt-4 size-4 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary" />
+      </Card>
+    </Link>
   );
 }
 
@@ -184,3 +258,4 @@ function RoleCard({
     </Link>
   );
 }
+
