@@ -103,6 +103,31 @@ export const getDemo = createServerFn({ method: "GET" }).handler(async () => {
   return out;
 });
 
+/** Reports presence flags for Pinch env vars (never values). */
+export const pinchEnvCheck = createServerFn({ method: "GET" }).handler(async () => {
+  return {
+    runtime: "TanStack Start server function (Cloudflare Worker)",
+    environment: process.env.NODE_ENV ?? "unknown",
+    PINCH_CLIENT_ID_present: !!process.env.PINCH_CLIENT_ID,
+    PINCH_CLIENT_SECRET_present: !!process.env.PINCH_CLIENT_SECRET,
+    PINCH_API_BASE_URL_present: !!process.env.PINCH_API_BASE_URL,
+    PINCH_API_BASE_present: !!process.env.PINCH_API_BASE,
+    PINCH_MERCHANT_ID_present: !!process.env.PINCH_MERCHANT_ID,
+    PINCH_SECRET_KEY_present: !!process.env.PINCH_SECRET_KEY,
+    PINCH_API_KEY_present: !!process.env.PINCH_API_KEY,
+    resolvedClientIdPresent: !!(
+      process.env.PINCH_CLIENT_ID ?? process.env.PINCH_MERCHANT_ID
+    ),
+    resolvedClientSecretPresent: !!(
+      process.env.PINCH_CLIENT_SECRET ??
+      process.env.PINCH_SECRET_KEY ??
+      process.env.PINCH_API_KEY
+    ),
+  };
+});
+
+
+
 const CheckoutSchema = z.object({
   memberId: z.union([z.string(), z.number()]),
   packId: z.union([z.string(), z.number()]),
