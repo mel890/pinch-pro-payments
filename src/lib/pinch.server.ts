@@ -182,3 +182,30 @@ export async function createPaymentLink(input: {
     body: JSON.stringify(body),
   });
 }
+
+/**
+ * Create a Pinch payer.
+ * See: https://docs.getpinch.com.au/reference/create-payer
+ * Sandbox accepts minimal payload; returns { id: "pyr_..." }.
+ */
+export async function createPayer(input: {
+  firstName: string;
+  lastName: string;
+  emailAddress: string;
+  mobileNumber?: string;
+}): Promise<PinchFetchResult> {
+  return pinchFetch("payers", {
+    method: "POST",
+    body: JSON.stringify({
+      firstName: input.firstName,
+      lastName: input.lastName,
+      emailAddress: input.emailAddress,
+      ...(input.mobileNumber ? { mobileNumber: input.mobileNumber } : {}),
+    }),
+  });
+}
+
+export function extractPayerId(payer: any): string | null {
+  if (!payer || typeof payer !== "object") return null;
+  return payer.id ?? payer.payerId ?? payer.data?.id ?? null;
+}
