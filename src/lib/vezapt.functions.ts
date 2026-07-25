@@ -76,12 +76,14 @@ export const getDemo = createServerFn({ method: "GET" }).handler(async () => {
     "split_tiers",
     "pt_packs",
     "sessions",
-    "payments_log",
   ] as const;
 
+  const PAYMENTS_LOG_COLS =
+    "id, pack_id, session_id, pinch_payment_id, amount_cents, pt_amount_cents, club_amount_cents, pt_split_pct, status, pinch_event_type, created_at";
+
   const out: Record<string, { rows: any[]; error: string | null }> = {};
-  await Promise.all(
-    tables.map(async (t) => {
+  await Promise.all([
+    ...tables.map(async (t) => {
       const { data, error } = await sb
         .from(t)
         .select("*")
@@ -89,7 +91,15 @@ export const getDemo = createServerFn({ method: "GET" }).handler(async () => {
         .limit(50);
       out[t] = { rows: data ?? [], error: error?.message ?? null };
     }),
-  );
+    (async () => {
+      const { data, error } = await sb
+        .from("payments_log")
+        .select(PAYMENTS_LOG_COLS)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      out["payments_log"] = { rows: data ?? [], error: error?.message ?? null };
+    })(),
+  ]);
   return out;
 });
 
@@ -146,8 +156,8 @@ export const createCheckout = createServerFn({ method: "POST" })
     }
 
     // Try inserting payments_log with flexible columns.
+    // Note: payments_log has no member_id column — the member is derived via pack_id.
     const baseRow: Record<string, any> = {
-      member_id: member.id,
       pack_id: pack.id,
       amount_cents: amountCents,
       status: "pending",
@@ -157,12 +167,11 @@ export const createCheckout = createServerFn({ method: "POST" })
 
     let inserted: any = null;
     let insertError: string | null = null;
-    // Try with all fields, then progressively drop unknown columns.
     const attempts: Array<Record<string, any>> = [
       baseRow,
-      { member_id: baseRow.member_id, pack_id: baseRow.pack_id, amount_cents: baseRow.amount_cents, status: "pending", pinch_payment_id: baseRow.pinch_payment_id },
-      { member_id: baseRow.member_id, pack_id: baseRow.pack_id, amount_cents: baseRow.amount_cents, status: "pending" },
-      { member_id: baseRow.member_id, pack_id: baseRow.pack_id, amount_cents: baseRow.amount_cents },
+      { pack_id: baseRow.pack_id, amount_cents: baseRow.amount_cents, status: "pending", pinch_payment_id: baseRow.pinch_payment_id },
+      { pack_id: baseRow.pack_id, amount_cents: baseRow.amount_cents, status: "pending" },
+      { pack_id: baseRow.pack_id, amount_cents: baseRow.amount_cents },
     ];
     for (const row of attempts) {
       const { data: ins, error } = await sb
