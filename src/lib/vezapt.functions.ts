@@ -307,6 +307,8 @@ export const createCheckout = createServerFn({ method: "POST" })
         });
         responseStatus = res.status;
         responseBodyPreview = res.raw.slice(0, 600);
+        diagnostics.sentBody = res.sentBody?.slice(0, 800) ?? null;
+        diagnostics.sentContentType = res.sentContentType ?? null;
         console.log("[pinch checkout] response:", {
           url: res.url,
           method: res.method,
