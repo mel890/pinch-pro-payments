@@ -1,274 +1,241 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ArrowRight, Check, Clock, X } from "lucide-react";
+import { formatAUD } from "@/lib/money";
 import {
-  CheckCircle2,
-  Clock,
-  Target,
-  Calendar,
-  Dumbbell,
-  DollarSign,
-  UserRound,
-  ArrowRight,
-} from "lucide-react";
+  useJourney,
+  journey,
+  KICKSTART,
+  INTAKE,
+  MEMBER,
+  TRAINER,
+} from "@/lib/journey-store";
 
 export const Route = createFileRoute("/opportunity")({
   head: () => ({
     meta: [
-      { title: "New paid coaching opportunity — VezaPT Pay" },
+      { title: "Paid coaching opportunity — VezaPT Pay" },
       {
         name: "description",
         content:
-          "A member has bought a coaching pack matched to your speciality. Review the payout, commitment and first session target before you accept.",
+          "Sarah reviews a paid Kickstart opportunity: member goal, preferred times, full commitment and a $199 payout, then accepts or declines with a reason.",
       },
-      { property: "og:title", content: "New paid coaching opportunity — VezaPT Pay" },
+      { property: "og:title", content: "Paid coaching opportunity — VezaPT Pay" },
       {
         property: "og:description",
         content:
-          "Review the member, goal, times and payout, then accept or decline the opportunity.",
+          "A trainer-facing paid opportunity with the full commitment and payout shown up front.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: OpportunityScreen,
+  component: Opportunity,
 });
 
-type Stage = "review" | "declining" | "accepted" | "declined";
-
-const DECLINE_REASONS = [
+const REASONS = [
   "Times do not match",
-  "Outside my scope",
+  "Outside scope",
   "At capacity",
-  "Existing conflict",
+  "Conflict",
   "Other",
 ];
 
-function OpportunityScreen() {
-  const navigate = useNavigate();
-  const [stage, setStage] = useState<Stage>("review");
-  const [reason, setReason] = useState<string | null>(null);
+function Opportunity() {
+  const s = useJourney();
+  const [declining, setDeclining] = useState(false);
+
+  if (!s.paid) {
+    return (
+      <Shell>
+        <Card className="border-border p-6">
+          <p className="text-lg font-semibold">No opportunity waiting</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Opportunities appear once a member purchases a gym-promoted product.
+          </p>
+          <Button asChild className="mt-4">
+            <Link to="/pay">Start with Alex's purchase</Link>
+          </Button>
+        </Card>
+      </Shell>
+    );
+  }
+
+  if (s.accepted) {
+    return (
+      <Shell>
+        <Card className="border-primary/40 bg-primary/5 p-6">
+          <div className="flex items-center gap-2 text-primary">
+            <Check className="size-5" />
+            <p className="text-lg font-semibold">
+              {MEMBER.first} is now your Kickstart client.
+            </p>
+          </div>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Contact them and book session one. Preferred times:{" "}
+            {INTAKE.days}, {INTAKE.times}.
+          </p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <Stat label="Contracted payout" value={formatAUD(KICKSTART.trainerPayoutCents)} />
+            <Stat label="Released on confirmation" value="Per session" />
+          </div>
+          <Button asChild className="mt-5">
+            <Link to="/journey/alex">
+              Open Alex's journey <ArrowRight className="ml-1 size-4" />
+            </Link>
+          </Button>
+        </Card>
+      </Shell>
+    );
+  }
+
+  if (s.declineReason) {
+    return (
+      <Shell>
+        <Card className="border-border p-6">
+          <p className="text-lg font-semibold">Opportunity declined</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Reason recorded: {s.declineReason}. VezaPT is offering it to the next
+            suitable trainer with matching capacity.
+          </p>
+          <Button
+            variant="outline"
+            className="mt-4"
+            onClick={() => journey.decline("")}
+          >
+            Undo for the demo
+          </Button>
+        </Card>
+      </Shell>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-2xl px-5 pt-10 pb-16 sm:px-8">
-        <header className="flex items-center justify-between">
+    <Shell>
+      <Card className="border-primary/30 p-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-              VezaPT Pay · Trainer
-            </p>
-            <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
-              New paid coaching opportunity
-            </h1>
+            <Badge className="border border-primary/40 bg-primary/10 text-primary">
+              New paid opportunity
+            </Badge>
+            <h2 className="mt-2 text-2xl font-semibold">
+              {MEMBER.name} purchased a {KICKSTART.name}
+            </h2>
           </div>
-          <Badge className="border border-warm/40 bg-warm/10 text-[color:var(--warm)] hover:bg-warm/10">
-            <Clock className="mr-1 size-3" /> 2h left
-          </Badge>
-        </header>
+          <div className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground">
+            <Clock className="size-3.5" /> Respond within 12 hours
+          </div>
+        </div>
 
-        {stage === "review" && (
-          <Card className="mt-6 border-primary/30 bg-[image:var(--gradient-hero)] p-6">
-            <p className="text-sm font-semibold text-primary">
-              Alex has purchased a PT Kickstart Pack
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Matched to you based on availability, speciality and member preference.
-            </p>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <Field label="Goal" value={INTAKE.goal} />
+          <Field label="Experience" value={INTAKE.experience} />
+          <Field label="Preferred times" value={`${INTAKE.days}, ${INTAKE.times}`} />
+          <Field label="Coaching preference" value={INTAKE.style} />
+          <Field label="Confidence today" value={`${INTAKE.confidence}/10`} />
+          <Field label="First-session target" value="Within 5 days of acceptance" />
+        </div>
 
-            <dl className="mt-6 grid gap-4 sm:grid-cols-2">
-              <Field icon={<Target className="size-4" />} label="Goal">
-                Build strength and feel more confident in the gym
-              </Field>
-              <Field icon={<Calendar className="size-4" />} label="Preferred times">
-                Tuesday or Thursday, 6:00–8:00 pm
-              </Field>
-              <Field icon={<UserRound className="size-4" />} label="Experience">
-                Beginner
-              </Field>
-              <Field icon={<Dumbbell className="size-4" />} label="Programme">
-                3 × 45-minute sessions
-              </Field>
-              <Field icon={<DollarSign className="size-4" />} label="Your payout" highlight>
-                <span className="font-mono text-lg font-semibold text-foreground">$199</span>
-              </Field>
-              <Field icon={<DollarSign className="size-4" />} label="Club campaign fee">
-                <span className="font-mono text-foreground">$50</span>
-              </Field>
-              <Field icon={<Calendar className="size-4" />} label="First session target">
-                Within seven days
-              </Field>
-              <Field icon={<Clock className="size-4" />} label="Response deadline">
-                2 hours remaining
-              </Field>
-            </dl>
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          <Stat label="Your commitment" value="3 × 45 min" />
+          <Stat
+            label="Your payout"
+            value={formatAUD(KICKSTART.trainerPayoutCents)}
+            accent
+          />
+          <Stat label="Club campaign fee" value={formatAUD(KICKSTART.clubFeeCents)} />
+        </div>
 
-            <div className="mt-6 flex flex-col gap-2 sm:flex-row">
-              <Button
-                size="lg"
-                className="h-12 flex-1 text-base font-semibold shadow-[var(--shadow-soft)]"
-                onClick={() => setStage("accepted")}
-              >
-                <CheckCircle2 className="mr-2 size-5" /> Accept opportunity
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="h-12"
-                onClick={() => setStage("declining")}
-              >
-                Decline
-              </Button>
-            </div>
+        <div className="mt-6 flex flex-wrap gap-2">
+          <Button size="lg" onClick={() => journey.accept()} className="shadow-[var(--shadow-soft)]">
+            <Check className="mr-2 size-4" /> Accept opportunity
+          </Button>
+          <Button size="lg" variant="outline" onClick={() => setDeclining((v) => !v)}>
+            <X className="mr-2 size-4" /> Decline
+          </Button>
+        </div>
 
-            <button className="mt-4 w-full text-center text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground">
-              View full member profile
-            </button>
-          </Card>
-        )}
-
-        {stage === "declining" && (
-          <Card className="mt-6 border-border p-6">
-            <p className="text-sm font-semibold">Let the club know why</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              A suitable decline immediately reoffers the member to the next
-              trainer, so they never wait.
-            </p>
-
-            <div className="mt-5 space-y-2">
-              {DECLINE_REASONS.map((r) => (
-                <label
+        {declining && (
+          <div className="mt-4 rounded-xl border border-border bg-card/60 p-4">
+            <p className="text-sm font-medium">Why are you declining?</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {REASONS.map((r) => (
+                <Button
                   key={r}
-                  className={`flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 text-sm transition ${
-                    reason === r
-                      ? "border-primary/60 bg-primary/10 text-foreground"
-                      : "border-border hover:border-primary/40"
-                  }`}
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => journey.decline(r)}
                 >
-                  <input
-                    type="radio"
-                    name="decline-reason"
-                    className="size-4 accent-[color:var(--primary)]"
-                    checked={reason === r}
-                    onChange={() => setReason(r)}
-                  />
                   {r}
-                </label>
+                </Button>
               ))}
             </div>
-
-            <div className="mt-6 flex gap-2">
-              <Button
-                size="lg"
-                className="h-12 flex-1 font-semibold"
-                disabled={!reason}
-                onClick={() => setStage("declined")}
-              >
-                Confirm decline
-              </Button>
-              <Button
-                size="lg"
-                variant="ghost"
-                className="h-12"
-                onClick={() => setStage("review")}
-              >
-                Back
-              </Button>
-            </div>
-          </Card>
-        )}
-
-        {stage === "accepted" && (
-          <Card className="mt-6 border-primary/40 bg-primary/10 p-6">
-            <div className="flex items-center gap-2 text-primary">
-              <CheckCircle2 className="size-5" />
-              <p className="font-semibold">Opportunity accepted</p>
-            </div>
-            <p className="mt-2 text-sm text-foreground/80">
-              Alex has been notified. Reach out to book the first session within
-              seven days — the payout releases as each session is confirmed.
+            <p className="mt-3 text-xs text-muted-foreground">
+              Declined or timed-out opportunities are offered automatically to
+              the next suitable trainer.
             </p>
-            <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-              <Button asChild size="lg" className="h-12 flex-1 font-semibold">
-                <Link to="/trainer">
-                  Go to your dashboard <ArrowRight className="ml-1.5 size-4" />
-                </Link>
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="h-12"
-                onClick={() => setStage("review")}
-              >
-                View again
-              </Button>
-            </div>
-          </Card>
+          </div>
         )}
+      </Card>
+    </Shell>
+  );
+}
 
-        {stage === "declined" && (
-          <Card className="mt-6 border-border p-6">
-            <p className="text-sm font-semibold">Thanks — we've noted "{reason}".</p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Alex is already being reoffered to the next best-matched trainer.
-              No time lost.
-            </p>
-            <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-              <Button asChild size="lg" className="h-12 flex-1 font-semibold">
-                <Link to="/trainer">
-                  Back to dashboard <ArrowRight className="ml-1.5 size-4" />
-                </Link>
-              </Button>
-              <Button
-                variant="ghost"
-                size="lg"
-                className="h-12"
-                onClick={() => {
-                  setReason(null);
-                  setStage("review");
-                }}
-              >
-                Reopen opportunity
-              </Button>
-            </div>
-          </Card>
-        )}
-
-        <div className="mt-8 text-center">
-          <button
-            onClick={() => navigate({ to: "/" })}
-            className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
-          >
-            ← Back to overview
-          </button>
-        </div>
+function Shell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen bg-background pb-20 text-foreground">
+      <div className="mx-auto max-w-3xl px-5 pt-10 sm:px-8">
+        <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          {TRAINER.name} · opportunities
+        </p>
+        <h1 className="mt-1 text-3xl font-semibold tracking-tight">
+          Paid coaching opportunity
+        </h1>
+        <div className="mt-6">{children}</div>
       </div>
     </div>
   );
 }
 
-function Field({
-  icon,
+function Field({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-border bg-card/60 p-3">
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-1 text-sm">{value}</p>
+    </div>
+  );
+}
+
+function Stat({
   label,
-  children,
-  highlight,
+  value,
+  accent,
 }: {
-  icon: React.ReactNode;
   label: string;
-  children: React.ReactNode;
-  highlight?: boolean;
+  value: string;
+  accent?: boolean;
 }) {
   return (
     <div
-      className={`rounded-lg border p-4 ${
-        highlight
-          ? "border-primary/40 bg-primary/5"
-          : "border-border/60 bg-background/40"
+      className={`rounded-xl border p-3 ${
+        accent ? "border-primary/40 bg-primary/5" : "border-border bg-card/60"
       }`}
     >
-      <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-        <span className="text-primary">{icon}</span> {label}
-      </div>
-      <div className="mt-2 text-sm text-foreground">{children}</div>
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+        {label}
+      </p>
+      <p
+        className={`mt-1 font-mono text-lg font-semibold tabular-nums ${
+          accent ? "text-primary" : ""
+        }`}
+      >
+        {value}
+      </p>
     </div>
   );
 }
