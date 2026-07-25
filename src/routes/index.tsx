@@ -252,13 +252,13 @@ function DemoPage() {
               {checkout.isPending ? "Creating…" : "Create Pinch checkout"}
             </button>
             {lastPayment && (
-              <div className="mt-3 rounded-md border border-border bg-muted/30 p-2 text-xs">
+              <div className="mt-3 rounded-md border border-border bg-muted/30 p-2 text-xs space-y-1">
                 <div>payment #{String(lastPayment.id)}</div>
                 <div>status: <span className="font-mono">{lastPayment.status}</span></div>
-                {pinchInfo?.pinch?.hosted_payment_url && (
+                {pinchInfo?.pinch?.url && (
                   <a
-                    className="text-primary underline"
-                    href={pinchInfo.pinch.hosted_payment_url}
+                    className="text-primary underline break-all"
+                    href={pinchInfo.pinch.url}
                     target="_blank"
                     rel="noreferrer"
                   >
@@ -266,11 +266,19 @@ function DemoPage() {
                   </a>
                 )}
                 {pinchInfo?.pinchError && (
-                  <div className="mt-1 text-destructive">
-                    Pinch: {pinchInfo.pinchError}
+                  <div className="mt-1 rounded border border-destructive/40 bg-destructive/10 p-2 text-destructive whitespace-pre-wrap break-words">
+                    {pinchInfo.pinchError}
                   </div>
                 )}
               </div>
+            )}
+            {pinchInfo?.diagnostics && (
+              <details className="mt-2 rounded-md border border-border bg-muted/20 p-2 text-[10px]">
+                <summary className="cursor-pointer font-medium">Pinch diagnostics</summary>
+                <pre className="mt-1 overflow-x-auto">
+{JSON.stringify(pinchInfo.diagnostics, null, 2)}
+                </pre>
+              </details>
             )}
           </StepCard>
 
