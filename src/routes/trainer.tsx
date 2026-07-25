@@ -26,7 +26,7 @@ import {
   CalendarPlus,
   Quote,
 } from "lucide-react";
-import { CoachMe } from "@/components/coach-me";
+import { CoachMeJourney } from "@/components/coach-me-journey";
 
 export const Route = createFileRoute("/trainer")({
   head: () => ({
@@ -462,7 +462,7 @@ function TrainerScreen() {
         </section>
 
         {/* 6. Coach Me */}
-        <CoachMe />
+        <CoachMeJourney />
       </div>
     </div>
   );
