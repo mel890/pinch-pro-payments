@@ -160,13 +160,53 @@ function Dashboard() {
           </div>
         </section>
 
+        {/* Team health — demo signals */}
+        <section className="mt-6">
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              Team health
+            </h2>
+            <Badge variant="secondary" className="text-[10px] uppercase tracking-wider">
+              Client impact demo data
+            </Badge>
+          </div>
+          <div className="mt-3 grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+            <Card className="border-border p-5">
+              <ul className="space-y-2 text-sm">
+                <HealthRow label="Clients building momentum" value="5" tone="good" />
+                <HealthRow label="Clients with no future booking" value="2" tone="warn" />
+                <HealthRow label="Trainers with rising cancellations" value="1" tone="warn" />
+                <HealthRow label="Average client support" value="4.6 / 5" tone="good" />
+                <HealthRow label="Client confidence wins this week" value="3" tone="good" />
+              </ul>
+            </Card>
+            <Card className="border-primary/25 bg-primary/5 p-5">
+              <p className="text-xs uppercase tracking-wider text-primary">
+                Coaching priority this week
+              </p>
+              <p className="mt-2 text-lg font-semibold">Client Connection</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Return attendance has softened across two trainers. Review
+                follow-up, personalisation and next-session booking behaviours.
+              </p>
+              <div className="mt-4 space-y-1.5 text-sm">
+                <DimensionRow name="Client Connection" state="Needs attention" tone="warn" />
+                <DimensionRow name="Movement Mastery" state="Stable" tone="ok" />
+                <DimensionRow name="Brand Power" state="Stable" tone="ok" />
+                <DimensionRow name="Flow in Function" state="Watch" tone="warn" />
+                <DimensionRow name="Financial IQ" state="Strong" tone="good" />
+              </div>
+            </Card>
+          </div>
+        </section>
+
         {/* Trainer roster */}
         <section className="mt-6">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             Trainer roster
           </h2>
           <div className="mt-3 space-y-2">
-            {trainerAgg.map(({ trainer, verifiedCount, earnedCents, tier, nextTier }) => {
+            {trainerAgg.map(({ trainer, verifiedCount, earnedCents, tier, nextTier }, i) => {
               const toNext = nextTier ? nextTier.sessions_min - verifiedCount : 0;
               const tierName =
                 (tier?.pt_split_pct ?? 40) >= 60
@@ -182,13 +222,20 @@ function Dashboard() {
                       100,
                   )
                 : 100;
+              const activeClients = new Set(
+                snap.sessions
+                  .filter((s: any) => s.trainer_id === trainer.id)
+                  .map((s: any) => s.member_id),
+              ).size;
+              // Illustrative per-trainer coaching signals
+              const signals = TRAINER_SIGNALS[i % TRAINER_SIGNALS.length];
               return (
                 <Card key={trainer.id} className="border-border p-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <p className="font-semibold">{trainer.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {tierName} · {tier?.pt_split_pct}% · {verifiedCount} verified
+                        {tierName} · {tier?.pt_split_pct}% · {verifiedCount} confirmed sessions · {activeClients} active clients
                       </p>
                     </div>
                     <p className="font-mono text-lg tabular-nums text-primary">
@@ -199,15 +246,27 @@ function Dashboard() {
                     <Progress value={progress} className="h-1.5" />
                     <p className="mt-1 text-[11px] text-muted-foreground">
                       {toNext > 0
-                        ? `${toNext} to unlock ${nextTier?.pt_split_pct}%`
+                        ? `${toNext} more confirmed sessions to reach the next earnings tier`
                         : "At top tier"}
                     </p>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
+                    <span className={`rounded-full border px-2 py-0.5 ${signals.retentionTone}`}>
+                      Retention: {signals.retention}
+                    </span>
+                    <span className="rounded-full border border-primary/30 bg-primary/5 px-2 py-0.5 text-primary">
+                      Support: {signals.support}
+                    </span>
+                    <span className="rounded-full border border-border bg-secondary/40 px-2 py-0.5 text-muted-foreground">
+                      Coaching focus: {signals.focus}
+                    </span>
                   </div>
                 </Card>
               );
             })}
           </div>
         </section>
+
 
         {/* Payments log */}
         <section className="mt-8 grid gap-6 lg:grid-cols-2">
