@@ -466,6 +466,48 @@ function DemoPage() {
   );
 }
 
+function PinchEnvPanel() {
+  const check = useServerFn(pinchEnvCheck);
+  const [info, setInfo] = useState<any>(null);
+  const [err, setErr] = useState<string | null>(null);
+  return (
+    <details className="rounded-md border border-border bg-card">
+      <summary className="cursor-pointer px-4 py-3 text-sm font-medium">
+        Pinch env check (server runtime)
+      </summary>
+      <div className="space-y-3 p-4 text-xs">
+        <button
+          className="rounded bg-primary px-3 py-1 text-primary-foreground"
+          onClick={async () => {
+            setErr(null);
+            try {
+              setInfo(await check());
+            } catch (e) {
+              setErr(e instanceof Error ? e.message : String(e));
+            }
+          }}
+        >
+          Check env vars
+        </button>
+        {err && <div className="text-destructive">{err}</div>}
+        {info && (
+          <pre className="overflow-x-auto rounded bg-muted/40 p-2">
+{JSON.stringify(info, null, 2)}
+          </pre>
+        )}
+        <p className="text-muted-foreground">
+          Server runtime: TanStack Start server functions running in the
+          Cloudflare Worker deployment. Env vars come from Lovable Cloud
+          project secrets (Project Settings → Secrets), not Supabase Edge
+          Function secrets. After adding or updating a secret, republish the
+          app for it to appear in the production Worker.
+        </p>
+      </div>
+    </details>
+  );
+}
+
+
 function StepCard({
   step,
   title,
