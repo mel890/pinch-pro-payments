@@ -35,7 +35,7 @@ const DIMENSIONS: Record<
     name: "Movement Mastery",
     icon: <Dumbbell className="size-4" />,
     blurb:
-      "Personalise sessions, coach clearly, progress appropriately and create meaningful experiences.",
+      "Personalise sessions, coach clearly, progress appropriately and create meaningful training experiences.",
   },
   brand: {
     name: "Brand Power",
@@ -47,7 +47,7 @@ const DIMENSIONS: Record<
     name: "Flow in Function",
     icon: <Workflow className="size-4" />,
     blurb:
-      "Schedule effectively, follow up consistently, manage the client lifecycle and reduce admin gaps.",
+      "Schedule effectively, follow up consistently, manage the client lifecycle and reduce operational gaps.",
   },
   financial: {
     name: "Financial IQ",
@@ -69,7 +69,7 @@ type Scenario = {
 const SCENARIOS: Scenario[] = [
   {
     id: "retention",
-    signal: "Client retention is trending down",
+    signal: "Client retention is starting to dip",
     dimensions: ["connection", "movement"],
     explanation:
       "Clients are attending, but fewer are returning consistently. Focus on making the next sessions feel more personal, progressive and connected to what matters most to each client.",
@@ -78,18 +78,31 @@ const SCENARIOS: Scenario[] = [
       "Add one visible progression",
       "Book the next session before the client leaves",
     ],
-    why: "Repeat-booking rate over the last 4 weeks is easing off while attendance holds steady.",
+    why: "Repeat-booking rate over the last four weeks is easing off while attendance holds steady.",
+  },
+  {
+    id: "buying-not-attending",
+    signal: "Clients buying but not attending",
+    dimensions: ["flow", "connection"],
+    explanation:
+      "Clients are committing, but not building a consistent training rhythm.",
+    actions: [
+      "Book session two before the client leaves",
+      "Follow up within 24 hours",
+      "Review clients with no future booking",
+    ],
+    why: "New pack activations are outpacing first-week session bookings.",
   },
   {
     id: "cancellations",
     signal: "Cancellations are rising",
     dimensions: ["flow", "brand"],
     explanation:
-      "More sessions are being rescheduled or dropped late. Tighten your scheduling rhythm and reinforce the value clients see in showing up.",
+      "You are creating interest, but sessions are being lost before delivery.",
     actions: [
-      "Send a warm 24-hour check-in message",
-      "Offer two firm session slots for next week",
-      "Share one client win publicly this week",
+      "Confirm tomorrow's appointments",
+      "Contact recent cancellations",
+      "Clarify expectations and next steps",
     ],
     why: "Late cancellations in the last fortnight are trending above your usual baseline.",
   },
@@ -98,11 +111,11 @@ const SCENARIOS: Scenario[] = [
     signal: "Conversion is dipping",
     dimensions: ["connection", "financial"],
     explanation:
-      "Intro sessions aren't converting into packs as often. Lean into what each prospect actually wants and recommend the plan that fits with confidence.",
+      "Clients are engaging, but the next step may not feel clear or relevant.",
     actions: [
-      "Recap the client's goal in their own words",
-      "Recommend a specific pack, not options",
-      "Book the follow-up before they leave the floor",
+      "Ask why the goal matters now",
+      "Reflect the client's own words",
+      "Recommend one clear service option",
     ],
     why: "Intro-to-pack conversion has softened compared to your rolling average.",
   },
@@ -111,37 +124,37 @@ const SCENARIOS: Scenario[] = [
     signal: "Production is dipping",
     dimensions: ["financial", "flow"],
     explanation:
-      "Delivered sessions per week are below your usual run rate. Rebuild the week's structure and protect your prime coaching hours.",
+      "Your session volume is falling even though you still have active clients.",
     actions: [
-      "Block two extra prime-time slots this week",
-      "Reach out to three clients due for a re-book",
-      "Review pack balances and flag any close to renewal",
+      "Review clients with unused sessions",
+      "Fill recurring appointments",
+      "Contact clients with no next booking",
     ],
-    why: "Session count this cycle is pacing under your last-cycle average.",
+    why: "Delivered sessions this cycle are pacing under your last-cycle average.",
   },
   {
     id: "feedback",
     signal: "Feedback is becoming flat",
     dimensions: ["movement", "connection"],
     explanation:
-      "Client ratings are steady but no longer climbing. Bring more variety and meaning into sessions so clients feel visible progress again.",
+      "Clients are attending, but the experience may be becoming too routine.",
     actions: [
-      "Introduce one new movement pattern",
-      "Name a small win in each session out loud",
-      "Ask one client what would make this a 5/5",
+      "Personalise one part of the session",
+      "Use one clearer coaching cue",
+      "Ask the client what felt most useful",
     ],
-    why: "Post-session ratings have plateaued over the last 3 weeks.",
+    why: "Post-session support ratings have plateaued over the last three weeks.",
   },
   {
     id: "quality",
     signal: "High production, quality slipping",
     dimensions: ["connection", "brand"],
     explanation:
-      "You're delivering strong volume, and it's showing in how personal each session feels. Protect the coaching quality that got you here.",
+      "Your business is growing, but clients may be feeling less seen.",
     actions: [
-      "Arrive 5 minutes early to reset between clients",
-      "Personalise the warm-up for each client",
-      "Send one thoughtful follow-up message per day",
+      "Review three client goals",
+      "Slow down the session close",
+      "Follow up personally with one client",
     ],
     why: "Volume is high while support scores have eased slightly.",
   },
@@ -154,11 +167,17 @@ export function CoachMe() {
   const scenario = SCENARIOS.find((s) => s.id === scenarioId)!;
 
   return (
-    <div className="mt-10">
+    <div className="mt-8">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Compass className="size-4 text-primary" />
           <h2 className="text-base font-semibold text-foreground">Coach Me</h2>
+          <Badge
+            variant="secondary"
+            className="ml-1 text-[10px] uppercase tracking-wider"
+          >
+            Demo coaching signal
+          </Badge>
         </div>
         <select
           value={scenarioId}
@@ -177,7 +196,7 @@ export function CoachMe() {
         </select>
       </div>
 
-      <Card className="mt-4 overflow-hidden border-0 bg-[image:var(--gradient-soft)] p-6 shadow-[var(--shadow-soft)]">
+      <Card className="mt-4 overflow-hidden border-primary/20 bg-[image:var(--gradient-hero)] p-6 shadow-[var(--shadow-soft)]">
         <div className="flex items-start gap-3">
           <div className="rounded-full bg-primary/15 p-2 text-primary">
             <Target className="size-5" />
@@ -194,7 +213,7 @@ export function CoachMe() {
                 <Badge
                   key={d}
                   variant="secondary"
-                  className="gap-1 bg-white/70 text-foreground"
+                  className="gap-1 bg-card/70 text-foreground"
                 >
                   <span className="text-primary">{DIMENSIONS[d].icon}</span>
                   {DIMENSIONS[d].name}
@@ -207,9 +226,26 @@ export function CoachMe() {
           </div>
         </div>
 
-        <div className="mt-5 rounded-xl bg-white/60 p-4">
+        <div className="mt-5 space-y-3">
+          {scenario.dimensions.map((d) => (
+            <div
+              key={d}
+              className="rounded-xl border border-border/40 bg-card/60 p-3"
+            >
+              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <span className="text-primary">{DIMENSIONS[d].icon}</span>
+                {DIMENSIONS[d].name}
+              </div>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                {DIMENSIONS[d].blurb}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-5 rounded-xl bg-card/60 p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Next three actions
+            Try these three actions next
           </p>
           <ul className="mt-2 space-y-2">
             {scenario.actions.map((a, i) => (
@@ -235,14 +271,17 @@ export function CoachMe() {
             disabled={focus}
             className="shadow-[var(--shadow-soft)]"
           >
-            {focus ? "Focus started" : "Start focus"}
+            {focus ? "Focus started" : "Start this focus"}
+          </Button>
+          <Button size="sm" variant="outline">
+            Review at-risk clients
           </Button>
           <Button
             size="sm"
-            variant="outline"
+            variant="ghost"
             onClick={() => setShowAll((v) => !v)}
           >
-            {showAll ? "Hide" : "View"} all five dimensions
+            View all Five Dimensions
             <ChevronDown
               className={`ml-1 size-3.5 transition-transform ${
                 showAll ? "rotate-180" : ""
