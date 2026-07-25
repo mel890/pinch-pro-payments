@@ -12,8 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TrainerCapacityRouteImport } from './routes/trainer-capacity'
 import { Route as TrainerRouteImport } from './routes/trainer'
 import { Route as SessionQrRouteImport } from './routes/session-qr'
+import { Route as ReviewRouteImport } from './routes/review'
 import { Route as PayRouteImport } from './routes/pay'
 import { Route as OpportunityRouteImport } from './routes/opportunity'
+import { Route as OngoingRouteImport } from './routes/ongoing'
 import { Route as MeRouteImport } from './routes/me'
 import { Route as DemoConsoleRouteImport } from './routes/demo-console'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -38,6 +40,11 @@ const SessionQrRoute = SessionQrRouteImport.update({
   path: '/session-qr',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReviewRoute = ReviewRouteImport.update({
+  id: '/review',
+  path: '/review',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PayRoute = PayRouteImport.update({
   id: '/pay',
   path: '/pay',
@@ -46,6 +53,11 @@ const PayRoute = PayRouteImport.update({
 const OpportunityRoute = OpportunityRouteImport.update({
   id: '/opportunity',
   path: '/opportunity',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OngoingRoute = OngoingRouteImport.update({
+  id: '/ongoing',
+  path: '/ongoing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MeRoute = MeRouteImport.update({
@@ -95,8 +107,10 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/demo-console': typeof DemoConsoleRoute
   '/me': typeof MeRoute
+  '/ongoing': typeof OngoingRoute
   '/opportunity': typeof OpportunityRoute
   '/pay': typeof PayRoute
+  '/review': typeof ReviewRoute
   '/session-qr': typeof SessionQrRoute
   '/trainer': typeof TrainerRoute
   '/trainer-capacity': typeof TrainerCapacityRoute
@@ -110,8 +124,10 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/demo-console': typeof DemoConsoleRoute
   '/me': typeof MeRoute
+  '/ongoing': typeof OngoingRoute
   '/opportunity': typeof OpportunityRoute
   '/pay': typeof PayRoute
+  '/review': typeof ReviewRoute
   '/session-qr': typeof SessionQrRoute
   '/trainer': typeof TrainerRoute
   '/trainer-capacity': typeof TrainerCapacityRoute
@@ -126,8 +142,10 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/demo-console': typeof DemoConsoleRoute
   '/me': typeof MeRoute
+  '/ongoing': typeof OngoingRoute
   '/opportunity': typeof OpportunityRoute
   '/pay': typeof PayRoute
+  '/review': typeof ReviewRoute
   '/session-qr': typeof SessionQrRoute
   '/trainer': typeof TrainerRoute
   '/trainer-capacity': typeof TrainerCapacityRoute
@@ -143,8 +161,10 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/demo-console'
     | '/me'
+    | '/ongoing'
     | '/opportunity'
     | '/pay'
+    | '/review'
     | '/session-qr'
     | '/trainer'
     | '/trainer-capacity'
@@ -158,8 +178,10 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/demo-console'
     | '/me'
+    | '/ongoing'
     | '/opportunity'
     | '/pay'
+    | '/review'
     | '/session-qr'
     | '/trainer'
     | '/trainer-capacity'
@@ -173,8 +195,10 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/demo-console'
     | '/me'
+    | '/ongoing'
     | '/opportunity'
     | '/pay'
+    | '/review'
     | '/session-qr'
     | '/trainer'
     | '/trainer-capacity'
@@ -189,8 +213,10 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   DemoConsoleRoute: typeof DemoConsoleRoute
   MeRoute: typeof MeRoute
+  OngoingRoute: typeof OngoingRoute
   OpportunityRoute: typeof OpportunityRoute
   PayRoute: typeof PayRoute
+  ReviewRoute: typeof ReviewRoute
   SessionQrRoute: typeof SessionQrRoute
   TrainerRoute: typeof TrainerRoute
   TrainerCapacityRoute: typeof TrainerCapacityRoute
@@ -222,6 +248,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SessionQrRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/review': {
+      id: '/review'
+      path: '/review'
+      fullPath: '/review'
+      preLoaderRoute: typeof ReviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pay': {
       id: '/pay'
       path: '/pay'
@@ -234,6 +267,13 @@ declare module '@tanstack/react-router' {
       path: '/opportunity'
       fullPath: '/opportunity'
       preLoaderRoute: typeof OpportunityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ongoing': {
+      id: '/ongoing'
+      path: '/ongoing'
+      fullPath: '/ongoing'
+      preLoaderRoute: typeof OngoingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/me': {
@@ -301,8 +341,10 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   DemoConsoleRoute: DemoConsoleRoute,
   MeRoute: MeRoute,
+  OngoingRoute: OngoingRoute,
   OpportunityRoute: OpportunityRoute,
   PayRoute: PayRoute,
+  ReviewRoute: ReviewRoute,
   SessionQrRoute: SessionQrRoute,
   TrainerRoute: TrainerRoute,
   TrainerCapacityRoute: TrainerCapacityRoute,

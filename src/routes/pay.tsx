@@ -1,376 +1,175 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useSuspenseQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { z } from "zod";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getSnapshot, purchasePack } from "@/lib/vezapt-live.functions";
+import { Check, CreditCard, ArrowRight, ShieldCheck } from "lucide-react";
 import { formatAUD } from "@/lib/money";
-import { CheckCircle2, Lock, ShieldCheck } from "lucide-react";
-
-const paySearchSchema = z.object({
-  pack: z.string().optional(),
-  trainer: z.string().optional(),
-  member: z.string().optional(),
-});
+import {
+  useJourney,
+  journey,
+  KICKSTART,
+  INTAKE,
+  CLUB,
+  MEMBER,
+} from "@/lib/journey-store";
 
 export const Route = createFileRoute("/pay")({
   head: () => ({
     meta: [
-      { title: "Pay your PT pack — VezaPT Pay" },
+      { title: "PT Kickstart Pack — start with clarity | VezaPT Pay" },
       {
         name: "description",
         content:
-          "Sandbox client checkout: pay for your PT pack. Funds only release to your trainer when you confirm each session.",
+          "Buy the 3-session PT Kickstart Pack: goal and confidence review, personalised starting programme, habit tracker and a recommended next step.",
       },
-      { property: "og:title", content: "Pay your PT pack — VezaPT Pay" },
+      { property: "og:title", content: "PT Kickstart Pack — VezaPT Pay" },
       {
         property: "og:description",
         content:
-          "Sandbox checkout for the VezaPT Pay hackathon demo. No real money moves.",
+          "Three 45-minute PT sessions, a personalised starting programme and a clear next step for $249.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  validateSearch: paySearchSchema,
-  loader: async ({ context }) =>
-    context.queryClient.ensureQueryData({
-      queryKey: ["snapshot"],
-      queryFn: () => getSnapshot(),
-      staleTime: 0,
-    }),
-  component: PayScreen,
+  component: MemberPurchase,
 });
 
-type Tier = {
-  id: string;
-  name: string;
-  bullets: string[];
-  priceLabel: string;
-  cta: string;
-  match: (p: any) => boolean;
-  highlight?: boolean;
-};
-
-const TIERS: Tier[] = [
-  {
-    id: "kickstart",
-    name: "PT Kickstart",
-    bullets: ["3 PT sessions", "Personalised starting programme", "Habit tracker"],
-    priceLabel: "$249",
-    cta: "Choose Kickstart",
-    match: (p) => Number(p.sessions_total) <= 5,
-  },
-  {
-    id: "momentum",
-    name: "6-Week Momentum",
-    bullets: [
-      "6 or 12 PT sessions",
-      "Workout templates",
-      "Weekly accountability",
-      "Progress review",
-    ],
-    priceLabel: "From $699",
-    cta: "Compare options",
-    match: (p) => Number(p.sessions_total) >= 6 && Number(p.sessions_total) < 20,
-    highlight: true,
-  },
-  {
-    id: "transformation",
-    name: "12-Week Transformation",
-    bullets: [
-      "12 or 24 PT sessions",
-      "Progressive programme",
-      "Habit coaching",
-      "Three progress reviews",
-    ],
-    priceLabel: "From $1,299",
-    cta: "Explore Transformation",
-    match: (p) => Number(p.sessions_total) >= 20,
-  },
+const FIELDS: { label: string; value: string }[] = [
+  { label: "Primary goal", value: INTAKE.goal },
+  { label: "Training experience", value: INTAKE.experience },
+  { label: "Preferred days", value: INTAKE.days },
+  { label: "Preferred times", value: INTAKE.times },
+  { label: "Coaching style", value: INTAKE.style },
+  { label: "Confidence today", value: `${INTAKE.confidence}/10` },
+  { label: "Current gym attendance", value: `${INTAKE.attendance} visits per week` },
 ];
 
-function PayScreen() {
-  const search = Route.useSearch();
-  const { data: snap } = useSuspenseQuery({
-    queryKey: ["snapshot"],
-    queryFn: () => getSnapshot(),
-    staleTime: 0,
-  });
-  const qc = useQueryClient();
-  const navigate = useNavigate();
+function MemberPurchase() {
+  const s = useJourney();
+  const [paying, setPaying] = useState(false);
 
-  const [chosenPackId, setChosenPackId] = useState<string | undefined>(search.pack);
-
-  const pack = chosenPackId
-    ? snap.packs.find((p: any) => p.id === chosenPackId)
-    : undefined;
-  const trainerId = search.trainer ?? pack?.trainer_id;
-  const memberId = search.member ?? pack?.member_id;
-
-  const trainer = pack ? snap.trainers.find((t: any) => t.id === trainerId) : undefined;
-  const member = pack ? snap.members.find((m: any) => m.id === memberId) : undefined;
-
-  const perSession = pack
-    ? Math.round(
-        Number(pack.total_amount) / (Number(pack.sessions_total) || 1),
-      )
-    : 0;
-
-  const [card, setCard] = useState({ number: "4111 1111 1111 1111", exp: "12/29", cvc: "123" });
-  const [done, setDone] = useState<null | { pinchId: string; sessionId: string }>(null);
-
-  const buy = useMutation({
-    mutationFn: () =>
-      purchasePack({
-        data: {
-          packId: pack!.id,
-          trainerId: trainerId!,
-          memberId: memberId!,
-          method: "QR",
-        },
-      }),
-    onSuccess: (res) => {
-      qc.invalidateQueries({ queryKey: ["snapshot"] });
-      setDone({
-        pinchId: res.pinchId,
-        sessionId: (res.session as any)?.id ?? "",
-      });
-    },
-  });
-
-  function pickTier(tier: Tier) {
-    const match = snap.packs.find((p: any) => tier.match(p)) ?? snap.packs[0];
-    if (match) setChosenPackId(match.id);
-  }
-
-  if (!pack) {
-    return (
-      <div className="min-h-screen bg-background text-foreground">
-        <div className="mx-auto max-w-5xl px-5 pt-10 pb-16 sm:px-8">
-          <header className="flex items-center justify-between">
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-              VezaPT Pay
-            </p>
-            <Badge className="border border-warm/40 bg-warm/10 text-[color:var(--warm)] hover:bg-warm/10">
-              Pinch · Sandbox
-            </Badge>
-          </header>
-
-          <h1 className="mt-6 max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
-            Choose the support that fits your goal
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
-            Every option is delivered by a matched trainer. Pick the level that
-            feels right — you can always step up later.
-          </p>
-
-          <div className="mt-8 grid gap-5 md:grid-cols-3">
-            {TIERS.map((t) => (
-              <Card
-                key={t.id}
-                className={`flex h-full flex-col p-6 transition ${
-                  t.highlight
-                    ? "border-primary/50 bg-primary/5"
-                    : "border-border hover:border-primary/40"
-                }`}
-              >
-                {t.highlight && (
-                  <span className="mb-3 inline-flex w-fit rounded-full bg-primary/15 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
-                    Most popular
-                  </span>
-                )}
-                <h3 className="text-lg font-semibold text-foreground">{t.name}</h3>
-                <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
-                  {t.bullets.map((b) => (
-                    <li key={b} className="flex items-start gap-2">
-                      <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
-                      <span>{b}</span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-5 font-mono text-2xl font-semibold tracking-tight text-foreground">
-                  {t.priceLabel}
-                </div>
-                <Button
-                  size="lg"
-                  className="mt-5 h-12 w-full font-semibold"
-                  variant={t.highlight ? "default" : "secondary"}
-                  onClick={() => pickTier(t)}
-                >
-                  {t.cta}
-                </Button>
-              </Card>
-            ))}
-          </div>
-
-          <Card className="mt-8 border-border/80 bg-secondary/30 p-5">
-            <p className="text-sm font-medium text-foreground">
-              Not sure which level is right?
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Answer three questions and we'll recommend a starting point.
-            </p>
-            <Button variant="outline" size="sm" className="mt-4">
-              Help me choose
-            </Button>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-
+  const buy = () => {
+    setPaying(true);
+    setTimeout(() => {
+      journey.pay();
+      setPaying(false);
+    }, 900);
+  };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-md px-5 pt-8 pb-16">
-        <header className="flex items-center justify-between">
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            VezaPT Pay
-          </p>
-          <Badge className="border border-warm/40 bg-warm/10 text-[color:var(--warm)] hover:bg-warm/10">
-            Pinch · Sandbox
-          </Badge>
-        </header>
-
-        <button
-          onClick={() => { setChosenPackId(undefined); setDone(null); }}
-          className="mt-4 text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
-        >
-          ← Change plan
-        </button>
-
-        <h1 className="mt-3 text-2xl font-semibold tracking-tight">
-          {pack.name}
+    <div className="min-h-screen bg-background pb-20 text-foreground">
+      <div className="mx-auto max-w-5xl px-5 pt-10 sm:px-8">
+        <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          {CLUB.name} · member offer
+        </p>
+        <h1 className="mt-2 max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
+          Start with clarity, confidence and a plan.
         </h1>
-
-        <p className="mt-1 text-sm text-muted-foreground">
-          With {trainer?.name ?? "your trainer"}
-          {member ? ` · Paying as ${member.name}` : ""}
+        <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
+          Three coached sessions with a {CLUB.name} trainer, a programme built
+          around your goal, and a clear recommendation for what comes next.
         </p>
 
-        <Card className="mt-6 border-border p-5">
-          <Row label="Pack price" value={formatAUD(pack.total_amount)} />
-          <Row label="Sessions" value={String(pack.sessions_total)} />
-          <Row label="Per session" value={formatAUD(perSession)} />
-          <div className="mt-3 flex items-start gap-2 rounded-lg border border-border/60 bg-secondary/40 p-3 text-xs text-muted-foreground">
-            <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
-            <span>
-              Charged now, held by the club. Each session's split releases only
-              after you tap Verify.
-            </span>
-          </div>
-        </Card>
-
-        {!done && (
-          <Card className="mt-4 border-border p-5">
-            <p className="text-sm font-medium">Card details</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Test card only · tokenised client-side · no real charge
-            </p>
-            <div className="mt-4 space-y-3">
-              <LabeledInput
-                label="Card number"
-                value={card.number}
-                onChange={(v) => setCard((c) => ({ ...c, number: v }))}
-              />
-              <div className="grid grid-cols-2 gap-3">
-                <LabeledInput
-                  label="Expiry"
-                  value={card.exp}
-                  onChange={(v) => setCard((c) => ({ ...c, exp: v }))}
-                />
-                <LabeledInput
-                  label="CVC"
-                  value={card.cvc}
-                  onChange={(v) => setCard((c) => ({ ...c, cvc: v }))}
-                />
-              </div>
-            </div>
-
-            <Button
-              size="lg"
-              className="mt-5 h-14 w-full text-base font-semibold shadow-[var(--shadow-soft)]"
-              onClick={() => buy.mutate()}
-              disabled={buy.isPending}
-            >
-              <Lock className="mr-2 size-4" />
-              {buy.isPending ? "Processing…" : `Pay ${formatAUD(pack.total_amount)}`}
-            </Button>
-
-            {buy.error && (
-              <p className="mt-2 text-xs text-destructive">
-                {(buy.error as Error).message}
-              </p>
-            )}
-          </Card>
-        )}
-
-        {done && (
-          <Card className="mt-4 border-primary/40 bg-primary/10 p-5">
+        {s.paid ? (
+          <Card className="mt-8 border-primary/40 bg-primary/5 p-6">
             <div className="flex items-center gap-2 text-primary">
-              <CheckCircle2 className="size-5" />
-              <p className="font-semibold">Payment received</p>
+              <Check className="size-5" />
+              <p className="text-lg font-semibold">Payment confirmed.</p>
             </div>
-            <p className="mt-1 text-sm text-foreground/80">
-              {pack.sessions_total} sessions credited. Session 1 is now assigned
-              to {trainer?.name ?? "your trainer"}.
+            <p className="mt-1 text-sm text-muted-foreground">
+              We're finding the right trainer for you. You'll hear from your
+              coach shortly to book session one.
             </p>
-            <div className="mt-3 space-y-1 font-mono text-xs text-muted-foreground">
-              <div>pinch_payment_id: {done.pinchId}</div>
-              <div>session_id: {done.sessionId}</div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <Paid label="Paid today" value={formatAUD(KICKSTART.priceCents)} />
+              <Paid label="Trainer payout" value={formatAUD(KICKSTART.trainerPayoutCents)} />
+              <Paid label="Club campaign fee" value={formatAUD(KICKSTART.clubFeeCents)} />
             </div>
-            <Button
-              asChild
-              size="lg"
-              className="mt-5 h-12 w-full font-semibold"
-            >
-              <Link to="/me">Go to your sessions</Link>
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="mt-2 w-full"
-              onClick={() => navigate({ to: "/trainer" })}
-            >
-              Peek at the trainer screen
+            <Button asChild className="mt-5">
+              <Link to="/opportunity">
+                Next: trainer receives the opportunity{" "}
+                <ArrowRight className="ml-1 size-4" />
+              </Link>
             </Button>
           </Card>
+        ) : (
+          <div className="mt-8 grid gap-5 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
+            <Card className="border-primary/30 p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <Badge className="border border-primary/40 bg-primary/10 text-primary">
+                    Entry product
+                  </Badge>
+                  <h2 className="mt-2 text-2xl font-semibold">{KICKSTART.name}</h2>
+                </div>
+                <div className="text-right">
+                  <p className="font-mono text-3xl font-semibold tabular-nums">
+                    {formatAUD(KICKSTART.priceCents)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">one-off payment</p>
+                </div>
+              </div>
+
+              <ul className="mt-5 space-y-2">
+                {KICKSTART.includes.map((i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm">
+                    <Check className="mt-0.5 size-4 shrink-0 text-primary" />
+                    {i}
+                  </li>
+                ))}
+              </ul>
+
+              <Button
+                size="lg"
+                className="mt-6 w-full shadow-[var(--shadow-soft)]"
+                onClick={buy}
+                disabled={paying}
+              >
+                <CreditCard className="mr-2 size-4" />
+                {paying ? "Opening secure checkout…" : "Buy with Pinch"}
+              </Button>
+              <p className="mt-2 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+                <ShieldCheck className="size-3.5" /> Secure Australian payment
+                processing. Sandbox for this demo.
+              </p>
+            </Card>
+
+            <Card className="border-border p-6">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                About you · {MEMBER.name}
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Your answers go straight to the trainer we match you with.
+              </p>
+              <dl className="mt-4 space-y-3">
+                {FIELDS.map((f) => (
+                  <div key={f.label}>
+                    <dt className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                      {f.label}
+                    </dt>
+                    <dd className="mt-0.5 rounded-lg border border-border bg-card/70 px-3 py-2 text-sm">
+                      {f.value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </Card>
+          </div>
         )}
       </div>
     </div>
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Paid({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between py-1.5 text-sm">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-mono tabular-nums text-foreground">{value}</span>
-    </div>
-  );
-}
-
-function LabeledInput({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <label className="block">
-      <span className="text-xs uppercase tracking-wider text-muted-foreground">
+    <div className="rounded-xl border border-border bg-card/60 p-3">
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
         {label}
-      </span>
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full rounded-lg border border-border bg-secondary/60 px-3 py-2 font-mono text-sm text-foreground outline-none focus:border-primary"
-      />
-    </label>
+      </p>
+      <p className="mt-1 font-mono text-lg font-semibold tabular-nums">{value}</p>
+    </div>
   );
 }
