@@ -10,7 +10,36 @@ import {
   confirmPtSession,
   pinchEnvCheck,
   getSupabaseConfig,
+  createCheckout,
 } from "@/lib/vezapt.functions";
+
+type DebugEntry = {
+  ts: number;
+  phase: string;
+  level: "info" | "success" | "error";
+  title: string;
+  detail?: any;
+};
+
+function redact(v: string | null | undefined): string {
+  if (!v) return "";
+  const s = String(v);
+  if (s.length <= 8) return "•".repeat(s.length);
+  return `${s.slice(0, 4)}…${s.slice(-4)} (len=${s.length})`;
+}
+
+function redactHeaders(h: Record<string, string>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(h)) {
+    const key = k.toLowerCase();
+    if (key === "authorization" || key === "apikey" || key === "x-api-key") {
+      out[k] = redact(v.replace(/^Bearer\s+/i, ""));
+    } else {
+      out[k] = v;
+    }
+  }
+  return out;
+}
 
 const demoQuery = queryOptions({
   queryKey: ["vezapt-demo"],
@@ -95,6 +124,12 @@ function DemoPage() {
 
   const refresh = () => router.invalidate();
 
+  // Debug log — captures each phase of the Pinch flow.
+  const [debugLog, setDebugLog] = useState<DebugEntry[]>([]);
+  const pushDebug = (e: Omit<DebugEntry, "ts">) =>
+    setDebugLog((prev) => [...prev, { ...e, ts: Date.now() }]);
+  const clearDebug = () => setDebugLog([]);
+
   // Auto-seed on load if the pt_packs table is empty; retries on refresh.
   const autoSeededRef = useRef(false);
   useEffect(() => {
@@ -107,23 +142,40 @@ function DemoPage() {
 
   const checkout = useMutation({
     mutationFn: async (v: { memberId: string; packId: string }) => {
+      pushDebug({ phase: "1. cfg", level: "info", title: "Fetching Supabase config", detail: v });
       const cfg = await cfgFn();
       if (!cfg.url || !cfg.anonKey) {
+        pushDebug({ phase: "1. cfg", level: "error", title: "Missing URL or anon key", detail: { hasUrl: !!cfg.url, hasAnonKey: !!cfg.anonKey } });
         throw new Error("Supabase config unavailable (missing URL or publishable key).");
       }
       const endpoint = `${cfg.url.replace(/\/$/, "")}/functions/v1/pinch-buy-pack`;
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: cfg.anonKey,
-          Authorization: `Bearer ${cfg.anonKey}`,
-        },
-        body: JSON.stringify(v),
+      const headers = {
+        "Content-Type": "application/json",
+        apikey: cfg.anonKey,
+        Authorization: `Bearer ${cfg.anonKey}`,
+      };
+      pushDebug({
+        phase: "2. edge fn request",
+        level: "info",
+        title: `POST ${endpoint}`,
+        detail: { headers: redactHeaders(headers), body: v },
       });
+      let res: Response;
+      try {
+        res = await fetch(endpoint, { method: "POST", headers, body: JSON.stringify(v) });
+      } catch (err) {
+        pushDebug({ phase: "2. edge fn request", level: "error", title: "Network/CORS error", detail: err instanceof Error ? err.message : String(err) });
+        throw err;
+      }
       const raw = await res.text();
       let json: any = null;
       try { json = raw ? JSON.parse(raw) : null; } catch { json = { raw }; }
+      pushDebug({
+        phase: "3. edge fn response",
+        level: res.ok ? "success" : "error",
+        title: `${res.status} ${res.statusText}`,
+        detail: { status: res.status, ok: res.ok, body: json ?? raw.slice(0, 600) },
+      });
       if (!res.ok) {
         const msg = json?.error ?? json?.message ?? raw?.slice(0, 300) ?? `HTTP ${res.status}`;
         throw new Error(`pinch-buy-pack ${res.status}: ${msg}`);
@@ -133,11 +185,51 @@ function DemoPage() {
     onSuccess: (res: any) => {
       const url = res?.paymentUrl ?? res?.payment_url ?? res?.url ?? null;
       setPinchInfo({ pinch: { url, id: res?.paymentId ?? res?.id ?? null }, response: res });
+      pushDebug({ phase: "4. hosted url", level: url ? "success" : "error", title: url ? "Received hosted checkout URL" : "No paymentUrl in response", detail: { url, id: res?.paymentId ?? res?.id ?? null } });
       setErrorMsg(null);
       if (url) window.open(url, "_blank", "noopener,noreferrer");
       refresh();
     },
-    onError: (e) => setErrorMsg(e instanceof Error ? e.message : String(e)),
+    onError: (e) => {
+      pushDebug({ phase: "!! failure", level: "error", title: "Checkout mutation rejected", detail: e instanceof Error ? e.message : String(e) });
+      setErrorMsg(e instanceof Error ? e.message : String(e));
+    },
+  });
+
+  // Alternate path: bypass edge function and call Pinch directly via our TanStack server fn.
+  // This route has full server-side instrumentation and returns redacted diagnostics.
+  const serverCheckoutFn = useServerFn(createCheckout);
+  const serverCheckout = useMutation({
+    mutationFn: async (v: { memberId: string; packId: string }) => {
+      pushDebug({ phase: "S1. server fn", level: "info", title: "Calling createCheckout (TanStack server fn → Pinch)", detail: v });
+      const res = await serverCheckoutFn({ data: v });
+      return res;
+    },
+    onSuccess: (res: any) => {
+      pushDebug({
+        phase: "S2. pinch diagnostics",
+        level: res?.pinchError ? "error" : "success",
+        title: res?.pinchError ? "Pinch call failed" : "Pinch call ok",
+        detail: res?.diagnostics,
+      });
+      if (res?.pinchError) {
+        pushDebug({ phase: "S3. pinch error", level: "error", title: "Verbatim Pinch error", detail: res.pinchError });
+      }
+      if (res?.insertError) {
+        pushDebug({ phase: "S4. payments_log", level: "error", title: "Insert into payments_log failed", detail: res.insertError });
+      } else if (res?.payment) {
+        pushDebug({ phase: "S4. payments_log", level: "success", title: "Inserted payments_log row", detail: { id: res.payment.id, status: res.payment.status } });
+      }
+      if (res?.pinch?.url) {
+        setPinchInfo({ pinch: res.pinch, response: res });
+        window.open(res.pinch.url, "_blank", "noopener,noreferrer");
+      }
+      refresh();
+    },
+    onError: (e) => {
+      pushDebug({ phase: "!! server fn threw", level: "error", title: "createCheckout rejected", detail: e instanceof Error ? e.message : String(e) });
+      setErrorMsg(e instanceof Error ? e.message : String(e));
+    },
   });
 
   const pay = useMutation({
@@ -277,6 +369,14 @@ function DemoPage() {
               onClick={() => checkout.mutate({ memberId, packId })}
             >
               {checkout.isPending ? "Creating…" : "Create Pinch checkout"}
+            </button>
+            <button
+              className="mt-2 inline-flex w-full items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-xs font-medium hover:bg-accent disabled:opacity-50"
+              disabled={!memberId || !packId || serverCheckout.isPending}
+              onClick={() => serverCheckout.mutate({ memberId, packId })}
+              title="Bypass the edge function — call Pinch directly from our TanStack server fn (fully instrumented)."
+            >
+              {serverCheckout.isPending ? "Debugging…" : "Debug via server (bypass edge fn)"}
             </button>
             {lastPayment && (
               <div className="mt-3 rounded-md border border-border bg-muted/30 p-2 text-xs space-y-1">
@@ -458,6 +558,8 @@ function DemoPage() {
           </details>
         </section>
 
+        <DebugPanel entries={debugLog} onClear={clearDebug} />
+
         <PinchEnvPanel />
 
 
@@ -489,6 +591,61 @@ function DemoPage() {
         VezaPT Pay · powered by Pinch Payments (sandbox)
       </footer>
     </div>
+  );
+}
+
+function DebugPanel({ entries, onClear }: { entries: DebugEntry[]; onClear: () => void }) {
+  const t0 = entries[0]?.ts;
+  return (
+    <section>
+      <details className="rounded-md border border-border bg-card" open={entries.length > 0}>
+        <summary className="cursor-pointer px-4 py-3 text-sm font-medium flex items-center justify-between">
+          <span>Pinch flow debug ({entries.length} events)</span>
+          {entries.length > 0 && (
+            <button
+              className="text-xs text-muted-foreground hover:text-foreground underline"
+              onClick={(e) => { e.preventDefault(); onClear(); }}
+            >
+              clear
+            </button>
+          )}
+        </summary>
+        <div className="p-4 space-y-2 text-xs">
+          {entries.length === 0 ? (
+            <p className="text-muted-foreground">
+              No events yet. Click <b>Create Pinch checkout</b> or <b>Debug via server</b> in Step 1
+              to capture each request / response (secrets redacted).
+            </p>
+          ) : (
+            entries.map((e, i) => {
+              const colour =
+                e.level === "error"
+                  ? "border-destructive/40 bg-destructive/5"
+                  : e.level === "success"
+                  ? "border-emerald-500/30 bg-emerald-500/5"
+                  : "border-border bg-muted/30";
+              const dot =
+                e.level === "error" ? "bg-destructive" : e.level === "success" ? "bg-emerald-500" : "bg-muted-foreground";
+              return (
+                <div key={i} className={`rounded-md border ${colour} p-2`}>
+                  <div className="flex items-center gap-2 font-mono text-[11px]">
+                    <span className={`inline-block h-2 w-2 rounded-full ${dot}`} />
+                    <span className="text-muted-foreground">+{t0 ? e.ts - t0 : 0}ms</span>
+                    <span className="font-semibold">{e.phase}</span>
+                    <span className="text-foreground">{e.title}</span>
+                  </div>
+                  {e.detail !== undefined && (
+                    <pre className="mt-1 overflow-x-auto whitespace-pre-wrap break-words rounded bg-background/60 p-2 text-[10px]">
+{typeof e.detail === "string" ? e.detail : JSON.stringify(e.detail, null, 2)}
+                    </pre>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+      </details>
+    </section>
   );
 }
 
