@@ -411,6 +411,104 @@ const TRAINER_SIGNALS = [
   { retention: "Needs attention", retentionTone: "border-destructive/40 bg-destructive/10 text-destructive", support: "4.3 / 5", focus: "Movement Mastery" },
 ];
 
+type TrainerProfile = {
+  accepting: string[];
+  capacity: { label: string; filled: number; total: number }[];
+  clients: { active: number; completing: number; continuation: number };
+  earningsCents: { earned: number; pending: number; potential: number };
+  signals: { acceptance: string; packCompletion: string; ongoing: string; support: string };
+};
+
+const TRAINER_PROFILES: TrainerProfile[] = [
+  {
+    accepting: ["Kickstart Packs", "6-Week Momentum", "Online coaching"],
+    capacity: [
+      { label: "Kickstart", filled: 2, total: 4 },
+      { label: "Challenge", filled: 3, total: 5 },
+    ],
+    clients: { active: 7, completing: 2, continuation: 1 },
+    earningsCents: { earned: 248600, pending: 79800, potential: 328400 },
+    signals: {
+      acceptance: "Strong",
+      packCompletion: "92%",
+      ongoing: "46%",
+      support: "4.5 / 5",
+    },
+  },
+  {
+    accepting: ["6-Week Momentum", "12-Week Transformation"],
+    capacity: [
+      { label: "Momentum", filled: 3, total: 4 },
+      { label: "Transformation", filled: 1, total: 3 },
+    ],
+    clients: { active: 9, completing: 1, continuation: 2 },
+    earningsCents: { earned: 312400, pending: 64200, potential: 289500 },
+    signals: {
+      acceptance: "Reliable",
+      packCompletion: "88%",
+      ongoing: "51%",
+      support: "4.7 / 5",
+    },
+  },
+  {
+    accepting: ["Kickstart Packs", "Online coaching"],
+    capacity: [
+      { label: "Kickstart", filled: 1, total: 4 },
+      { label: "Online", filled: 4, total: 6 },
+    ],
+    clients: { active: 5, completing: 0, continuation: 1 },
+    earningsCents: { earned: 178300, pending: 42500, potential: 196400 },
+    signals: {
+      acceptance: "Watch",
+      packCompletion: "81%",
+      ongoing: "38%",
+      support: "4.3 / 5",
+    },
+  },
+];
+
+function RosterBlock({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
+      <div className="mt-1.5">{children}</div>
+    </div>
+  );
+}
+
+function EarningsRow({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: "primary" | "warm" | "muted";
+}) {
+  const cls =
+    tone === "primary"
+      ? "text-primary"
+      : tone === "warm"
+        ? "text-[color:var(--warm)]"
+        : "text-foreground/80";
+  return (
+    <li className="flex items-center justify-between">
+      <span className="text-muted-foreground">{label}</span>
+      <span className={`font-mono font-semibold tabular-nums ${cls}`}>{value}</span>
+    </li>
+  );
+}
+
+function SignalRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between border-b border-border/30 pb-1 last:border-0 last:pb-0">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium text-foreground/90">{value}</span>
+    </div>
+  );
+}
+
+
 function HealthRow({ label, value, tone }: { label: string; value: string; tone: "good" | "warn" }) {
   const cls = tone === "good" ? "text-primary" : "text-[color:var(--warm)]";
   return (
