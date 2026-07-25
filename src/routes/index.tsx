@@ -64,13 +64,13 @@ function StartScreen() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-5xl px-5 pt-10 pb-16 sm:px-8">
-        <header className="flex items-center justify-between">
+        <header className="flex items-center justify-between gap-4">
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
               VezaPT Pay
             </p>
             <h1 className="mt-2 max-w-3xl text-3xl font-semibold tracking-tight sm:text-4xl">
-              Pay trainers for sessions delivered. Show them the difference those sessions make.
+              Turn member interest into paid coaching—without adding a PT sales team.
             </h1>
           </div>
           <Badge className="border border-warm/40 bg-warm/10 text-[color:var(--warm)] hover:bg-warm/10">
@@ -79,35 +79,52 @@ function StartScreen() {
         </header>
 
         <p className="mt-4 max-w-2xl text-sm text-muted-foreground">
-          VezaPT Pay connects client-confirmed coaching, progressive trainer
-          earnings and real client impact in one simple flow.
+          Launch ready-made PT packs and challenges, match each buyer with an
+          available trainer, and track whether every purchase becomes an active,
+          ongoing coaching relationship.
         </p>
 
         <section className="mt-8">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            The session-confirmation journey
+            How VezaPT turns interest into coaching
           </p>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <JourneyCard
-              step="Client"
-              title="Choose the support that fits your goals."
+              step="1 · Gym"
+              title="Gym launches an offer"
+              body="Choose an always-on pack or quarterly challenge."
+              to="/dashboard"
+            />
+            <JourneyCard
+              step="2 · Member"
+              title="Members buy or register"
+              body="Promote through email, social, QR codes and in-club campaigns."
               to="/pay"
               search={pack ? { pack: pack.id, trainer: trainerId, member: memberId } : undefined}
             />
             <JourneyCard
-              step="Trainer"
-              title="Deliver coaching, confirm the session and build sustainable production."
-              to="/trainer"
+              step="3 · VezaPT"
+              title="VezaPT matches the right trainer"
+              body="Based on availability, capacity, speciality and member preference."
+              to="/dashboard"
             />
             <JourneyCard
-              step="Client confirmation"
-              title="Confirm the session and record what changed."
-              to="/me"
+              step="4 · Trainer"
+              title="Trainer accepts the paid opportunity"
+              body="The trainer sees the commitment and payout before accepting."
+              to="/trainer"
               highlight
             />
             <JourneyCard
-              step="Manager"
-              title="See revenue, trainer performance, client momentum and coaching priorities."
+              step="5 · Member"
+              title="Member starts coaching"
+              body="Sessions, templates and habits begin automatically."
+              to="/me"
+            />
+            <JourneyCard
+              step="6 · VezaPT"
+              title="VezaPT tracks progression"
+              body="See who starts, completes and moves into ongoing coaching."
               to="/dashboard"
             />
           </div>
@@ -116,7 +133,7 @@ function StartScreen() {
         <section className="mt-8 grid gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
           <Card className="border-border bg-card p-6">
             <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-              <QrCode className="size-3.5" /> Sandbox purchase QR
+              <QrCode className="size-3.5" /> Campaign QR
             </div>
             <p className="mt-2 text-sm text-muted-foreground">
               {pack?.name ?? "No pack seeded"}
@@ -129,10 +146,9 @@ function StartScreen() {
 
             {qrSrc && (
               <div className="mt-4 flex flex-col items-center gap-3 rounded-xl bg-background/60 p-4">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={qrSrc}
-                  alt="Scan to open the client checkout"
+                  alt="Scan to open the member checkout"
                   width={200}
                   height={200}
                   className="rounded-md"
@@ -140,20 +156,9 @@ function StartScreen() {
               </div>
             )}
 
-            {pack && (
-              <Button asChild className="mt-4 w-full" size="sm" variant="secondary">
-                <Link
-                  to="/pay"
-                  search={{ pack: pack.id, trainer: trainerId, member: memberId }}
-                >
-                  Open client view <ArrowRight className="ml-1.5 size-4" />
-                </Link>
-              </Button>
-            )}
             <p className="mt-3 text-[11px] text-muted-foreground">
-              The purchase step exists so we can run the full flow end-to-end.
-              The heart of the demo is what happens after: coaching, client
-              confirmation and impact.
+              Drop this QR into posters, emails or in-club screens. Every scan
+              opens a live checkout, matched to an available trainer.
             </p>
           </Card>
 
@@ -162,22 +167,30 @@ function StartScreen() {
               <Smartphone className="size-3.5" /> Product promise
             </div>
             <p className="mt-3 text-lg font-semibold leading-snug text-foreground">
-              Payment is linked to verified service. Impact is captured at the
-              same moment.
+              Every offer becomes a matched trainer, an active member and a
+              measurable coaching relationship.
             </p>
             <p className="mt-3 text-sm text-muted-foreground">
-              Every confirmed session grows the trainer's income and creates
-              evidence of the difference they are making.
+              No PT sales team required. Interest becomes income, and income
+              becomes ongoing coaching.
             </p>
             <div className="mt-5 flex flex-wrap gap-2">
               <Button asChild size="sm">
-                <Link to="/trainer">
-                  Open Sarah's dashboard <ArrowRight className="ml-1.5 size-4" />
+                <Link to="/dashboard">
+                  Launch a campaign <ArrowRight className="ml-1.5 size-4" />
                 </Link>
               </Button>
               <Button asChild size="sm" variant="outline">
-                <Link to="/dashboard">
-                  <LayoutDashboard className="mr-1.5 size-4" /> Manager view
+                <Link to="/trainer">
+                  View trainer opportunity <ArrowRight className="ml-1.5 size-4" />
+                </Link>
+              </Button>
+              <Button asChild size="sm" variant="ghost">
+                <Link
+                  to="/pay"
+                  search={pack ? { pack: pack.id, trainer: trainerId, member: memberId } : undefined}
+                >
+                  <LayoutDashboard className="mr-1.5 size-4" /> See the member journey
                 </Link>
               </Button>
             </div>
@@ -192,6 +205,7 @@ function StartScreen() {
             Technical integration console
           </Link>
         </div>
+
       </div>
     </div>
   );
