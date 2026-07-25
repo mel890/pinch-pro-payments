@@ -165,36 +165,24 @@ export async function createPaymentLink(input: {
   allowedPaymentMethods?: Array<"credit-card" | "bank-account">;
   metadata?: Record<string, string | number | null | undefined>;
 }): Promise<PinchFetchResult> {
-  // Pinch sandbox validator uses PascalCase property names — send both cases
-  // for safety across API versions.
-  const amount = input.amountCents;
-  const currency = input.currency ?? "AUD";
-  const allowed = input.allowedPaymentMethods ?? ["credit-card", "bank-account"];
+  // Pinch API (pinch-version: 2020.1) — camelCase fields.
+  // NOTE: `metadata` MUST be a string. Sending an object silently fails .NET
+  // model binding and nulls every field (Amount=0, PayerId=null, etc.).
   const body: Record<string, any> = {
-    Amount: amount,
-    amount,
-    Description: input.description,
+    amount: input.amountCents,
     description: input.description,
-    Currency: currency,
-    currency,
-    AllowedPaymentMethods: allowed,
-    allowedPaymentMethods: allowed,
+    currency: input.currency ?? "AUD",
+    allowedPaymentMethods:
+      input.allowedPaymentMethods ?? ["credit-card", "bank-account"],
   };
-  if (input.reference) {
-    body.Reference = input.reference;
-    body.reference = input.reference;
-  }
-  if (input.returnUrl) {
-    body.ReturnUrl = input.returnUrl;
-    body.returnUrl = input.returnUrl;
-  }
-  if (input.payerId) {
-    body.PayerId = input.payerId;
-    body.payerId = input.payerId;
-  }
+  if (input.reference) body.reference = input.reference;
+  if (input.returnUrl) body.returnUrl = input.returnUrl;
+  if (input.payerId) body.payerId = input.payerId;
   if (input.metadata) {
-    body.Metadata = input.metadata;
-    body.metadata = input.metadata;
+    body.metadata =
+      typeof input.metadata === "string"
+        ? input.metadata
+        : JSON.stringify(input.metadata);
   }
 
   return pinchFetch("payment-links", {
