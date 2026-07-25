@@ -33,7 +33,7 @@ export const Route = createFileRoute("/ongoing")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: OngoingBilling;
+  component: OngoingBilling,
 });
 
 function OngoingBilling() {
