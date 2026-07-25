@@ -176,7 +176,7 @@ function StartScreen() {
             </p>
             <div className="mt-5 flex flex-wrap gap-2">
               <Button asChild size="sm">
-                <Link to="/dashboard">
+                <Link to="/trainer-capacity">
                   Launch a campaign <ArrowRight className="ml-1.5 size-4" />
                 </Link>
               </Button>
@@ -187,10 +187,7 @@ function StartScreen() {
               </Button>
 
               <Button asChild size="sm" variant="ghost">
-                <Link
-                  to="/pay"
-                  search={pack ? { pack: pack.id, trainer: trainerId, member: memberId } : undefined}
-                >
+                <Link to="/journey/alex">
                   <LayoutDashboard className="mr-1.5 size-4" /> See the member journey
                 </Link>
               </Button>

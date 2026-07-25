@@ -158,6 +158,85 @@ const SCENARIOS: Scenario[] = [
     ],
     why: "Volume is high while support scores have eased slightly.",
   },
+  {
+    id: "kickstart-s2",
+    signal: "Kickstart clients are not booking session two",
+    dimensions: ["flow", "connection"],
+    explanation:
+      "Kickstart buyers complete session one but leave without their next appointment in the calendar, so momentum stalls before the pack proves itself.",
+    actions: [
+      "Book session two before the member leaves the floor",
+      "Send a same-day check-in with one thing that went well",
+      "Reconfirm the member's original goal at the start of session two",
+    ],
+    why: "Kickstart session-1 to session-2 booking rate is trailing your rolling average.",
+  },
+  {
+    id: "habit-checkins",
+    signal: "Challenge participants are missing habit check-ins",
+    dimensions: ["flow", "movement"],
+    explanation:
+      "Attendance is fine, but habit tracking has gone quiet — the between-session support that makes challenges work.",
+    actions: [
+      "Message the three lowest-adherence clients directly",
+      "Simplify each client's habit down to one daily action",
+      "Open the next session by reviewing this week's check-ins",
+    ],
+    why: "Less than half of active challenge clients logged a check-in in the last 7 days.",
+  },
+  {
+    id: "final-reviews",
+    signal: "Final reviews are not being booked",
+    dimensions: ["flow", "financial"],
+    explanation:
+      "Packs are finishing without a structured review conversation, so the next-step opportunity slips past.",
+    actions: [
+      "Book the final review before session three of every Kickstart",
+      "Prepare one progress artefact — a lift, a photo, a habit chart",
+      "Prepare one clear next-step recommendation per client",
+    ],
+    why: "Final review bookings are trailing pack completions by more than half.",
+  },
+  {
+    id: "pack-to-ongoing",
+    signal: "Pack-to-ongoing conversion is below team average",
+    dimensions: ["connection", "financial"],
+    explanation:
+      "Members are finishing packs, but not moving into 6-Week Momentum or ongoing support at the rate the rest of the team is.",
+    actions: [
+      "Reconnect each pack finisher to their original goal",
+      "Recommend one clear next product per client",
+      "Offer the choice between 1:1, hybrid and online support",
+    ],
+    why: "Your pack-to-ongoing rate is 12 points below the team median this quarter.",
+  },
+  {
+    id: "completed-no-progression",
+    signal: "Kickstart clients are completing sessions but not progressing",
+    dimensions: ["financial", "connection"],
+    explanation:
+      "Four clients completed their packs this month, but only one had a documented next-step conversation.",
+    actions: [
+      "Book the final review before session three",
+      "Link progress back to the member's original goal",
+      "Recommend one clear next step",
+      "Offer one-to-one, hybrid or online support",
+    ],
+    why: "Pack completions this month: 4. Documented next-step conversations: 1.",
+  },
+  {
+    id: "over-capacity",
+    signal: "Accepted client load is above your capacity",
+    dimensions: ["flow", "movement"],
+    explanation:
+      "You've accepted more challenge opportunities than your available weekly slots — quality and reliability are at risk before delivery even begins.",
+    actions: [
+      "Decline the next opportunity or add availability",
+      "Re-check evening capacity for the current campaign",
+      "Rebalance existing clients across your open slots",
+    ],
+    why: "Accepted delivery hours exceed your published weekly capacity.",
+  },
 ];
 
 export function CoachMe() {
