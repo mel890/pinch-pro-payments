@@ -395,14 +395,12 @@ function MemberPurchase() {
 
             <OfferCard
               form={form}
-              ready={complete}
+              ready={s.intakeSubmitted && !editing}
               paying={paying}
               onBuy={buy}
-              onJump={(i) => {
-                setStep(i);
-                setTouched(false);
-              }}
+              onJump={editStep}
             />
+
           </div>
         )}
       </div>
