@@ -283,6 +283,8 @@ export type JourneyState = {
   reviewComplete: boolean;
   recommended: boolean;
   ongoingActive: boolean;
+  /** Timestamp label for when Alex was notified of the ongoing recommendation. */
+  memberNotifiedAt: string | null;
 };
 
 
@@ -404,6 +406,7 @@ const INITIAL: JourneyState = {
   reviewComplete: false,
   recommended: false,
   ongoingActive: false,
+  memberNotifiedAt: null,
 };
 
 let state: JourneyState = structuredClone(INITIAL);
@@ -686,6 +689,61 @@ export const journey = {
   completeReview: () => patch({ reviewComplete: true }),
   recommend: () => patch({ recommended: true, reviewComplete: true }),
   startOngoing: () => patch({ ongoingActive: true, recommended: true }),
+
+  /** Presenter shortcut: run all three sessions through to verified. */
+  simulatePackDelivery: () => {
+    const at = nowLabel();
+    const wins = [
+      "Completed a full set of goblet squats unassisted",
+      "Added weight to the trap-bar deadlift with clean technique",
+      "Ran the whole warm-up independently",
+    ];
+    patch({
+      campaignLive: true,
+      intakeSubmitted: true,
+      paid: true,
+      matched: true,
+      matchConfirmed: true,
+      accepted: true,
+      declineReason: null,
+      sessions: state.sessions.map((s) => ({
+        ...s,
+        booked: true,
+        qrIssued: true,
+        qrUsed: true,
+        checkinMethod: s.checkinMethod ?? "qr",
+        checkinAt: s.checkinAt ?? at,
+        completed: true,
+        completedAt: s.completedAt ?? at,
+        fullyDelivered: true,
+        nextBooked: s.n < 3,
+        win: s.win ?? wins[s.n - 1],
+        feedbackAt: s.feedbackAt ?? at,
+        feedback:
+          s.feedback ?? {
+            tookPlace: true,
+            supported: "Yes",
+            understands: "Yes",
+            nextBooked: s.n < 3,
+            win: wins[s.n - 1],
+          },
+        confirmed: true,
+        deducted: true,
+        reserved: false,
+        verifiedAt: s.verifiedAt ?? at,
+        reviewReason: null,
+        status: "verified" as SessionStatus,
+      })),
+    });
+  },
+
+  /** Sarah sends Alex the ongoing twice-weekly recommendation. */
+  notifyMember: () =>
+    patch({
+      recommended: true,
+      reviewComplete: true,
+      memberNotifiedAt: state.memberNotifiedAt ?? nowLabel(),
+    }),
 };
 
 function journeyPatchSession(n: number, fn: (s: SessionPlan) => SessionPlan) {
