@@ -370,6 +370,8 @@ const BACKUP_CODES = ["481 902", "336 741", "205 618"];
 const INITIAL: JourneyState = {
   campaignLive: false,
   intakeSubmitted: false,
+  intake: { ...INTAKE_DEFAULTS },
+
   paid: false,
   matched: false,
   matchConfirmed: false,
