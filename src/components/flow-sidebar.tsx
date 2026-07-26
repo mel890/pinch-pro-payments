@@ -14,6 +14,10 @@ import {
   User,
   Smartphone,
   Users,
+  QrCode,
+  ScanLine,
+  ClipboardCheck,
+  AlertTriangle,
 } from "lucide-react";
 
 import {
@@ -43,7 +47,11 @@ const flowItems = [
 
 const otherItems = [
   { title: "Pinch integration console", url: "/demo-console", icon: Wrench },
-  { title: "Member confirmation", url: "/confirm-session/demo", icon: Smartphone },
+  { title: "Member check-in QR", url: "/checkin", icon: QrCode },
+  { title: "Trainer QR scanner", url: "/scan", icon: ScanLine },
+  { title: "Trainer completion", url: "/complete-session", icon: ClipboardCheck },
+  { title: "Member feedback", url: "/confirm-session/demo", icon: Smartphone },
+  { title: "Session exceptions", url: "/exceptions", icon: AlertTriangle },
   { title: "Trainer capacity", url: "/trainer-capacity", icon: Users },
   { title: "Trainer home", url: "/trainer", icon: Dumbbell },
   { title: "Client home", url: "/me", icon: User },
