@@ -111,11 +111,26 @@ function ProgressReview() {
           </Card>
         )}
 
+        <Card className="mt-4 border-primary/30 bg-primary/5 p-5">
+          <p className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-primary">
+            <Sparkles className="size-3.5" /> AI-assisted summary
+          </p>
+          <p className="mt-2 text-sm leading-relaxed">{AI_SUMMARY}</p>
+          <p className="mt-3 text-sm">
+            <span className="text-muted-foreground">Suggested next step: </span>
+            <span className="font-semibold text-primary">{ONGOING.name}</span>
+          </p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {TRAINER.first} makes the final recommendation.
+          </p>
+        </Card>
+
         <section className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
           <Card className="border-primary/30 bg-[image:var(--gradient-hero)] p-6">
             <Badge className="border border-primary/40 bg-primary/10 text-primary">
               Recommended next step
             </Badge>
+
             <h2 className="mt-2 text-2xl font-semibold">{ONGOING.name}</h2>
             <ul className="mt-4 space-y-2">
               {ONGOING.includes.map((i) => (
