@@ -79,6 +79,35 @@ export const INTAKE = {
 export const BEFORE = { confidence: 5, visits: 1.4, clarity: 4 };
 export const AFTER = { confidence: 8, visits: 2.6, clarity: 8 };
 
+export type SessionStatus =
+  | "booked"
+  | "qr_issued"
+  | "checked_in"
+  | "in_progress"
+  | "awaiting_feedback"
+  | "verified"
+  | "review_required"
+  | "cancelled"
+  | "no_show";
+
+export type PayoutStatus =
+  | "Not started"
+  | "Pending delivery"
+  | "Awaiting verification"
+  | "Payout eligible"
+  | "Review required"
+  | "Paid";
+
+export type CheckinMethod = "qr" | "backup" | "manual" | null;
+
+export type SessionFeedback = {
+  tookPlace: boolean;
+  supported: "Yes" | "Somewhat" | "No";
+  understands: "Yes" | "Not yet";
+  nextBooked: boolean;
+  win: string | null;
+};
+
 export type SessionPlan = {
   n: 1 | 2 | 3;
   title: string;
@@ -90,6 +119,29 @@ export type SessionPlan = {
   confirmed: boolean;
   win: string | null;
   payoutCents: number;
+  /** Three-stage verification model. */
+  status: SessionStatus;
+  scheduledLabel: string;
+  qrIssued: boolean;
+  qrUsed: boolean;
+  backupCode: string;
+  checkinMethod: CheckinMethod;
+  checkinAt: string | null;
+  completedAt: string | null;
+  fullyDelivered: boolean | null;
+  nextBooked: boolean | null;
+  feedbackAt: string | null;
+  feedback: SessionFeedback | null;
+  verifiedAt: string | null;
+  reviewReason: string | null;
+  reserved: boolean;
+  deducted: boolean;
+};
+
+export type ExceptionAction = {
+  n: number;
+  action: string;
+  at: string;
 };
 
 export type JourneyState = {
@@ -101,10 +153,12 @@ export type JourneyState = {
   accepted: boolean;
   declineReason: string | null;
   sessions: SessionPlan[];
+  exceptionLog: ExceptionAction[];
   reviewComplete: boolean;
   recommended: boolean;
   ongoingActive: boolean;
 };
+
 
 const SESSION_TEMPLATES: Omit<
   SessionPlan,
