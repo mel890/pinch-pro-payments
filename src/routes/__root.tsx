@@ -14,6 +14,8 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { FlowSidebar } from "@/components/flow-sidebar";
+import { RestartDemoButton } from "@/components/restart-demo-button";
+
 
 function NotFoundComponent() {
   return (
@@ -148,10 +150,14 @@ function RootComponent() {
             <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/70 px-4 backdrop-blur-xl">
               <SidebarTrigger />
               <span className="text-sm font-semibold tracking-tight">VezaPT Pay</span>
-              <span className="pill pill-paid ml-auto">
-                <CreditCard className="size-3.5" /> Payments by Pinch
-              </span>
+              <div className="ml-auto flex items-center gap-2">
+                <RestartDemoButton />
+                <span className="pill pill-paid hidden md:inline-flex">
+                  <CreditCard className="size-3.5" /> Payments by Pinch
+                </span>
+              </div>
             </header>
+
             <main className="flex-1 min-w-0">
               {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
               <Outlet />
