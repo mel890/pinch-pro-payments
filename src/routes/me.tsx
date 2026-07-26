@@ -59,27 +59,13 @@ function MeScreen() {
   );
   const done = mine.filter((s: any) => s.status === "confirmed");
 
-  const [flash, setFlash] = useState<null | {
-    trainerName: string;
-    ptPct: number;
-    ptCents: number;
-    clubCents: number;
-    tierUpgraded: boolean;
-    tierName: string;
-  }>(null);
+  const [flash, setFlash] = useState<null | { trainerName: string }>(null);
 
   const verify = useMutation({
     mutationFn: (id: string) => verifySession({ data: { sessionId: id } }),
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ["snapshot"] });
-      setFlash({
-        trainerName: res.trainerName,
-        ptPct: res.ptPct,
-        ptCents: res.ptCents,
-        clubCents: res.clubCents,
-        tierUpgraded: res.tierUpgraded,
-        tierName: res.tierName,
-      });
+      setFlash({ trainerName: res.trainerName });
     },
   });
 
@@ -132,31 +118,12 @@ function MeScreen() {
           <Card className="mt-5 border-primary/40 bg-primary/10 p-5">
             <div className="flex items-center gap-2 text-primary">
               <Sparkles className="size-5" />
-              <p className="font-semibold">Split applied · live</p>
+              <p className="font-semibold">Session verified</p>
             </div>
-            <div className="mt-3 space-y-1 font-mono text-sm tabular-nums">
-              <SplitRow
-                label={`${flash.trainerName} · ${flash.ptPct}%`}
-                value={formatAUD(flash.ptCents)}
-                accent
-              />
-              <SplitRow
-                label={`Club · ${100 - flash.ptPct}%`}
-                value={formatAUD(flash.clubCents)}
-              />
-            </div>
-            {flash.tierUpgraded && (
-              <p className="mt-3 rounded-md bg-primary/15 p-2 text-xs text-primary">
-                {flash.trainerName} reached {flash.tierName} — this session paid
-                at {flash.ptPct}%.
-              </p>
-            )}
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-secondary">
-              <div
-                className="h-full bg-primary transition-all duration-700"
-                style={{ width: `${flash.ptPct}%` }}
-              />
-            </div>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Thanks — {flash.trainerName.replace("Test PT ", "")} has been
+              notified.
+            </p>
           </Card>
         )}
 
@@ -241,9 +208,7 @@ function MeScreen() {
                   <p className="text-xs text-muted-foreground">
                     {new Date(s.member_confirmed_at ?? s.created_at).toLocaleString()}
                   </p>
-                  <p className="font-mono text-xs tabular-nums text-primary">
-                    +{formatAUD(s.pt_amount_cents)} to PT
-                  </p>
+                  <p className="text-xs text-primary">Verified</p>
                 </Card>
               ))}
             </div>
@@ -262,27 +227,6 @@ function MeScreen() {
           </Link>
         </div>
       </div>
-    </div>
-  );
-}
-
-function SplitRow({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: string;
-  accent?: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className={accent ? "text-primary" : "text-muted-foreground"}>
-        {label}
-      </span>
-      <span className={accent ? "text-primary" : "text-foreground"}>
-        {value}
-      </span>
     </div>
   );
 }
