@@ -8,6 +8,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import { CreditCard } from "lucide-react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -101,6 +102,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      {
+        rel: "preconnect",
+        href: "https://fonts.gstatic.com",
+        crossOrigin: "anonymous",
+      },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap",
+      },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
@@ -133,9 +144,12 @@ function RootComponent() {
         <div className="flex min-h-screen w-full">
           <FlowSidebar />
           <div className="flex flex-1 flex-col min-w-0">
-            <header className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border/60 bg-background/80 px-2 backdrop-blur">
+            <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/70 px-4 backdrop-blur-xl">
               <SidebarTrigger />
-              <span className="text-xs text-muted-foreground">VezaPT Pay demo</span>
+              <span className="text-sm font-semibold tracking-tight">VezaPT Pay</span>
+              <span className="pill pill-paid ml-auto">
+                <CreditCard className="size-3.5" /> Payments by Pinch
+              </span>
             </header>
             <main className="flex-1 min-w-0">
               {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
