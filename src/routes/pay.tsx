@@ -408,9 +408,7 @@ function MemberPurchase() {
   );
 }
 
-/* Placeholders kept out of the render path. */
-function setEditing(_x: unknown) {}
-function setEditingIntake() {}
+
 
 function stepErrors(step: number, f: IntakeForm): string[] {
   const e: string[] = [];
