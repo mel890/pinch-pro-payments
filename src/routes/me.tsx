@@ -118,31 +118,12 @@ function MeScreen() {
           <Card className="mt-5 border-primary/40 bg-primary/10 p-5">
             <div className="flex items-center gap-2 text-primary">
               <Sparkles className="size-5" />
-              <p className="font-semibold">Split applied · live</p>
+              <p className="font-semibold">Session verified</p>
             </div>
-            <div className="mt-3 space-y-1 font-mono text-sm tabular-nums">
-              <SplitRow
-                label={`${flash.trainerName} · ${flash.ptPct}%`}
-                value={formatAUD(flash.ptCents)}
-                accent
-              />
-              <SplitRow
-                label={`Club · ${100 - flash.ptPct}%`}
-                value={formatAUD(flash.clubCents)}
-              />
-            </div>
-            {flash.tierUpgraded && (
-              <p className="mt-3 rounded-md bg-primary/15 p-2 text-xs text-primary">
-                {flash.trainerName} reached {flash.tierName} — this session paid
-                at {flash.ptPct}%.
-              </p>
-            )}
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-secondary">
-              <div
-                className="h-full bg-primary transition-all duration-700"
-                style={{ width: `${flash.ptPct}%` }}
-              />
-            </div>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Thanks — {flash.trainerName.replace("Test PT ", "")} has been
+              notified.
+            </p>
           </Card>
         )}
 
