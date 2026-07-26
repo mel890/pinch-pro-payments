@@ -406,6 +406,7 @@ const INITIAL: JourneyState = {
   reviewComplete: false,
   recommended: false,
   ongoingActive: false,
+  memberNotifiedAt: null,
 };
 
 let state: JourneyState = structuredClone(INITIAL);
