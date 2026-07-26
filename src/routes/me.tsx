@@ -208,9 +208,7 @@ function MeScreen() {
                   <p className="text-xs text-muted-foreground">
                     {new Date(s.member_confirmed_at ?? s.created_at).toLocaleString()}
                   </p>
-                  <p className="font-mono text-xs tabular-nums text-primary">
-                    +{formatAUD(s.pt_amount_cents)} to PT
-                  </p>
+                  <p className="text-xs text-primary">Verified</p>
                 </Card>
               ))}
             </div>
