@@ -72,9 +72,13 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --font-sans: "Manrope", "Inter", ui-sans-serif, system-ui, sans-serif;
-  --shadow-card: 0 18px 60px rgba(0, 0, 0, 0.25);
-  --shadow-glow: 0 0 32px rgba(126, 242, 154, 0.08);
+  --font-sans: "Inter", "Calibri", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Montserrat", "Calibri", ui-sans-serif, system-ui, sans-serif;
+  --color-violet: var(--violet);
+  --color-violet-surface: var(--violet-surface);
+  --shadow-card: 0 18px 60px rgba(0, 0, 0, 0.35);
+  --shadow-glow: 0 0 32px rgba(0, 194, 203, 0.14);
+
 }
 
 
