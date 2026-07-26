@@ -127,10 +127,14 @@ function ClientJourney() {
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    <Pill on={sess.booked}>Booked</Pill>
-                    <Pill on={sess.completed}>Completed</Pill>
-                    <Pill on={sess.confirmed}>Member confirmed</Pill>
+                    <Pill on={sess.qrUsed}>Checked in</Pill>
+                    <Pill on={sess.completed}>Trainer completed</Pill>
+                    <Pill on={sess.confirmed}>Verified</Pill>
+                    <span className="rounded-full border border-border px-2.5 py-0.5 text-[11px] text-muted-foreground">
+                      {SESSION_STATUS_LABEL[sess.status]}
+                    </span>
                   </div>
+
                 </div>
 
                 <p className="mt-4 text-[10px] uppercase tracking-wider text-muted-foreground">

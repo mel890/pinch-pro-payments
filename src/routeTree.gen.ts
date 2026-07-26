@@ -19,6 +19,7 @@ import { Route as OpportunityRouteImport } from './routes/opportunity'
 import { Route as OngoingRouteImport } from './routes/ongoing'
 import { Route as MeRouteImport } from './routes/me'
 import { Route as MatchRouteImport } from './routes/match'
+import { Route as ExceptionsRouteImport } from './routes/exceptions'
 import { Route as DemoConsoleRouteImport } from './routes/demo-console'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CompleteSessionRouteImport } from './routes/complete-session'
@@ -79,6 +80,11 @@ const MatchRoute = MatchRouteImport.update({
   path: '/match',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ExceptionsRoute = ExceptionsRouteImport.update({
+  id: '/exceptions',
+  path: '/exceptions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DemoConsoleRoute = DemoConsoleRouteImport.update({
   id: '/demo-console',
   path: '/demo-console',
@@ -132,6 +138,7 @@ export interface FileRoutesByFullPath {
   '/complete-session': typeof CompleteSessionRoute
   '/dashboard': typeof DashboardRoute
   '/demo-console': typeof DemoConsoleRoute
+  '/exceptions': typeof ExceptionsRoute
   '/match': typeof MatchRoute
   '/me': typeof MeRoute
   '/ongoing': typeof OngoingRoute
@@ -153,6 +160,7 @@ export interface FileRoutesByTo {
   '/complete-session': typeof CompleteSessionRoute
   '/dashboard': typeof DashboardRoute
   '/demo-console': typeof DemoConsoleRoute
+  '/exceptions': typeof ExceptionsRoute
   '/match': typeof MatchRoute
   '/me': typeof MeRoute
   '/ongoing': typeof OngoingRoute
@@ -175,6 +183,7 @@ export interface FileRoutesById {
   '/complete-session': typeof CompleteSessionRoute
   '/dashboard': typeof DashboardRoute
   '/demo-console': typeof DemoConsoleRoute
+  '/exceptions': typeof ExceptionsRoute
   '/match': typeof MatchRoute
   '/me': typeof MeRoute
   '/ongoing': typeof OngoingRoute
@@ -198,6 +207,7 @@ export interface FileRouteTypes {
     | '/complete-session'
     | '/dashboard'
     | '/demo-console'
+    | '/exceptions'
     | '/match'
     | '/me'
     | '/ongoing'
@@ -219,6 +229,7 @@ export interface FileRouteTypes {
     | '/complete-session'
     | '/dashboard'
     | '/demo-console'
+    | '/exceptions'
     | '/match'
     | '/me'
     | '/ongoing'
@@ -240,6 +251,7 @@ export interface FileRouteTypes {
     | '/complete-session'
     | '/dashboard'
     | '/demo-console'
+    | '/exceptions'
     | '/match'
     | '/me'
     | '/ongoing'
@@ -262,6 +274,7 @@ export interface RootRouteChildren {
   CompleteSessionRoute: typeof CompleteSessionRoute
   DashboardRoute: typeof DashboardRoute
   DemoConsoleRoute: typeof DemoConsoleRoute
+  ExceptionsRoute: typeof ExceptionsRoute
   MatchRoute: typeof MatchRoute
   MeRoute: typeof MeRoute
   OngoingRoute: typeof OngoingRoute
@@ -349,6 +362,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MatchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/exceptions': {
+      id: '/exceptions'
+      path: '/exceptions'
+      fullPath: '/exceptions'
+      preLoaderRoute: typeof ExceptionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/demo-console': {
       id: '/demo-console'
       path: '/demo-console'
@@ -422,6 +442,7 @@ const rootRouteChildren: RootRouteChildren = {
   CompleteSessionRoute: CompleteSessionRoute,
   DashboardRoute: DashboardRoute,
   DemoConsoleRoute: DemoConsoleRoute,
+  ExceptionsRoute: ExceptionsRoute,
   MatchRoute: MatchRoute,
   MeRoute: MeRoute,
   OngoingRoute: OngoingRoute,
