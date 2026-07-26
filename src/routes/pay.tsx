@@ -81,7 +81,8 @@ function MemberPurchase() {
     });
 
   const errors = stepErrors(step, form);
-  const complete = s.intakeSubmitted;
+  const [editing, setEditing] = useState(false);
+  const showWizard = !s.intakeSubmitted || editing;
 
   const next = () => {
     setTouched(true);
@@ -89,8 +90,18 @@ function MemberPurchase() {
     setTouched(false);
     journey.updateIntake(form);
     if (step < STEPS.length - 1) setStep(step + 1);
-    else journey.submitIntake();
+    else {
+      setEditing(false);
+      journey.submitIntake();
+    }
   };
+
+  const editStep = (i: number) => {
+    setStep(i);
+    setTouched(false);
+    setEditing(true);
+  };
+
 
   const buy = () => {
     setPaying(true);
