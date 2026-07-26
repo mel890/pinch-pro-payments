@@ -17,6 +17,7 @@ import { Route as PayRouteImport } from './routes/pay'
 import { Route as OpportunityRouteImport } from './routes/opportunity'
 import { Route as OngoingRouteImport } from './routes/ongoing'
 import { Route as MeRouteImport } from './routes/me'
+import { Route as MatchRouteImport } from './routes/match'
 import { Route as DemoConsoleRouteImport } from './routes/demo-console'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CompleteSessionRouteImport } from './routes/complete-session'
@@ -66,6 +67,11 @@ const MeRoute = MeRouteImport.update({
   path: '/me',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MatchRoute = MatchRouteImport.update({
+  id: '/match',
+  path: '/match',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DemoConsoleRoute = DemoConsoleRouteImport.update({
   id: '/demo-console',
   path: '/demo-console',
@@ -113,6 +119,7 @@ export interface FileRoutesByFullPath {
   '/complete-session': typeof CompleteSessionRoute
   '/dashboard': typeof DashboardRoute
   '/demo-console': typeof DemoConsoleRoute
+  '/match': typeof MatchRoute
   '/me': typeof MeRoute
   '/ongoing': typeof OngoingRoute
   '/opportunity': typeof OpportunityRoute
@@ -131,6 +138,7 @@ export interface FileRoutesByTo {
   '/complete-session': typeof CompleteSessionRoute
   '/dashboard': typeof DashboardRoute
   '/demo-console': typeof DemoConsoleRoute
+  '/match': typeof MatchRoute
   '/me': typeof MeRoute
   '/ongoing': typeof OngoingRoute
   '/opportunity': typeof OpportunityRoute
@@ -150,6 +158,7 @@ export interface FileRoutesById {
   '/complete-session': typeof CompleteSessionRoute
   '/dashboard': typeof DashboardRoute
   '/demo-console': typeof DemoConsoleRoute
+  '/match': typeof MatchRoute
   '/me': typeof MeRoute
   '/ongoing': typeof OngoingRoute
   '/opportunity': typeof OpportunityRoute
@@ -170,6 +179,7 @@ export interface FileRouteTypes {
     | '/complete-session'
     | '/dashboard'
     | '/demo-console'
+    | '/match'
     | '/me'
     | '/ongoing'
     | '/opportunity'
@@ -188,6 +198,7 @@ export interface FileRouteTypes {
     | '/complete-session'
     | '/dashboard'
     | '/demo-console'
+    | '/match'
     | '/me'
     | '/ongoing'
     | '/opportunity'
@@ -206,6 +217,7 @@ export interface FileRouteTypes {
     | '/complete-session'
     | '/dashboard'
     | '/demo-console'
+    | '/match'
     | '/me'
     | '/ongoing'
     | '/opportunity'
@@ -225,6 +237,7 @@ export interface RootRouteChildren {
   CompleteSessionRoute: typeof CompleteSessionRoute
   DashboardRoute: typeof DashboardRoute
   DemoConsoleRoute: typeof DemoConsoleRoute
+  MatchRoute: typeof MatchRoute
   MeRoute: typeof MeRoute
   OngoingRoute: typeof OngoingRoute
   OpportunityRoute: typeof OpportunityRoute
@@ -296,6 +309,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/match': {
+      id: '/match'
+      path: '/match'
+      fullPath: '/match'
+      preLoaderRoute: typeof MatchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/demo-console': {
       id: '/demo-console'
       path: '/demo-console'
@@ -361,6 +381,7 @@ const rootRouteChildren: RootRouteChildren = {
   CompleteSessionRoute: CompleteSessionRoute,
   DashboardRoute: DashboardRoute,
   DemoConsoleRoute: DemoConsoleRoute,
+  MatchRoute: MatchRoute,
   MeRoute: MeRoute,
   OngoingRoute: OngoingRoute,
   OpportunityRoute: OpportunityRoute,
