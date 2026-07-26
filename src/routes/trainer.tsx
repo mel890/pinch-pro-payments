@@ -29,14 +29,25 @@ import {
   ScanLine,
   ArrowRight,
   Inbox,
+  Sparkles,
+  Send,
+  FastForward,
+  BellRing,
 } from "lucide-react";
 import { CoachMeJourney } from "@/components/coach-me-journey";
 import {
   useJourney,
+  journey,
   activeSession,
+  confirmedCount,
+  releasedPayoutCents,
   SESSION_STATUS_LABEL,
   MEMBER,
+  TRAINER,
   KICKSTART,
+  ONGOING,
+  BEFORE,
+  AFTER,
 } from "@/lib/journey-store";
 
 export const Route = createFileRoute("/trainer")({
