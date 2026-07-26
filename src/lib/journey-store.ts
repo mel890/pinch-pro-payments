@@ -283,6 +283,8 @@ export type JourneyState = {
   reviewComplete: boolean;
   recommended: boolean;
   ongoingActive: boolean;
+  /** Timestamp label for when Alex was notified of the ongoing recommendation. */
+  memberNotifiedAt: string | null;
 };
 
 
