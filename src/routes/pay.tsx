@@ -82,17 +82,17 @@ function MemberPurchase() {
               We're finding the right trainer for you. You'll hear from your
               coach shortly to book session one.
             </p>
-            <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              <Paid label="Paid today" value={formatAUD(KICKSTART.priceCents)} />
-              <Paid label="Trainer payout" value={formatAUD(KICKSTART.trainerPayoutCents)} />
-              <Paid label="Club campaign fee" value={formatAUD(KICKSTART.clubFeeCents)} />
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <Paid label="Payment status" value="Paid" />
+              <Paid label="Amount" value={formatAUD(KICKSTART.priceCents)} />
             </div>
             <Button asChild className="mt-5">
-              <Link to="/opportunity">
-                Next: trainer receives the opportunity{" "}
+              <Link to="/match">
+                Next: VezaPT recommends a trainer{" "}
                 <ArrowRight className="ml-1 size-4" />
               </Link>
             </Button>
+
           </Card>
         ) : (
           <div className="mt-8 grid gap-5 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
