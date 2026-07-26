@@ -230,5 +230,3 @@ function MeScreen() {
     </div>
   );
 }
-
-}
