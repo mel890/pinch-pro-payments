@@ -479,6 +479,9 @@ export const journey = {
   launchCampaign: () => patch({ campaignLive: true }),
   confirmMatch: () => patch({ matchConfirmed: true, matched: true }),
   submitIntake: () => patch({ intakeSubmitted: true }),
+  updateIntake: (next: Partial<IntakeForm>) =>
+    patch({ intake: { ...state.intake, ...next } }),
+
   pay: () =>
     patch({ paid: true, intakeSubmitted: true, matched: true, campaignLive: true }),
   accept: () => {
