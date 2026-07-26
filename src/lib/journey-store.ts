@@ -271,6 +271,8 @@ export type ExceptionAction = {
 export type JourneyState = {
   campaignLive: boolean;
   intakeSubmitted: boolean;
+  intake: IntakeForm;
+
   paid: boolean;
   matched: boolean;
   matchConfirmed: boolean;
