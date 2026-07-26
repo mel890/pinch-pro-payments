@@ -34,6 +34,38 @@ export const ONGOING = {
   nextReview: "Monday 31 August",
 };
 
+export const CAMPAIGN = {
+  name: "PT Kickstart Campaign",
+  subtitle: "Turn member interest into paid coaching without adding a PT sales team.",
+  capacityPacks: 7,
+  trainers: 3,
+  channels: ["Email", "Social media", "In-club QR"],
+};
+
+export const MATCH = {
+  confidence: "Strong",
+  reasons: [
+    "Available Tuesday and Thursday evenings",
+    "Experienced with beginner strength clients",
+    "Supportive and structured coaching style",
+    "Currently accepting Kickstart clients",
+  ],
+  rules: [
+    "Schedule compatibility",
+    "Available capacity",
+    "Goal and speciality match",
+    "Coaching-style preference",
+    "Acceptance reliability",
+  ],
+  alternatives: ["Dan Whitcombe", "Priya Raman"],
+};
+
+export const TRAINER_BRIEF =
+  "Alex is a beginner who wants to feel more confident using the gym. Prioritise rapport, simple strength movements and an early confidence win.";
+
+export const AI_SUMMARY =
+  "Alex has completed all three sessions, improved confidence and increased gym attendance. Alex still values structure, accountability and technique support.";
+
 export const INTAKE = {
   goal: "Build strength and feel confident using the gym",
   experience: "Beginner",
