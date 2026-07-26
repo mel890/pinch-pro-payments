@@ -233,6 +233,14 @@ const SESSION_TEMPLATES: Pick<
   },
 ];
 
+const SCHEDULE = [
+  "Tuesday 6:00 pm",
+  "Thursday 6:00 pm",
+  "Tuesday 6:00 pm (next week)",
+];
+
+const BACKUP_CODES = ["481 902", "336 741", "205 618"];
+
 const INITIAL: JourneyState = {
   campaignLive: false,
   intakeSubmitted: false,
@@ -241,13 +249,30 @@ const INITIAL: JourneyState = {
   matchConfirmed: false,
   accepted: false,
   declineReason: null,
-  sessions: SESSION_TEMPLATES.map((s) => ({
+  sessions: SESSION_TEMPLATES.map((s, i) => ({
     ...s,
     booked: false,
     completed: false,
     confirmed: false,
     win: null,
+    status: "booked" as SessionStatus,
+    scheduledLabel: SCHEDULE[i],
+    qrIssued: false,
+    qrUsed: false,
+    backupCode: BACKUP_CODES[i],
+    checkinMethod: null,
+    checkinAt: null,
+    completedAt: null,
+    fullyDelivered: null,
+    nextBooked: null,
+    feedbackAt: null,
+    feedback: null,
+    verifiedAt: null,
+    reviewReason: null,
+    reserved: false,
+    deducted: false,
   })),
+  exceptionLog: [],
   reviewComplete: false,
   recommended: false,
   ongoingActive: false,
