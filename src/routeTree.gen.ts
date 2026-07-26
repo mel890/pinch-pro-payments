@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TrainerCapacityRouteImport } from './routes/trainer-capacity'
 import { Route as TrainerRouteImport } from './routes/trainer'
-import { Route as SessionQrRouteImport } from './routes/session-qr'
 import { Route as ScanRouteImport } from './routes/scan'
 import { Route as ReviewRouteImport } from './routes/review'
 import { Route as PayRouteImport } from './routes/pay'
@@ -38,11 +37,6 @@ const TrainerCapacityRoute = TrainerCapacityRouteImport.update({
 const TrainerRoute = TrainerRouteImport.update({
   id: '/trainer',
   path: '/trainer',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SessionQrRoute = SessionQrRouteImport.update({
-  id: '/session-qr',
-  path: '/session-qr',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ScanRoute = ScanRouteImport.update({
@@ -146,7 +140,6 @@ export interface FileRoutesByFullPath {
   '/pay': typeof PayRoute
   '/review': typeof ReviewRoute
   '/scan': typeof ScanRoute
-  '/session-qr': typeof SessionQrRoute
   '/trainer': typeof TrainerRoute
   '/trainer-capacity': typeof TrainerCapacityRoute
   '/confirm-session/demo': typeof ConfirmSessionDemoRoute
@@ -168,7 +161,6 @@ export interface FileRoutesByTo {
   '/pay': typeof PayRoute
   '/review': typeof ReviewRoute
   '/scan': typeof ScanRoute
-  '/session-qr': typeof SessionQrRoute
   '/trainer': typeof TrainerRoute
   '/trainer-capacity': typeof TrainerCapacityRoute
   '/confirm-session/demo': typeof ConfirmSessionDemoRoute
@@ -191,7 +183,6 @@ export interface FileRoutesById {
   '/pay': typeof PayRoute
   '/review': typeof ReviewRoute
   '/scan': typeof ScanRoute
-  '/session-qr': typeof SessionQrRoute
   '/trainer': typeof TrainerRoute
   '/trainer-capacity': typeof TrainerCapacityRoute
   '/confirm-session/demo': typeof ConfirmSessionDemoRoute
@@ -215,7 +206,6 @@ export interface FileRouteTypes {
     | '/pay'
     | '/review'
     | '/scan'
-    | '/session-qr'
     | '/trainer'
     | '/trainer-capacity'
     | '/confirm-session/demo'
@@ -237,7 +227,6 @@ export interface FileRouteTypes {
     | '/pay'
     | '/review'
     | '/scan'
-    | '/session-qr'
     | '/trainer'
     | '/trainer-capacity'
     | '/confirm-session/demo'
@@ -259,7 +248,6 @@ export interface FileRouteTypes {
     | '/pay'
     | '/review'
     | '/scan'
-    | '/session-qr'
     | '/trainer'
     | '/trainer-capacity'
     | '/confirm-session/demo'
@@ -282,7 +270,6 @@ export interface RootRouteChildren {
   PayRoute: typeof PayRoute
   ReviewRoute: typeof ReviewRoute
   ScanRoute: typeof ScanRoute
-  SessionQrRoute: typeof SessionQrRoute
   TrainerRoute: typeof TrainerRoute
   TrainerCapacityRoute: typeof TrainerCapacityRoute
   ConfirmSessionDemoRoute: typeof ConfirmSessionDemoRoute
@@ -304,13 +291,6 @@ declare module '@tanstack/react-router' {
       path: '/trainer'
       fullPath: '/trainer'
       preLoaderRoute: typeof TrainerRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/session-qr': {
-      id: '/session-qr'
-      path: '/session-qr'
-      fullPath: '/session-qr'
-      preLoaderRoute: typeof SessionQrRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/scan': {
@@ -450,7 +430,6 @@ const rootRouteChildren: RootRouteChildren = {
   PayRoute: PayRoute,
   ReviewRoute: ReviewRoute,
   ScanRoute: ScanRoute,
-  SessionQrRoute: SessionQrRoute,
   TrainerRoute: TrainerRoute,
   TrainerCapacityRoute: TrainerCapacityRoute,
   ConfirmSessionDemoRoute: ConfirmSessionDemoRoute,
