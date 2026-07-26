@@ -355,7 +355,7 @@ export const journey = {
     patch({ paid: true, intakeSubmitted: true, matched: true, campaignLive: true }),
   accept: () => {
     const sessions = state.sessions.map((s) =>
-      s.n === 1 ? { ...s, booked: true } : s,
+      s.n === 1 ? { ...s, booked: true, status: "booked" as SessionStatus } : s,
     );
     patch({ accepted: true, declineReason: null, sessions });
   },
@@ -364,11 +364,188 @@ export const journey = {
     patch({
       sessions: state.sessions.map((s) => (s.n === n ? { ...s, ...next } : s)),
     }),
+
+  /* ---------- Three-stage session verification ---------- */
+
+  /** Member opens their check-in screen: a one-time QR + backup code is issued. */
+  issueQr: (n: number) =>
+    journeyPatchSession(n, (s) =>
+      s.qrUsed || s.status !== "booked"
+        ? s
+        : { ...s, qrIssued: true, status: "qr_issued" },
+    ),
+
+  /** Trainer scans the QR (or keys the backup code). Reserves the session. */
+  checkIn: (n: number, method: Exclude<CheckinMethod, null>) =>
+    journeyPatchSession(n, (s) =>
+      s.qrUsed
+        ? s
+        : {
+            ...s,
+            qrUsed: true,
+            qrIssued: true,
+            checkinMethod: method,
+            checkinAt: nowLabel(),
+            reserved: true,
+            status: "in_progress",
+            reviewReason:
+              method === "manual"
+                ? "Manual check-in — QR not scanned"
+                : s.reviewReason,
+          },
+    ),
+
+  /** Trainer completion: session delivered, next booked, optional win. */
+  completeSession: (
+    n: number,
+    input: { delivered: boolean; nextBooked: boolean; win: string | null },
+  ) => {
+    const sessions = state.sessions.map((s) => {
+      if (s.n !== n) return s;
+      if (!input.delivered) {
+        return {
+          ...s,
+          completed: false,
+          status: "review_required" as SessionStatus,
+          completedAt: nowLabel(),
+          fullyDelivered: false,
+          reviewReason: "Trainer reported the session was not fully delivered",
+        };
+      }
+      return {
+        ...s,
+        completed: true,
+        completedAt: nowLabel(),
+        fullyDelivered: true,
+        nextBooked: input.nextBooked,
+        win: input.win ?? s.win,
+        status: "awaiting_feedback" as SessionStatus,
+      };
+    });
+    const idx = sessions.findIndex((s) => s.n === n);
+    if (input.delivered && input.nextBooked && sessions[idx + 1]) {
+      sessions[idx + 1] = { ...sessions[idx + 1], booked: true };
+    }
+    patch({ sessions });
+  },
+
+  /** Member feedback stage — no dispute verifies the session and releases payout. */
+  submitFeedback: (n: number, feedback: SessionFeedback) =>
+    journeyPatchSession(n, (s) =>
+      feedback.tookPlace
+        ? {
+            ...s,
+            feedback,
+            feedbackAt: nowLabel(),
+            win: feedback.win ?? s.win,
+            confirmed: true,
+            completed: true,
+            deducted: true,
+            reserved: false,
+            verifiedAt: nowLabel(),
+            status: "verified",
+          }
+        : {
+            ...s,
+            feedback,
+            feedbackAt: nowLabel(),
+            status: "review_required",
+            reviewReason: "Member disputed that the session took place",
+          },
+    ),
+
+  /** 12-hour no-dispute timeout auto-verifies. */
+  timeoutVerify: (n: number) =>
+    journeyPatchSession(n, (s) =>
+      s.status !== "awaiting_feedback"
+        ? s
+        : {
+            ...s,
+            confirmed: true,
+            deducted: true,
+            reserved: false,
+            verifiedAt: nowLabel(),
+            status: "verified",
+          },
+    ),
+
+  /** Manager resolution from the exception queue. */
+  resolveException: (n: number, outcome: "verify" | "cancel" | "no_show") => {
+    const at = nowLabel();
+    const sessions = state.sessions.map((s) => {
+      if (s.n !== n) return s;
+      if (outcome === "verify") {
+        return {
+          ...s,
+          confirmed: true,
+          completed: true,
+          deducted: true,
+          reserved: false,
+          verifiedAt: at,
+          reviewReason: null,
+          status: "verified" as SessionStatus,
+        };
+      }
+      // Cancelled or no-show: restore the reserved pack credit.
+      return {
+        ...s,
+        confirmed: false,
+        completed: false,
+        reserved: false,
+        deducted: false,
+        qrUsed: false,
+        qrIssued: false,
+        checkinMethod: null,
+        checkinAt: null,
+        completedAt: null,
+        feedback: null,
+        feedbackAt: null,
+        status: (outcome === "cancel" ? "cancelled" : "no_show") as SessionStatus,
+      };
+    });
+    patch({
+      sessions,
+      exceptionLog: [
+        ...state.exceptionLog,
+        {
+          n,
+          at,
+          action:
+            outcome === "verify"
+              ? "Manually verified and payout released"
+              : outcome === "cancel"
+                ? "Cancelled — pack credit restored"
+                : "Marked no-show — pack credit restored",
+        },
+      ],
+    });
+  },
+
+  /** Restore a cancelled/no-show session back to booked. */
+  rebook: (n: number) =>
+    journeyPatchSession(n, (s) => ({
+      ...s,
+      status: "booked",
+      booked: true,
+      reviewReason: null,
+    })),
+
+  /** Legacy one-tap confirm, kept for older screens. */
   confirm: (n: number, win: string | null) => {
     const sessions = state.sessions.map((s) =>
-      s.n === n ? { ...s, confirmed: true, completed: true, win } : s,
+      s.n === n
+        ? {
+            ...s,
+            confirmed: true,
+            completed: true,
+            deducted: true,
+            reserved: false,
+            verifiedAt: nowLabel(),
+            status: "verified" as SessionStatus,
+            win,
+          }
+        : s,
     );
-    // Confirming a session auto-books the next one for the demo flow.
     const idx = sessions.findIndex((s) => s.n === n);
     if (sessions[idx + 1]) sessions[idx + 1] = { ...sessions[idx + 1], booked: true };
     patch({ sessions });
@@ -378,10 +555,71 @@ export const journey = {
   startOngoing: () => patch({ ongoingActive: true, recommended: true }),
 };
 
+function journeyPatchSession(n: number, fn: (s: SessionPlan) => SessionPlan) {
+  patch({ sessions: state.sessions.map((s) => (s.n === n ? fn(s) : s)) });
+}
+
+function nowLabel(): string {
+  return new Intl.DateTimeFormat("en-AU", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date());
+}
+
+export const SESSION_STATUS_LABEL: Record<SessionStatus, string> = {
+  booked: "Booked",
+  qr_issued: "QR issued",
+  checked_in: "Checked in",
+  in_progress: "In progress",
+  awaiting_feedback: "Awaiting feedback",
+  verified: "Verified",
+  review_required: "Review required",
+  cancelled: "Cancelled",
+  no_show: "No-show",
+};
+
+export function payoutStatusOf(s: SessionPlan): PayoutStatus {
+  switch (s.status) {
+    case "verified":
+      return "Paid";
+    case "awaiting_feedback":
+      return "Awaiting verification";
+    case "in_progress":
+    case "checked_in":
+      return "Pending delivery";
+    case "review_required":
+      return "Review required";
+    default:
+      return "Not started";
+  }
+}
+
+/** Pack balance: 3 credits, reserved at check-in, deducted at verification. */
+export function packBalance(s: JourneyState) {
+  const total = s.sessions.length;
+  const deducted = s.sessions.filter((x) => x.deducted).length;
+  const reserved = s.sessions.filter((x) => x.reserved).length;
+  return { total, deducted, reserved, remaining: total - deducted - reserved };
+}
+
+export function exceptions(s: JourneyState): SessionPlan[] {
+  return s.sessions.filter(
+    (x) =>
+      x.status === "review_required" ||
+      x.status === "no_show" ||
+      x.status === "cancelled" ||
+      (x.checkinMethod === "manual" && x.status !== "verified"),
+  );
+}
+
 export function useJourney(): JourneyState {
   useEffect(hydrate, []);
   return useSyncExternalStore(journey.subscribe, journey.get, journey.get);
 }
+
 
 export function releasedPayoutCents(s: JourneyState): number {
   return s.sessions
