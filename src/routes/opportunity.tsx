@@ -119,35 +119,43 @@ function Opportunity() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <Badge className="border border-primary/40 bg-primary/10 text-primary">
-              New paid opportunity
+              New prepaid client opportunity
             </Badge>
             <h2 className="mt-2 text-2xl font-semibold">
               {MEMBER.name} purchased a {KICKSTART.name}
             </h2>
           </div>
           <div className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground">
-            <Clock className="size-3.5" /> Respond within 12 hours
+            <Clock className="size-3.5" /> Response deadline: 2 hours
           </div>
         </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          <Field label="Goal" value={INTAKE.goal} />
+          <Field label="Goal" value="Build strength and gym confidence" />
           <Field label="Experience" value={INTAKE.experience} />
           <Field label="Preferred times" value={`${INTAKE.days}, ${INTAKE.times}`} />
           <Field label="Coaching preference" value={INTAKE.style} />
           <Field label="Confidence today" value={`${INTAKE.confidence}/10`} />
-          <Field label="First-session target" value="Within 5 days of acceptance" />
+          <Field label="First-session target" value="Within seven days" />
+        </div>
+
+        <div className="mt-5 rounded-xl border border-primary/30 bg-primary/5 p-4">
+          <p className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-primary">
+            <Sparkles className="size-3.5" /> AI-generated trainer brief
+          </p>
+          <p className="mt-2 text-sm leading-relaxed">{TRAINER_BRIEF}</p>
         </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
           <Stat label="Your commitment" value="3 × 45 min" />
           <Stat
-            label="Your payout"
+            label="Total trainer payout"
             value={formatAUD(KICKSTART.trainerPayoutCents)}
             accent
           />
           <Stat label="Club campaign fee" value={formatAUD(KICKSTART.clubFeeCents)} />
         </div>
+
 
         <div className="mt-6 flex flex-wrap gap-2">
           <Button size="lg" onClick={() => journey.accept()} className="shadow-[var(--shadow-soft)]">
