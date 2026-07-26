@@ -838,7 +838,7 @@ export function payoutStatusOf(s: SessionPlan): PayoutStatus {
 }
 
 
-/** Pack balance: 3 credits, reserved at check-in, deducted at verification. */
+/** Pack balance: 3 credits, reserved when the completion code is scanned, deducted at verification. */
 export function packBalance(s: JourneyState) {
   const total = s.sessions.length;
   const deducted = s.sessions.filter((x) => x.deducted).length;
