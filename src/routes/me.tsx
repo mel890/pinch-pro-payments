@@ -231,23 +231,4 @@ function MeScreen() {
   );
 }
 
-function SplitRow({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: string;
-  accent?: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className={accent ? "text-primary" : "text-muted-foreground"}>
-        {label}
-      </span>
-      <span className={accent ? "text-primary" : "text-foreground"}>
-        {value}
-      </span>
-    </div>
-  );
 }
