@@ -25,8 +25,19 @@ import {
   QrCode,
   CalendarPlus,
   Quote,
+  RefreshCw,
+  ScanLine,
+  ArrowRight,
+  Inbox,
 } from "lucide-react";
 import { CoachMeJourney } from "@/components/coach-me-journey";
+import {
+  useJourney,
+  activeSession,
+  SESSION_STATUS_LABEL,
+  MEMBER,
+  KICKSTART,
+} from "@/lib/journey-store";
 
 export const Route = createFileRoute("/trainer")({
   head: () => ({
@@ -186,8 +197,7 @@ function TrainerScreen() {
 
         {/* 2a. Client opportunities + obvious QR steps */}
         <OpportunityBoard onRefresh={invalidate} />
-
-
+        {/* 2. Recent client wins */}
         <section className="mt-10">
           <h2 className="text-base font-semibold">Recent client wins</h2>
           <div className="mt-3 space-y-2">
