@@ -197,6 +197,9 @@ function TrainerScreen() {
 
         {/* 2a. Client opportunities + obvious QR steps */}
         <OpportunityBoard onRefresh={invalidate} />
+        {/* 2b. End of pack — recommend ongoing coaching to Alex */}
+        <PackWrapUp />
+
         {/* 2. Recent client wins */}
         <section className="mt-10">
           <h2 className="text-base font-semibold">Recent client wins</h2>
