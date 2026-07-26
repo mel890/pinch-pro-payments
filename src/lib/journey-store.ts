@@ -433,6 +433,8 @@ function hydrate() {
       state = {
         ...structuredClone(INITIAL),
         ...parsed,
+        intake: { ...INTAKE_DEFAULTS, ...(parsed.intake ?? {}) },
+
         // Always re-apply the current copy/templates over stored progress.
         sessions: INITIAL.sessions.map((base) => {
           const saved = parsed.sessions.find((x) => x.n === base.n);
