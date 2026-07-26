@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Check, TrendingUp } from "lucide-react";
+import { ArrowRight, Check, Sparkles, TrendingUp } from "lucide-react";
 import { formatAUD } from "@/lib/money";
 import { CoachMeJourney } from "@/components/coach-me-journey";
 import {
@@ -14,6 +14,7 @@ import {
   ONGOING,
   MEMBER,
   TRAINER,
+  AI_SUMMARY,
 } from "@/lib/journey-store";
 
 export const Route = createFileRoute("/review")({
