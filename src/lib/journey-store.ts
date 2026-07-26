@@ -264,8 +264,11 @@ export const journey = {
     save();
     emit();
   },
+  launchCampaign: () => patch({ campaignLive: true }),
+  confirmMatch: () => patch({ matchConfirmed: true, matched: true }),
   submitIntake: () => patch({ intakeSubmitted: true }),
-  pay: () => patch({ paid: true, intakeSubmitted: true, matched: true }),
+  pay: () =>
+    patch({ paid: true, intakeSubmitted: true, matched: true, campaignLive: true }),
   accept: () => {
     const sessions = state.sessions.map((s) =>
       s.n === 1 ? { ...s, booked: true } : s,
