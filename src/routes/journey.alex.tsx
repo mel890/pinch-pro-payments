@@ -14,9 +14,9 @@ import { formatAUD } from "@/lib/money";
 import { CoachMeJourney } from "@/components/coach-me-journey";
 import {
   useJourney,
-  journey,
   confirmedCount,
   releasedPayoutCents,
+  SESSION_STATUS_LABEL,
   KICKSTART,
   INTAKE,
   MEMBER,
