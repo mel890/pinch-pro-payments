@@ -205,10 +205,11 @@ export const AFTER = { confidence: 8, visits: 2.6, clarity: 8 };
 
 export type SessionStatus =
   | "booked"
-  | "qr_issued"
-  | "checked_in"
   | "in_progress"
-  | "awaiting_feedback"
+  | "code_ready"
+  | "code_accepted"
+  | "awaiting_log"
+  | "awaiting_confirmation"
   | "verified"
   | "review_required"
   | "cancelled"
@@ -216,13 +217,17 @@ export type SessionStatus =
 
 export type PayoutStatus =
   | "Not started"
-  | "Pending delivery"
-  | "Awaiting verification"
+  | "Session in progress"
+  | "Verification in progress"
+  | "Awaiting member confirmation"
   | "Payout eligible"
   | "Review required"
   | "Paid";
 
-export type CheckinMethod = "qr" | "backup" | "manual" | null;
+/** How the completion code was presented at the end of the session. */
+export type CodeMethod = "qr" | "backup" | "manual" | null;
+/** Legacy alias. */
+export type CheckinMethod = CodeMethod;
 
 export type SessionFeedback = {
   tookPlace: boolean;
@@ -243,24 +248,29 @@ export type SessionPlan = {
   confirmed: boolean;
   win: string | null;
   payoutCents: number;
-  /** Three-stage verification model. */
+  /** Deliver → Scan → Log → Confirm → Verify. */
   status: SessionStatus;
   scheduledLabel: string;
+  /** Completion code lifecycle. */
   qrIssued: boolean;
   qrUsed: boolean;
   backupCode: string;
-  checkinMethod: CheckinMethod;
+  checkinMethod: CodeMethod;
+  /** Timestamp the completion code was accepted. */
   checkinAt: string | null;
   completedAt: string | null;
   fullyDelivered: boolean | null;
   nextBooked: boolean | null;
+  issueNote: string | null;
   feedbackAt: string | null;
   feedback: SessionFeedback | null;
   verifiedAt: string | null;
+  verifiedVia: "member" | "timeout" | "manager" | null;
   reviewReason: string | null;
   reserved: boolean;
   deducted: boolean;
 };
+
 
 export type ExceptionAction = {
   n: number;
@@ -395,10 +405,13 @@ const INITIAL: JourneyState = {
     completedAt: null,
     fullyDelivered: null,
     nextBooked: null,
+    issueNote: null,
     feedbackAt: null,
     feedback: null,
     verifiedAt: null,
+    verifiedVia: null,
     reviewReason: null,
+
     reserved: false,
     deducted: false,
   })),
@@ -501,18 +514,26 @@ export const journey = {
       sessions: state.sessions.map((s) => (s.n === n ? { ...s, ...next } : s)),
     }),
 
-  /* ---------- Three-stage session verification ---------- */
+  /* ---------- Deliver → Scan → Log → Confirm → Verify ---------- */
 
-  /** Member opens their check-in screen: a one-time QR + backup code is issued. */
-  issueQr: (n: number) =>
+  /** Trainer taps "Complete session" at the end of delivery. */
+  startCompletion: (n: number) =>
     journeyPatchSession(n, (s) =>
-      s.qrUsed || s.status !== "booked"
-        ? s
-        : { ...s, qrIssued: true, status: "qr_issued" },
+      s.status === "booked" || s.status === "in_progress"
+        ? { ...s, status: "in_progress" }
+        : s,
     ),
 
-  /** Trainer scans the QR (or keys the backup code). Reserves the session. */
-  checkIn: (n: number, method: Exclude<CheckinMethod, null>) =>
+  /** Member opens their session completion screen: one-time QR + backup code. */
+  issueCompletionCode: (n: number) =>
+    journeyPatchSession(n, (s) =>
+      s.qrUsed || (s.status !== "booked" && s.status !== "in_progress")
+        ? s
+        : { ...s, qrIssued: true, status: "code_ready" },
+    ),
+
+  /** Trainer scans the completion code (or keys the backup code). Reserves the session. */
+  scanCompletionCode: (n: number, method: Exclude<CodeMethod, null>) =>
     journeyPatchSession(n, (s) =>
       s.qrUsed
         ? s
@@ -523,18 +544,23 @@ export const journey = {
             checkinMethod: method,
             checkinAt: nowLabel(),
             reserved: true,
-            status: "in_progress",
+            status: "awaiting_log",
             reviewReason:
               method === "manual"
-                ? "Manual check-in — QR not scanned"
+                ? "Manual override — completion code not scanned"
                 : s.reviewReason,
           },
     ),
 
-  /** Trainer completion: session delivered, next booked, optional win. */
-  completeSession: (
+  /** Trainer session log. */
+  logSession: (
     n: number,
-    input: { delivered: boolean; nextBooked: boolean; win: string | null },
+    input: {
+      delivered: boolean;
+      nextBooked: boolean;
+      win: string | null;
+      issue?: string | null;
+    },
   ) => {
     const sessions = state.sessions.map((s) => {
       if (s.n !== n) return s;
@@ -545,6 +571,7 @@ export const journey = {
           status: "review_required" as SessionStatus,
           completedAt: nowLabel(),
           fullyDelivered: false,
+          issueNote: input.issue?.trim() || null,
           reviewReason: "Trainer reported the session was not fully delivered",
         };
       }
@@ -555,7 +582,8 @@ export const journey = {
         fullyDelivered: true,
         nextBooked: input.nextBooked,
         win: input.win ?? s.win,
-        status: "awaiting_feedback" as SessionStatus,
+        issueNote: input.issue?.trim() || null,
+        status: "awaiting_confirmation" as SessionStatus,
       };
     });
     const idx = sessions.findIndex((s) => s.n === n);
@@ -565,7 +593,7 @@ export const journey = {
     patch({ sessions });
   },
 
-  /** Member feedback stage — no dispute verifies the session and releases payout. */
+  /** Member confirmation stage — confirming verifies and makes the payout eligible. */
   submitFeedback: (n: number, feedback: SessionFeedback) =>
     journeyPatchSession(n, (s) =>
       feedback.tookPlace
@@ -579,6 +607,7 @@ export const journey = {
             deducted: true,
             reserved: false,
             verifiedAt: nowLabel(),
+            verifiedVia: "member",
             status: "verified",
           }
         : {
@@ -586,14 +615,14 @@ export const journey = {
             feedback,
             feedbackAt: nowLabel(),
             status: "review_required",
-            reviewReason: "Member disputed that the session took place",
+            reviewReason: "Member reported the session did not take place as expected",
           },
     ),
 
-  /** 12-hour no-dispute timeout auto-verifies. */
+  /** 12-hour no-dispute timeout verifies the session. */
   timeoutVerify: (n: number) =>
     journeyPatchSession(n, (s) =>
-      s.status !== "awaiting_feedback"
+      s.status !== "awaiting_confirmation"
         ? s
         : {
             ...s,
@@ -601,9 +630,11 @@ export const journey = {
             deducted: true,
             reserved: false,
             verifiedAt: nowLabel(),
+            verifiedVia: "timeout",
             status: "verified",
           },
     ),
+
 
   /** Manager resolution from the exception queue. */
   resolveException: (n: number, outcome: "verify" | "cancel" | "no_show") => {
@@ -762,25 +793,43 @@ function nowLabel(): string {
 
 export const SESSION_STATUS_LABEL: Record<SessionStatus, string> = {
   booked: "Booked",
-  qr_issued: "QR issued",
-  checked_in: "Checked in",
-  in_progress: "In progress",
-  awaiting_feedback: "Awaiting feedback",
+  in_progress: "Session in progress",
+  code_ready: "Completion code ready",
+  code_accepted: "Completion code accepted",
+  awaiting_log: "Awaiting trainer log",
+  awaiting_confirmation: "Awaiting member confirmation",
   verified: "Verified",
   review_required: "Review required",
   cancelled: "Cancelled",
   no_show: "No-show",
 };
 
+/** What the member/trainer should do next, in plain language. */
+export const SESSION_NEXT_ACTION: Record<SessionStatus, string> = {
+  booked: "Deliver the booked session",
+  in_progress: "Ask the member to open their completion code",
+  code_ready: "Scan the member's completion code",
+  code_accepted: "Log the session",
+  awaiting_log: "Log the session",
+  awaiting_confirmation: "Waiting on the member — auto-verifies after 12 hours",
+  verified: "Nothing — payout eligible",
+  review_required: "Manager review required",
+  cancelled: "Rebook the session",
+  no_show: "Rebook the session",
+};
+
 export function payoutStatusOf(s: SessionPlan): PayoutStatus {
   switch (s.status) {
     case "verified":
-      return "Paid";
-    case "awaiting_feedback":
-      return "Awaiting verification";
+      return "Payout eligible";
+    case "awaiting_confirmation":
+      return "Awaiting member confirmation";
+    case "code_ready":
+    case "code_accepted":
+    case "awaiting_log":
+      return "Verification in progress";
     case "in_progress":
-    case "checked_in":
-      return "Pending delivery";
+      return "Session in progress";
     case "review_required":
       return "Review required";
     default:
@@ -788,7 +837,8 @@ export function payoutStatusOf(s: SessionPlan): PayoutStatus {
   }
 }
 
-/** Pack balance: 3 credits, reserved at check-in, deducted at verification. */
+
+/** Pack balance: 3 credits, reserved when the completion code is scanned, deducted at verification. */
 export function packBalance(s: JourneyState) {
   const total = s.sessions.length;
   const deducted = s.sessions.filter((x) => x.deducted).length;

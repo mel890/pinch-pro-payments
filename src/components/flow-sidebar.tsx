@@ -54,15 +54,16 @@ const manager: Item[] = [
 
 const trainer: Item[] = [
   { title: "Trainer home", url: "/trainer", icon: ShieldCheck },
-  { title: "Scan client QR", url: "/scan", icon: ScanLine },
-  { title: "Complete session", url: "/complete-session", icon: ClipboardCheck },
+  { title: "Scan completion code", url: "/scan", icon: ScanLine },
+  { title: "Log session", url: "/complete-session", icon: ClipboardCheck },
 ];
 
 const member: Item[] = [
   { title: "Client home", url: "/me", icon: User },
-  { title: "Check-in QR", url: "/checkin", icon: QrCode },
-  { title: "Session feedback", url: "/confirm-session/demo", icon: MessageCircle },
+  { title: "My completion code", url: "/checkin", icon: QrCode },
+  { title: "Confirm session", url: "/confirm-session/demo", icon: MessageCircle },
 ];
+
 
 const technical: Item[] = [
   { title: "Pinch Integration", url: "/demo-console", icon: Terminal },

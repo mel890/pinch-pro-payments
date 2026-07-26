@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ScanLine, Check, X, ArrowRight, ShieldAlert } from "lucide-react";
+import { VerificationSteps } from "@/components/verification-steps";
 import {
   useJourney,
   journey,
@@ -19,17 +20,17 @@ import {
 export const Route = createFileRoute("/scan")({
   head: () => ({
     meta: [
-      { title: "Scan member QR — VezaPT Pay" },
+      { title: "Scan completion code — VezaPT Pay" },
       {
         name: "description",
         content:
-          "Trainer scanner: validates the member, trainer, booking, time window and single-use status before a session starts.",
+          "Trainer scanner: validates the member, trainer, booking, pack, completion window and single-use status before the session log.",
       },
-      { property: "og:title", content: "Scan member QR — VezaPT Pay" },
+      { property: "og:title", content: "Scan completion code — VezaPT Pay" },
       {
         property: "og:description",
         content:
-          "Validate the member's one-time check-in code to start the session.",
+          "Scan the member's single-use completion code to start verification.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -41,9 +42,27 @@ export const Route = createFileRoute("/scan")({
 const CHECKS = [
   "Member identity matches the booking",
   "Trainer is the assigned coach",
-  "Booking exists for this club and pack",
-  "Inside the 30-minute check-in window",
+  "Booking belongs to this club and pack",
+  "Session number matches the purchased pack",
+  "Inside the allowed completion window",
   "Code has not been used before",
+];
+
+const INVALID_STATES = [
+  { label: "Expired code", message: "This completion code has expired." },
+  { label: "Already used", message: "This code has already been used." },
+  {
+    label: "Wrong trainer",
+    message: "This session is assigned to another trainer.",
+  },
+  {
+    label: "Wrong booking",
+    message: "This code does not match the selected booking.",
+  },
+  {
+    label: "Outside window",
+    message: "This code is outside the completion window.",
+  },
 ];
 
 function ScanScreen() {
@@ -57,7 +76,7 @@ function ScanScreen() {
     return (
       <Shell>
         <Card className="border-border p-6">
-          <p className="text-lg font-semibold">No session awaiting check-in</p>
+          <p className="text-lg font-semibold">No session awaiting completion</p>
           <Button asChild className="mt-4" size="sm">
             <Link to="/journey/alex">Back to the journey</Link>
           </Button>
@@ -68,8 +87,8 @@ function ScanScreen() {
 
   const scanned = session.qrUsed;
 
-  const doCheckIn = (method: "qr" | "backup" | "manual") => {
-    journey.checkIn(session.n, method);
+  const doScan = (method: "qr" | "backup" | "manual") => {
+    journey.scanCompletionCode(session.n, method);
     setError(null);
   };
 
@@ -81,7 +100,7 @@ function ScanScreen() {
             {TRAINER.name} · {CLUB.name}
           </p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-            Check in {MEMBER.first}
+            Scan {MEMBER.first}'s completion code
           </h1>
         </div>
         <Badge className="border border-primary/40 bg-primary/10 text-primary">
@@ -89,13 +108,20 @@ function ScanScreen() {
         </Badge>
       </header>
 
+      <VerificationSteps status={session.status} className="mt-4" />
+
       <Card className="mt-5 p-6">
         {scanned ? (
           <div className="space-y-3">
             <div className="flex items-center gap-2 text-primary">
               <Check className="size-5" />
-              <p className="font-semibold">Check-in accepted</p>
+              <p className="font-semibold">Completion code accepted</p>
             </div>
+            <p className="text-sm text-muted-foreground">
+              {MEMBER.first} and {TRAINER.first} were verified together at the end
+              of the booked session. Verification is in progress — the session is
+              not verified yet.
+            </p>
             <ul className="space-y-1.5">
               {CHECKS.map((c) => (
                 <li key={c} className="flex gap-2 text-sm text-muted-foreground">
@@ -108,7 +134,7 @@ function ScanScreen() {
               <Row label="Session" value={`${session.n} of 3 · ${session.title}`} />
               <Row label="Pack" value={KICKSTART.name} />
               <Row
-                label="Checked in"
+                label="Code accepted"
                 value={`${session.checkinAt ?? ""} · ${
                   session.checkinMethod === "manual"
                     ? "manual override"
@@ -118,14 +144,13 @@ function ScanScreen() {
                 }`}
               />
               <Row label="Pack credit" value="Reserved (not yet deducted)" />
-              <Row label="Payout" value="Held until verification" />
+              <Row label="Payout" value="Verification in progress" />
             </div>
             <Button
               className="w-full"
               onClick={() => navigate({ to: "/complete-session" })}
             >
-              Session finished — record completion{" "}
-              <ArrowRight className="ml-1 size-4" />
+              Log {MEMBER.first}'s session <ArrowRight className="ml-1 size-4" />
             </Button>
           </div>
         ) : (
@@ -133,16 +158,21 @@ function ScanScreen() {
             <div className="grid h-44 place-items-center rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5">
               <div className="flex flex-col items-center gap-2 text-muted-foreground">
                 <ScanLine className="size-8 animate-pulse text-primary" />
-                <span className="text-sm">Point the camera at the member QR</span>
+                <span className="text-sm">
+                  Point the camera at {MEMBER.first}'s completion code
+                </span>
               </div>
             </div>
-            <Button className="w-full" onClick={() => doCheckIn("qr")}>
-              Simulate successful scan
+            <Button className="w-full" onClick={() => doScan("qr")}>
+              Open scanner — simulate successful scan
             </Button>
+            <p className="text-center text-xs text-muted-foreground">
+              Scanning starts the verification process.
+            </p>
 
             <div>
               <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
-                Or enter the six-digit backup code
+                Enter backup code
               </p>
               <div className="mt-2 flex gap-2">
                 <Input
@@ -158,9 +188,9 @@ function ScanScreen() {
                   onClick={() => {
                     const clean = code.replace(/\s/g, "");
                     if (clean === session.backupCode.replace(/\s/g, "")) {
-                      doCheckIn("backup");
+                      doScan("backup");
                     } else {
-                      setError("That code doesn't match this booking.");
+                      setError("This code does not match the selected booking.");
                     }
                   }}
                 >
@@ -172,15 +202,40 @@ function ScanScreen() {
                   <X className="size-4" /> {error}
                 </p>
               )}
+              {error && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Retry the scan, re-enter the backup code, or request manager
+                  review below.
+                </p>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-dashed border-border p-3">
+              <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                Preview an invalid code state
+              </p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {INVALID_STATES.map((st) => (
+                  <button
+                    key={st.label}
+                    type="button"
+                    onClick={() => setError(st.message)}
+                    className="rounded-lg border border-border px-2.5 py-1 text-xs text-muted-foreground hover:border-destructive/50 hover:text-destructive"
+                  >
+                    {st.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <button
               type="button"
-              onClick={() => doCheckIn("manual")}
+              onClick={() => doScan("manual")}
               className="flex w-full items-center gap-2 rounded-xl border border-dashed border-border px-4 py-3 text-left text-sm text-muted-foreground hover:border-primary/40"
             >
               <ShieldAlert className="size-4" />
-              Manual check-in — flags the session for manager review
+              Request manager review — manual override creates a review-required
+              record
             </button>
           </div>
         )}

@@ -35,6 +35,7 @@ import {
   BellRing,
 } from "lucide-react";
 import { CoachMeJourney } from "@/components/coach-me-journey";
+import { VerificationSteps } from "@/components/verification-steps";
 import {
   useJourney,
   journey,
@@ -42,6 +43,8 @@ import {
   confirmedCount,
   releasedPayoutCents,
   SESSION_STATUS_LABEL,
+  SESSION_NEXT_ACTION,
+
   MEMBER,
   TRAINER,
   KICKSTART,
@@ -602,16 +605,34 @@ function OpportunityBoard({ onRefresh }: { onRefresh: () => void }) {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="font-semibold">
-                  {MEMBER.name} · session {session.n} of 3
+                  {MEMBER.name} · {KICKSTART.name} session {session.n} of 3
                 </p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  {session.title} · {session.scheduledLabel}
+                  {session.title} · {session.scheduledLabel} · {TRAINER.name}
                 </p>
               </div>
               <span className="rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-[10px] uppercase tracking-wider text-primary">
                 {SESSION_STATUS_LABEL[session.status]}
               </span>
             </div>
+            <VerificationSteps status={session.status} className="mt-4" />
+            <p className="mt-4 text-xs text-muted-foreground">
+              Next: {SESSION_NEXT_ACTION[session.status]}
+            </p>
+            {(session.status === "booked" || session.status === "in_progress") && (
+              <Button size="sm" className="mt-3" asChild>
+                <Link
+                  to="/checkin"
+                  onClick={() => journey.startCompletion(session.n)}
+                >
+                  Complete session <ArrowRight className="ml-1 size-3.5" />
+                </Link>
+              </Button>
+            )}
+
+            <p className="mt-2 text-xs text-muted-foreground">
+              Use {MEMBER.first}'s completion code at the end of the session.
+            </p>
           </Card>
         )}
 
@@ -628,26 +649,28 @@ function OpportunityBoard({ onRefresh }: { onRefresh: () => void }) {
         <div className="flex items-center gap-2">
           <ScanLine className="size-4 text-primary" />
           <h3 className="text-sm font-semibold uppercase tracking-wider">
-            At the end of every session — scan {MEMBER.first}'s QR code
+            Complete {MEMBER.first}'s session
           </h3>
         </div>
         <p className="mt-1 text-xs text-muted-foreground">
-          {MEMBER.first}'s code is unique and single-use. Scanning it is what
-          releases your payout for that session.
+          At the end of each session, follow these steps. {MEMBER.first}'s unique
+          completion code confirms that {MEMBER.first} and {TRAINER.first} are
+          together at the end of the booked session. Scanning starts the
+          verification process.
         </p>
 
         <ol className="mt-4 space-y-3">
           <Step
             n={1}
-            title={`Ask ${MEMBER.first} to open their check-in screen`}
-            body="Their VezaPT app shows a one-time QR code and a 6-digit backup code."
+            title={`Ask ${MEMBER.first} to open their completion code`}
+            body={`${MEMBER.first}'s VezaPT screen shows a unique QR code and six-digit backup code.`}
             to="/checkin"
-            cta="Open member QR screen"
+            cta="Open member code"
           />
           <Step
             n={2}
-            title={`Scan ${MEMBER.first}'s unique QR code`}
-            body="Use your scanner. If the camera fails, key in the backup code instead."
+            title={`Scan ${MEMBER.first}'s completion code`}
+            body="Use the scanner or enter the backup code."
             to="/scan"
             cta="Open scanner"
             primary
@@ -655,19 +678,23 @@ function OpportunityBoard({ onRefresh }: { onRefresh: () => void }) {
           <Step
             n={3}
             title="Log the session"
-            body="Confirm it was fully delivered, book the next session and note one win."
+            body="Confirm the session was delivered, book the next session and record one win."
             to="/complete-session"
             cta="Log session"
           />
           <Step
             n={4}
             title={`${MEMBER.first} confirms`}
-            body="Feedback (or a 12-hour no-dispute timeout) verifies the session and releases payment."
+            body={`${MEMBER.first} confirms through a short prompt. If no dispute is raised within 12 hours, the session is automatically verified.`}
             to="/confirm-session/demo"
             cta="Member confirmation"
           />
         </ol>
+        <p className="mt-4 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+          Final state: Verified — payout eligible
+        </p>
       </Card>
+
     </section>
   );
 }
