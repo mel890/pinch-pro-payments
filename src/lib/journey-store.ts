@@ -82,6 +82,8 @@ export const AFTER = { confidence: 8, visits: 2.6, clarity: 8 };
 export type SessionPlan = {
   n: 1 | 2 | 3;
   title: string;
+  purpose: string[];
+  prep: string[];
   aims: string[];
   booked: boolean;
   completed: boolean;
@@ -91,9 +93,11 @@ export type SessionPlan = {
 };
 
 export type JourneyState = {
+  campaignLive: boolean;
   intakeSubmitted: boolean;
   paid: boolean;
   matched: boolean;
+  matchConfirmed: boolean;
   accepted: boolean;
   declineReason: string | null;
   sessions: SessionPlan[];
@@ -102,10 +106,24 @@ export type JourneyState = {
   ongoingActive: boolean;
 };
 
-const SESSION_TEMPLATES: Omit<SessionPlan, "booked" | "completed" | "confirmed" | "win">[] = [
+const SESSION_TEMPLATES: Omit<
+  SessionPlan,
+  "booked" | "completed" | "confirmed" | "win"
+>[] = [
   {
     n: 1,
     title: "Understand",
+    purpose: [
+      "Clarify Alex's goal and motivation",
+      "Establish a starting point",
+      "Create one early confidence win",
+      "Agree on one action before session two",
+    ],
+    prep: [
+      "Ask what currently feels uncomfortable in the gym",
+      "Choose simple whole-body movements",
+      "Finish with one task Alex can repeat independently",
+    ],
     aims: [
       "Clarify goal and motivation",
       "Assess starting point",
@@ -116,7 +134,18 @@ const SESSION_TEMPLATES: Omit<SessionPlan, "booked" | "completed" | "confirmed" 
   },
   {
     n: 2,
-    title: "Personalise",
+    title: "Progress",
+    purpose: [
+      "Personalise the session",
+      "Record one visible improvement",
+      "Review confidence and attendance",
+      "Ensure session three is booked",
+    ],
+    prep: [
+      "Review soreness and confidence",
+      "Progress one movement clearly",
+      "Link the session back to Alex's original goal",
+    ],
     aims: [
       "Deliver a goal-aligned session",
       "Record one visible progression",
@@ -128,6 +157,18 @@ const SESSION_TEMPLATES: Omit<SessionPlan, "booked" | "completed" | "confirmed" 
   {
     n: 3,
     title: "Review and recommend",
+    purpose: [
+      "Show Alex's progress",
+      "Reassess confidence",
+      "Identify remaining support needs",
+      "Recommend one clear next step",
+    ],
+    prep: [
+      "Compare Alex's starting and current confidence",
+      "Show one measurable improvement",
+      "Ask what Alex still doesn't feel confident doing alone",
+      "Recommend one suitable ongoing plan",
+    ],
     aims: [
       "Show progress",
       "Reassess confidence",
@@ -139,9 +180,11 @@ const SESSION_TEMPLATES: Omit<SessionPlan, "booked" | "completed" | "confirmed" 
 ];
 
 const INITIAL: JourneyState = {
+  campaignLive: false,
   intakeSubmitted: false,
   paid: false,
   matched: false,
+  matchConfirmed: false,
   accepted: false,
   declineReason: null,
   sessions: SESSION_TEMPLATES.map((s) => ({
