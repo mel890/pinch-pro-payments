@@ -308,16 +308,21 @@ function hydrate() {
         // Always re-apply the current copy/templates over stored progress.
         sessions: INITIAL.sessions.map((base) => {
           const saved = parsed.sessions.find((x) => x.n === base.n);
-          return saved
-            ? {
-                ...base,
-                booked: !!saved.booked,
-                completed: !!saved.completed,
-                confirmed: !!saved.confirmed,
-                win: saved.win ?? null,
-              }
-            : base;
+          if (!saved) return base;
+          const {
+            n: _n,
+            title: _t,
+            purpose: _p,
+            prep: _pr,
+            aims: _a,
+            payoutCents: _c,
+            scheduledLabel: _s,
+            backupCode: _b,
+            ...progress
+          } = saved;
+          return { ...base, ...progress };
         }),
+
       };
       emit();
     }
