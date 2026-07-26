@@ -521,7 +521,7 @@ function PinchConsole() {
           <div className="grid gap-x-8 sm:grid-cols-2">
             <div>
               <Field label="Member" value="Alex Morgan" />
-              <Field label="Trainer" value="Sarah Nguyen" />
+              <Field label="Trainer" value="Sarah Marino" />
               <Field label="Plan" value="2 sessions per week" />
               <Field label="Price" value="$180.00 AUD per week" tone="payment" />
             </div>
@@ -582,7 +582,7 @@ function PinchConsole() {
           <div className="grid gap-x-8 sm:grid-cols-2">
             <div>
               <Field label="Purchase paid" value="Yes" tone="payment" />
-              <Field label="Trainer assigned" value="Sarah Nguyen" />
+              <Field label="Trainer assigned" value="Sarah Marino" />
               <Field label="Session 1 check-in" value="Verified" tone="workflow" />
             </div>
             <div>

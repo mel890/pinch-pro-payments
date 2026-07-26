@@ -20,7 +20,7 @@ export const Route = createFileRoute("/match")({
       {
         name: "description",
         content:
-          "VezaPT recommends Sarah Nguyen for Alex's Kickstart Pack based on schedule fit, capacity, beginner strength experience and coaching style.",
+          "VezaPT recommends Sarah Marino for Alex's Kickstart Pack based on schedule fit, capacity, beginner strength experience and coaching style.",
       },
       { property: "og:title", content: "Best trainer match — VezaPT Pay" },
       {
