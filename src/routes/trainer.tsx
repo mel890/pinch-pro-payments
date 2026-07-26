@@ -184,7 +184,10 @@ function TrainerScreen() {
           </p>
         </Card>
 
-        {/* 2. Recent client wins */}
+        {/* 2a. Client opportunities + obvious QR steps */}
+        <OpportunityBoard onRefresh={invalidate} />
+
+
         <section className="mt-10">
           <h2 className="text-base font-semibold">Recent client wins</h2>
           <div className="mt-3 space-y-2">
