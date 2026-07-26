@@ -160,9 +160,9 @@ export type JourneyState = {
 };
 
 
-const SESSION_TEMPLATES: Omit<
+const SESSION_TEMPLATES: Pick<
   SessionPlan,
-  "booked" | "completed" | "confirmed" | "win"
+  "n" | "title" | "purpose" | "prep" | "aims" | "payoutCents"
 >[] = [
   {
     n: 1,
