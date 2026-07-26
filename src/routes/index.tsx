@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowRight,
+  Rocket,
   ShoppingBag,
+  Sparkles,
   Handshake,
   CheckCircle2,
   Star,
   RefreshCw,
-  Users,
+  LayoutDashboard,
   Wrench,
 } from "lucide-react";
 import { formatAUD } from "@/lib/money";
@@ -26,17 +28,20 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "VezaPT Pay — one member journey, end to end" },
+      { title: "VezaPT Pay — one prepaid PT journey, end to end" },
       {
         name: "description",
         content:
-          "Follow Alex Morgan from a $249 gym-promoted Kickstart Pack to twice-weekly recurring coaching with Sarah — purchase, match, delivery, confirmation, review and conversion.",
+          "A guided demo: Northside Club promotes one $249 Kickstart Pack, Alex buys through Pinch, VezaPT matches Sarah, three sessions are delivered and Alex converts to twice-weekly coaching.",
       },
-      { property: "og:title", content: "VezaPT Pay — one member journey, end to end" },
+      {
+        property: "og:title",
+        content: "VezaPT Pay — one prepaid PT journey, end to end",
+      },
       {
         property: "og:description",
         content:
-          "A guided demo: Kickstart purchase, trainer match, three confirmed sessions, progress review and conversion to ongoing coaching.",
+          "Campaign, purchase, match, delivery, review, conversion and manager impact in eight steps.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -49,77 +54,89 @@ function Landing() {
   const s = useJourney();
   const done = confirmedCount(s);
 
-  const steps: {
-    n: number;
-    title: string;
-    blurb: string;
-    to: string;
-    icon: typeof Users;
-    done: boolean;
-  }[] = [
+  const steps = [
     {
       n: 1,
-      title: "Manager launches campaign",
-      blurb: `${CLUB.name} promotes the Kickstart Pack to ${CLUB.members} members — capacity checked first.`,
-      to: "/trainer-capacity",
-      icon: Users,
-      done: s.paid,
+      title: "Launch campaign",
+      blurb: `${CLUB.name} switches on the Kickstart Campaign — one product, ready to run.`,
+      to: "/campaign",
+      icon: Rocket,
+      done: s.campaignLive,
     },
     {
       n: 2,
       title: `${MEMBER.first} buys Kickstart`,
-      blurb: `${formatAUD(KICKSTART.priceCents)} with goals, availability and confidence captured at checkout.`,
+      blurb: `${formatAUD(KICKSTART.priceCents)} through Pinch, with goal, availability and confidence captured.`,
       to: "/pay",
       icon: ShoppingBag,
       done: s.paid,
     },
     {
       n: 3,
+      title: `VezaPT matches ${TRAINER.first}`,
+      blurb: "AI-assisted recommendation on schedule, capacity and coaching fit.",
+      to: "/match",
+      icon: Sparkles,
+      done: s.matchConfirmed,
+    },
+    {
+      n: 4,
       title: `${TRAINER.first} accepts`,
-      blurb: `Full commitment and ${formatAUD(KICKSTART.trainerPayoutCents)} payout shown before she responds.`,
+      blurb: `A prepaid opportunity with a ${formatAUD(KICKSTART.trainerPayoutCents)} payout shown up front.`,
       to: "/opportunity",
       icon: Handshake,
       done: s.accepted,
     },
     {
-      n: 4,
+      n: 5,
       title: "Deliver three sessions",
-      blurb: `Understand → Personalise → Review. ${MEMBER.first} confirms each one. (${done} of 3)`,
+      blurb: `Understand → Progress → Review. ${MEMBER.first} confirms each one. (${done} of 3)`,
       to: "/journey/alex",
       icon: CheckCircle2,
       done: done === 3,
     },
     {
-      n: 5,
-      title: "Review progress",
+      n: 6,
+      title: `Review ${MEMBER.first}'s progress`,
       blurb: "Confidence 5 → 8, visits 1.4 → 2.6, clarity 4 → 8.",
       to: "/review",
       icon: Star,
       done: s.recommended,
     },
     {
-      n: 6,
-      title: "Convert to 2× weekly",
+      n: 7,
+      title: "Convert to 2× weekly coaching",
       blurb: `${formatAUD(ONGOING.weeklyCents)} per week, recurring through Pinch.`,
       to: "/ongoing",
       icon: RefreshCw,
       done: s.ongoingActive,
     },
     {
-      n: 7,
+      n: 8,
       title: "View manager impact",
-      blurb: "Commercial, member and trainer outcomes from one purchase.",
+      blurb: "Packs sold, members started, conversions, campaign revenue, retention.",
       to: "/dashboard",
-      icon: Users,
+      icon: LayoutDashboard,
       done: s.ongoingActive,
     },
+  ];
+
+  const promises = [
     {
-      n: 8,
-      title: "Open Pinch integration console",
-      blurb: "Checkout creation, webhooks, payment and session logs.",
-      to: "/demo-console",
-      icon: Wrench,
-      done: false,
+      who: "For gyms",
+      text: "Keep your current rental model and add a ready-to-run PT campaign without hiring a sales team.",
+    },
+    {
+      who: "For trainers",
+      text: "Receive prepaid clients, deliver three valuable sessions and keep the ongoing coaching relationship.",
+    },
+    {
+      who: "For members",
+      text: "Buy a clear starting product, get matched with the right trainer and continue only when the coaching is working.",
+    },
+    {
+      who: "For Pinch",
+      text: "Process the initial gym-promoted purchase, then transition the member into PT-owned recurring billing.",
     },
   ];
 
@@ -130,101 +147,90 @@ function Landing() {
           {CLUB.name} · guided demo
         </Badge>
         <h1 className="mt-3 max-w-3xl text-3xl font-semibold tracking-tight sm:text-5xl">
-          One member. One journey. From a first paid session to ongoing coaching.
+          One prepaid pack. One trainer. One member who keeps going.
         </h1>
         <p className="mt-4 max-w-2xl text-sm text-muted-foreground sm:text-base">
-          {MEMBER.name} buys a gym-promoted {KICKSTART.name}, is matched with{" "}
-          {TRAINER.name}, completes three confirmed sessions, reviews measured
-          progress, and continues on a {formatAUD(ONGOING.weeklyCents)} weekly
-          plan. Every dollar and every outcome is visible along the way.
+          {MEMBER.name} buys the gym-promoted {KICKSTART.name} for{" "}
+          {formatAUD(KICKSTART.priceCents)}, is matched with {TRAINER.name},
+          confirms three sessions and converts to {ONGOING.name} at{" "}
+          {formatAUD(ONGOING.weeklyCents)} per week.
         </p>
 
         <div className="mt-6 flex flex-wrap gap-2">
           <Button asChild size="lg" className="shadow-[var(--shadow-soft)]">
-            <Link to="/pay">
-              Start the journey <ArrowRight className="ml-1 size-4" />
+            <Link to="/campaign">
+              Start the demo <ArrowRight className="ml-1 size-4" />
             </Link>
           </Button>
           <Button asChild size="lg" variant="outline">
-            <Link to="/dashboard">Manager impact view</Link>
+            <Link to="/demo-console">
+              <Wrench className="mr-2 size-4" /> Pinch integration console
+            </Link>
           </Button>
         </div>
 
+        <section className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {promises.map((p) => (
+            <Card key={p.who} className="border-border p-4">
+              <p className="text-[10px] uppercase tracking-wider text-primary">
+                {p.who}
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">{p.text}</p>
+            </Card>
+          ))}
+        </section>
+
         <section className="mt-10">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-            Guided demo navigation
+            The eight-step journey
           </p>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            {steps.map((step) => (
+            {steps.map((st) => (
               <Link
-                key={step.n}
-                to={step.to}
-                className="group block focus:outline-none"
+                key={st.n}
+                to={st.to}
+                className="group rounded-xl border border-border bg-card/60 p-4 transition-colors hover:border-primary/40"
               >
-                <Card
-                  className={`h-full p-5 transition-colors ${
-                    step.done
-                      ? "border-primary/40 bg-primary/5"
-                      : "border-border hover:border-primary/40"
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="grid size-9 shrink-0 place-items-center rounded-xl border border-primary/30 bg-primary/10">
-                      <step.icon className="size-4 text-primary" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                        Step {step.n}
-                        {step.done && " · done"}
-                      </p>
-                      <p className="mt-0.5 font-semibold">{step.title}</p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {step.blurb}
-                      </p>
-                    </div>
-                    <ArrowRight className="ml-auto size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`grid size-7 place-items-center rounded-lg border font-mono text-xs ${
+                        st.done
+                          ? "border-primary/50 bg-primary/15 text-primary"
+                          : "border-border text-muted-foreground"
+                      }`}
+                    >
+                      {st.n}
+                    </span>
+                    <st.icon className="size-4 text-primary" />
                   </div>
-                </Card>
+                  {st.done && (
+                    <CheckCircle2 className="size-4 shrink-0 text-primary" />
+                  )}
+                </div>
+                <p className="mt-3 font-semibold">{st.title}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{st.blurb}</p>
+                <span className="mt-2 inline-flex items-center text-xs text-primary opacity-0 transition-opacity group-hover:opacity-100">
+                  Open <ArrowRight className="ml-1 size-3" />
+                </span>
               </Link>
             ))}
           </div>
         </section>
 
-        <section className="mt-10 grid gap-3 sm:grid-cols-3">
-          <Money label="Kickstart price" value={formatAUD(KICKSTART.priceCents)} />
-          <Money
-            label="Trainer payout"
-            value={formatAUD(KICKSTART.trainerPayoutCents)}
-            accent
-          />
-          <Money label="Club campaign fee" value={formatAUD(KICKSTART.clubFeeCents)} />
-        </section>
+        <Card className="mt-10 border-primary/30 bg-[image:var(--gradient-hero)] p-6">
+          <p className="text-[10px] uppercase tracking-wider text-primary">
+            What this demo proves
+          </p>
+          <p className="mt-2 text-base leading-relaxed">
+            The gym created the first paid opportunity. {TRAINER.first} delivered
+            three valuable sessions and converted {MEMBER.first} into
+            twice-weekly coaching. Pinch powered the one-off purchase and the
+            recurring plan, while VezaPT connected the match, service journey,
+            conversion and retention impact.
+          </p>
+        </Card>
       </div>
     </div>
-  );
-}
-
-function Money({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: string;
-  accent?: boolean;
-}) {
-  return (
-    <Card className={`p-4 ${accent ? "border-primary/40 bg-primary/5" : "border-border"}`}>
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-        {label}
-      </p>
-      <p
-        className={`mt-1 font-mono text-2xl font-semibold tabular-nums ${
-          accent ? "text-primary" : ""
-        }`}
-      >
-        {value}
-      </p>
-    </Card>
   );
 }

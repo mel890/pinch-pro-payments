@@ -34,6 +34,38 @@ export const ONGOING = {
   nextReview: "Monday 31 August",
 };
 
+export const CAMPAIGN = {
+  name: "PT Kickstart Campaign",
+  subtitle: "Turn member interest into paid coaching without adding a PT sales team.",
+  capacityPacks: 7,
+  trainers: 3,
+  channels: ["Email", "Social media", "In-club QR"],
+};
+
+export const MATCH = {
+  confidence: "Strong",
+  reasons: [
+    "Available Tuesday and Thursday evenings",
+    "Experienced with beginner strength clients",
+    "Supportive and structured coaching style",
+    "Currently accepting Kickstart clients",
+  ],
+  rules: [
+    "Schedule compatibility",
+    "Available capacity",
+    "Goal and speciality match",
+    "Coaching-style preference",
+    "Acceptance reliability",
+  ],
+  alternatives: ["Dan Whitcombe", "Priya Raman"],
+};
+
+export const TRAINER_BRIEF =
+  "Alex is a beginner who wants to feel more confident using the gym. Prioritise rapport, simple strength movements and an early confidence win.";
+
+export const AI_SUMMARY =
+  "Alex has completed all three sessions, improved confidence and increased gym attendance. Alex still values structure, accountability and technique support.";
+
 export const INTAKE = {
   goal: "Build strength and feel confident using the gym",
   experience: "Beginner",
@@ -50,6 +82,8 @@ export const AFTER = { confidence: 8, visits: 2.6, clarity: 8 };
 export type SessionPlan = {
   n: 1 | 2 | 3;
   title: string;
+  purpose: string[];
+  prep: string[];
   aims: string[];
   booked: boolean;
   completed: boolean;
@@ -59,9 +93,11 @@ export type SessionPlan = {
 };
 
 export type JourneyState = {
+  campaignLive: boolean;
   intakeSubmitted: boolean;
   paid: boolean;
   matched: boolean;
+  matchConfirmed: boolean;
   accepted: boolean;
   declineReason: string | null;
   sessions: SessionPlan[];
@@ -70,10 +106,24 @@ export type JourneyState = {
   ongoingActive: boolean;
 };
 
-const SESSION_TEMPLATES: Omit<SessionPlan, "booked" | "completed" | "confirmed" | "win">[] = [
+const SESSION_TEMPLATES: Omit<
+  SessionPlan,
+  "booked" | "completed" | "confirmed" | "win"
+>[] = [
   {
     n: 1,
     title: "Understand",
+    purpose: [
+      "Clarify Alex's goal and motivation",
+      "Establish a starting point",
+      "Create one early confidence win",
+      "Agree on one action before session two",
+    ],
+    prep: [
+      "Ask what currently feels uncomfortable in the gym",
+      "Choose simple whole-body movements",
+      "Finish with one task Alex can repeat independently",
+    ],
     aims: [
       "Clarify goal and motivation",
       "Assess starting point",
@@ -84,7 +134,18 @@ const SESSION_TEMPLATES: Omit<SessionPlan, "booked" | "completed" | "confirmed" 
   },
   {
     n: 2,
-    title: "Personalise",
+    title: "Progress",
+    purpose: [
+      "Personalise the session",
+      "Record one visible improvement",
+      "Review confidence and attendance",
+      "Ensure session three is booked",
+    ],
+    prep: [
+      "Review soreness and confidence",
+      "Progress one movement clearly",
+      "Link the session back to Alex's original goal",
+    ],
     aims: [
       "Deliver a goal-aligned session",
       "Record one visible progression",
@@ -96,6 +157,18 @@ const SESSION_TEMPLATES: Omit<SessionPlan, "booked" | "completed" | "confirmed" 
   {
     n: 3,
     title: "Review and recommend",
+    purpose: [
+      "Show Alex's progress",
+      "Reassess confidence",
+      "Identify remaining support needs",
+      "Recommend one clear next step",
+    ],
+    prep: [
+      "Compare Alex's starting and current confidence",
+      "Show one measurable improvement",
+      "Ask what Alex still doesn't feel confident doing alone",
+      "Recommend one suitable ongoing plan",
+    ],
     aims: [
       "Show progress",
       "Reassess confidence",
@@ -107,9 +180,11 @@ const SESSION_TEMPLATES: Omit<SessionPlan, "booked" | "completed" | "confirmed" 
 ];
 
 const INITIAL: JourneyState = {
+  campaignLive: false,
   intakeSubmitted: false,
   paid: false,
   matched: false,
+  matchConfirmed: false,
   accepted: false,
   declineReason: null,
   sessions: SESSION_TEMPLATES.map((s) => ({
@@ -128,7 +203,7 @@ let state: JourneyState = structuredClone(INITIAL);
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 
-const STORAGE_KEY = "vezapt-journey-v1";
+const STORAGE_KEY = "vezapt-journey-v2";
 let hydrated = false;
 
 function save() {
@@ -148,7 +223,23 @@ function hydrate() {
     if (!raw) return;
     const parsed = JSON.parse(raw) as JourneyState;
     if (parsed && Array.isArray(parsed.sessions)) {
-      state = { ...structuredClone(INITIAL), ...parsed };
+      state = {
+        ...structuredClone(INITIAL),
+        ...parsed,
+        // Always re-apply the current copy/templates over stored progress.
+        sessions: INITIAL.sessions.map((base) => {
+          const saved = parsed.sessions.find((x) => x.n === base.n);
+          return saved
+            ? {
+                ...base,
+                booked: !!saved.booked,
+                completed: !!saved.completed,
+                confirmed: !!saved.confirmed,
+                win: saved.win ?? null,
+              }
+            : base;
+        }),
+      };
       emit();
     }
   } catch {
@@ -173,8 +264,11 @@ export const journey = {
     save();
     emit();
   },
+  launchCampaign: () => patch({ campaignLive: true }),
+  confirmMatch: () => patch({ matchConfirmed: true, matched: true }),
   submitIntake: () => patch({ intakeSubmitted: true }),
-  pay: () => patch({ paid: true, intakeSubmitted: true, matched: true }),
+  pay: () =>
+    patch({ paid: true, intakeSubmitted: true, matched: true, campaignLive: true }),
   accept: () => {
     const sessions = state.sessions.map((s) =>
       s.n === 1 ? { ...s, booked: true } : s,

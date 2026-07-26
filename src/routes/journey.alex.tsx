@@ -3,7 +3,13 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, Circle, CalendarCheck, ArrowRight } from "lucide-react";
+import {
+  CheckCircle2,
+  Circle,
+  CalendarCheck,
+  ArrowRight,
+  Sparkles,
+} from "lucide-react";
 import { formatAUD } from "@/lib/money";
 import { CoachMeJourney } from "@/components/coach-me-journey";
 import {
@@ -127,8 +133,11 @@ function ClientJourney() {
                   </div>
                 </div>
 
-                <ul className="mt-4 grid gap-1.5 sm:grid-cols-2">
-                  {sess.aims.map((a) => (
+                <p className="mt-4 text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Purpose
+                </p>
+                <ul className="mt-1.5 grid gap-1.5 sm:grid-cols-2">
+                  {sess.purpose.map((a) => (
                     <li
                       key={a}
                       className="flex gap-2 text-sm text-muted-foreground"
@@ -138,6 +147,22 @@ function ClientJourney() {
                     </li>
                   ))}
                 </ul>
+
+                {!locked && !sess.confirmed && (
+                  <div className="mt-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
+                    <p className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-primary">
+                      <Sparkles className="size-3.5" /> AI preparation prompts
+                    </p>
+                    <ul className="mt-1.5 space-y-1">
+                      {sess.prep.map((p) => (
+                        <li key={p} className="text-sm">
+                          {p}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
 
                 {sess.win && (
                   <p className="mt-3 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-sm">

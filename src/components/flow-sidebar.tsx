@@ -1,7 +1,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  Users,
+  Rocket,
   ShoppingBag,
+  Sparkles,
   Handshake,
   CheckCircle2,
   Star,
@@ -12,6 +13,7 @@ import {
   Dumbbell,
   User,
   Smartphone,
+  Users,
 } from "lucide-react";
 
 import {
@@ -29,21 +31,24 @@ import {
 
 const flowItems = [
   { title: "Demo home", url: "/", icon: Home },
-  { title: "1. Launch campaign", url: "/trainer-capacity", icon: Users },
+  { title: "1. Launch campaign", url: "/campaign", icon: Rocket },
   { title: "2. Alex buys Kickstart", url: "/pay", icon: ShoppingBag },
-  { title: "3. Sarah accepts", url: "/opportunity", icon: Handshake },
-  { title: "4. Deliver 3 sessions", url: "/journey/alex", icon: CheckCircle2 },
-  { title: "5. Review progress", url: "/review", icon: Star },
-  { title: "6. Convert to 2× weekly", url: "/ongoing", icon: RefreshCw },
-  { title: "7. Manager impact", url: "/dashboard", icon: LayoutDashboard },
-  { title: "8. Pinch console", url: "/demo-console", icon: Wrench },
+  { title: "3. VezaPT matches Sarah", url: "/match", icon: Sparkles },
+  { title: "4. Sarah accepts", url: "/opportunity", icon: Handshake },
+  { title: "5. Deliver three sessions", url: "/journey/alex", icon: CheckCircle2 },
+  { title: "6. Review Alex's progress", url: "/review", icon: Star },
+  { title: "7. Convert to 2× weekly", url: "/ongoing", icon: RefreshCw },
+  { title: "8. View manager impact", url: "/dashboard", icon: LayoutDashboard },
 ];
 
 const otherItems = [
+  { title: "Pinch integration console", url: "/demo-console", icon: Wrench },
   { title: "Member confirmation", url: "/confirm-session/demo", icon: Smartphone },
+  { title: "Trainer capacity", url: "/trainer-capacity", icon: Users },
   { title: "Trainer home", url: "/trainer", icon: Dumbbell },
   { title: "Client home", url: "/me", icon: User },
 ];
+
 
 export function FlowSidebar() {
   const { state } = useSidebar();
