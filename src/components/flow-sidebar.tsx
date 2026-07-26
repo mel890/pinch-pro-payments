@@ -65,8 +65,9 @@ const member: Item[] = [
 ];
 
 const technical: Item[] = [
-  { title: "Pinch integration console", url: "/demo-console", icon: Terminal },
+  { title: "Pinch Integration", url: "/demo-console", icon: Terminal },
 ];
+
 
 export function FlowSidebar() {
   const { state } = useSidebar();

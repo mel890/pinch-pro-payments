@@ -1,790 +1,780 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
-import { useMutation, useSuspenseQuery, useQuery, queryOptions } from "@tanstack/react-query";
-import { useState, useMemo, useEffect, useRef } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useState, useEffect, useRef } from "react";
 import {
-  getDemo,
-  markPaid,
-  seedDemoPacks,
-  logPtSession,
-  confirmPtSession,
-  pinchEnvCheck,
-  getSupabaseConfig,
-  createCheckout,
-} from "@/lib/vezapt.functions";
+  CheckCircle2,
+  Clock,
+  XCircle,
+  ShieldCheck,
+  Activity,
+  CreditCard,
+  Repeat,
+  Package,
+  ChevronRight,
+  Play,
+  Copy,
+  ChevronDown,
+} from "lucide-react";
 
-type DebugEntry = {
-  ts: number;
-  phase: string;
-  level: "info" | "success" | "error";
-  title: string;
-  detail?: any;
-};
-
-function redact(v: string | null | undefined): string {
-  if (!v) return "";
-  const s = String(v);
-  if (s.length <= 8) return "•".repeat(s.length);
-  return `${s.slice(0, 4)}…${s.slice(-4)} (len=${s.length})`;
-}
-
-function redactHeaders(h: Record<string, string>): Record<string, string> {
-  const out: Record<string, string> = {};
-  for (const [k, v] of Object.entries(h)) {
-    const key = k.toLowerCase();
-    if (key === "authorization" || key === "apikey" || key === "x-api-key") {
-      out[k] = redact(v.replace(/^Bearer\s+/i, ""));
-    } else {
-      out[k] = v;
-    }
-  }
-  return out;
-}
-
-const demoQuery = queryOptions({
-  queryKey: ["vezapt-demo"],
-  queryFn: () => getDemo(),
-});
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/demo-console")({
   head: () => ({
     meta: [
-      { title: "VezaPT Pay — hackathon demo" },
+      { title: "Pinch Integration Console — VezaPT Pay" },
       {
         name: "description",
         content:
-          "End-to-end PT payments demo: member buys a pack, trainer logs a session, split payout calculated instantly.",
+          "Live payment events connecting purchase, service delivery and recurring coaching in VezaPT Pay.",
       },
-      { property: "og:title", content: "VezaPT Pay" },
+      { property: "og:title", content: "Pinch Integration Console — VezaPT Pay" },
       {
         property: "og:description",
-        content: "Personal training payments powered by Pinch.",
+        content:
+          "Verify how Pinch confirms payment and VezaPT activates coaching packs and recurring billing.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(demoQuery),
-  component: DemoPage,
+  component: PinchConsole,
 });
 
-function fmt(cents: number | null | undefined): string {
-  if (cents == null) return "—";
-  return `$${(cents / 100).toFixed(2)}`;
+/* ------------------------------------------------------------------ */
+/* Demo data                                                           */
+/* ------------------------------------------------------------------ */
+
+type Source = "VezaPT" | "Pinch";
+type Status = "complete" | "pending" | "failed";
+
+type TimelineEvent = {
+  id: string;
+  name: string;
+  description: string;
+  time: string;
+  status: Status;
+  source: Source;
+  detail: {
+    eventId: string;
+    recordId: string;
+    received: string;
+    processed: string;
+    result: string;
+    related: string;
+    idempotency: string;
+    retries: number;
+    payload: Record<string, unknown>;
+  };
+};
+
+const BASE_DATE = "2026-07-24";
+const t = (hhmm: string) => `${BASE_DATE} ${hhmm} AEST`;
+
+function ev(
+  id: string,
+  name: string,
+  description: string,
+  time: string,
+  source: Source,
+  detail: Partial<TimelineEvent["detail"]> = {},
+  status: Status = "complete",
+): TimelineEvent {
+  return {
+    id,
+    name,
+    description,
+    time: t(time),
+    status,
+    source,
+    detail: {
+      eventId: detail.eventId ?? `evt_test_${id}`,
+      recordId: detail.recordId ?? "purchase_demo_001",
+      received: t(time),
+      processed: t(time),
+      result: detail.result ?? "Processed successfully",
+      related: detail.related ?? "Alex Morgan — PT Kickstart Pack",
+      idempotency: detail.idempotency ?? "First time this event ID was seen",
+      retries: detail.retries ?? 0,
+      payload: detail.payload ?? {
+        provider: "pinch",
+        environment: "test",
+        event_type: "workflow.step",
+        provider_event_id: `evt_test_${id}`,
+        purchase_id: "purchase_demo_001",
+        amount: 24900,
+        currency: "AUD",
+        status: "confirmed",
+      },
+    },
+  };
 }
 
-function DemoPage() {
-  const { data } = useSuspenseQuery(demoQuery);
-  const router = useRouter();
-
-  const members = data.members?.rows ?? [];
-  const trainers = data.trainers?.rows ?? [];
-  const packs = data.pt_packs?.rows ?? [];
-  const payments = data.payments_log?.rows ?? [];
-  const sessions = data.sessions?.rows ?? [];
-
-  const [memberId, setMemberId] = useState<string>(String(members[0]?.id ?? ""));
-  const [packId, setPackId] = useState<string>(String(packs[0]?.id ?? ""));
-  const [trainerId, setTrainerId] = useState<string>(String(trainers[0]?.id ?? ""));
-  const [lastPayment, setLastPayment] = useState<any>(null);
-  const [pinchInfo, setPinchInfo] = useState<any>(null);
-  const [logResult, setLogResult] = useState<any>(null);
-  const [confirmResult, setConfirmResult] = useState<any>(null);
-  const [confirmationToken, setConfirmationToken] = useState<string>("");
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  const cfgFn = useServerFn(getSupabaseConfig);
-  const paidFn = useServerFn(markPaid);
-  const logPtFn = useServerFn(logPtSession);
-  const confirmPtFn = useServerFn(confirmPtSession);
-  const seedFn = useServerFn(seedDemoPacks);
-  const envFn = useServerFn(pinchEnvCheck);
-
-  const envQuery = useQuery({
-    queryKey: ["pinch-env"],
-    queryFn: () => envFn(),
-    staleTime: 60_000,
-    refetchOnWindowFocus: false,
-  });
-  const envReady =
-    !!envQuery.data?.resolvedClientIdPresent &&
-    !!envQuery.data?.resolvedClientSecretPresent;
-  const [seedResult, setSeedResult] = useState<any>(null);
-  const seed = useMutation({
-    mutationFn: () => seedFn(),
-    onSuccess: (res: any) => {
-      setSeedResult(res.results);
-      refresh();
+const KICKSTART_EVENTS: TimelineEvent[] = [
+  ev("kick_01", "Purchase created", "VezaPT created purchase purchase_demo_001.", "09:02", "VezaPT"),
+  ev("kick_02", "Payment Link requested", "A hosted Pinch checkout was requested for $249 AUD.", "09:02", "VezaPT"),
+  ev("kick_03", "Checkout opened", "Alex opened the Pinch-hosted checkout.", "09:03", "Pinch"),
+  ev("kick_04", "Payment submitted", "Payment details were securely submitted to Pinch.", "09:04", "Pinch", {
+    payload: {
+      provider: "pinch",
+      environment: "test",
+      event_type: "payment.submitted",
+      provider_event_id: "evt_test_8X2K...",
+      purchase_id: "purchase_demo_001",
+      payment_method: "card ending ••••",
+      amount: 24900,
+      currency: "AUD",
+      status: "processing",
     },
-    onError: (e) => {
-      autoSeededRef.current = false;
-      setErrorMsg(e instanceof Error ? e.message : String(e));
+  }),
+  ev("kick_05", "Payment confirmed by Pinch", "Pinch reported the transaction as successful.", "09:04", "Pinch", {
+    eventId: "evt_test_8X2K...",
+    payload: {
+      provider: "pinch",
+      environment: "test",
+      event_type: "payment.confirmed",
+      provider_event_id: "evt_test_8X2K...",
+      purchase_id: "purchase_demo_001",
+      amount: 24900,
+      currency: "AUD",
+      status: "confirmed",
     },
-  });
+  }),
+  ev("kick_06", "Webhook received", "VezaPT received the confirmed payment event.", "09:04", "VezaPT", {
+    eventId: "evt_test_8X2K...",
+  }),
+  ev("kick_07", "Webhook verified", "The incoming event passed signature and source validation.", "09:04", "VezaPT", {
+    result: "Signature valid — source verified",
+  }),
+  ev("kick_08", "Duplicate check passed", "The provider event ID had not been processed previously.", "09:04", "VezaPT", {
+    idempotency: "No prior record of evt_test_8X2K... — processed once",
+  }),
+  ev("kick_09", "Purchase updated", "Purchase status changed from Pending to Paid.", "09:05", "VezaPT", {
+    result: "purchase_demo_001 → Paid",
+  }),
+  ev("kick_10", "Pack activated", "Alex received three available Kickstart sessions.", "09:05", "VezaPT", {
+    related: "Kickstart Pack — 3 sessions available",
+  }),
+  ev("kick_11", "Trainer matching initiated", "VezaPT started matching Alex with an available trainer.", "09:05", "VezaPT", {
+    related: "Match request — Northside Club",
+  }),
+];
 
-  const refresh = () => router.invalidate();
+const RECURRING_EVENTS: TimelineEvent[] = [
+  ev("rec_01", "Ongoing plan recommended", "Sarah recommended Twice-Weekly Coaching after Alex’s progress review.", "16:10", "VezaPT", { recordId: "plan_demo_001", related: "Alex Morgan — Twice-Weekly Coaching" }),
+  ev("rec_02", "Member accepted plan", "Alex selected the $180 weekly coaching plan.", "16:14", "VezaPT", { recordId: "plan_demo_001", related: "Alex Morgan — Twice-Weekly Coaching" }),
+  ev("rec_03", "Payer record created", "Alex was registered as a payer in the Pinch test environment.", "16:15", "Pinch", { recordId: "plan_demo_001", eventId: "pyr_test_cD59...", related: "Payer record (test)" }),
+  ev("rec_04", "Payment authority created", "Alex authorised the recurring payment arrangement.", "16:16", "Pinch", { recordId: "plan_demo_001", eventId: "auth_test_9Qm2...", related: "Payment authority (masked)" }),
+  ev("rec_05", "Weekly schedule created", "A $180 weekly collection schedule was created.", "16:16", "Pinch", { recordId: "plan_demo_001", related: "Weekly schedule — $180 AUD" }),
+  ev("rec_06", "Confirmation received", "Pinch confirmed the recurring arrangement.", "16:17", "Pinch", { recordId: "plan_demo_001", related: "Recurring arrangement confirmed" }),
+  ev("rec_07", "Coaching plan activated", "VezaPT changed the plan status from Authority pending to Active.", "16:17", "VezaPT", { recordId: "plan_demo_001", result: "plan_demo_001 → Active" }),
+  ev("rec_08", "Next collection scheduled", "The next payment date was stored in VezaPT.", "16:17", "VezaPT", { recordId: "plan_demo_001", result: "Next collection: 31 Jul 2026" }),
+];
 
-  // Debug log — captures each phase of the Pinch flow.
-  const [debugLog, setDebugLog] = useState<DebugEntry[]>([]);
-  const pushDebug = (e: Omit<DebugEntry, "ts">) =>
-    setDebugLog((prev) => [...prev, { ...e, ts: Date.now() }]);
-  const clearDebug = () => setDebugLog([]);
+const FAILED_EVENTS: TimelineEvent[] = [
+  ev("fail_01", "Checkout created", "A hosted Pinch checkout was created for $249 AUD.", "11:20", "VezaPT", { recordId: "purchase_demo_002", related: "Jordan Blake — PT Kickstart Pack" }),
+  ev("fail_02", "Payment attempted", "Payment details were submitted to Pinch.", "11:21", "Pinch", { recordId: "purchase_demo_002" }),
+  {
+    ...ev("fail_03", "Payment declined", "Test payment declined by the issuing bank.", "11:21", "Pinch", {
+      recordId: "purchase_demo_002",
+      result: "Declined — test card",
+      payload: {
+        provider: "pinch",
+        environment: "test",
+        event_type: "payment.failed",
+        provider_event_id: "evt_test_4LmQ...",
+        purchase_id: "purchase_demo_002",
+        amount: 24900,
+        currency: "AUD",
+        status: "declined",
+      },
+    }),
+    status: "failed",
+  },
+  ev("fail_04", "Failure webhook received", "VezaPT received the failed payment event.", "11:21", "VezaPT", { recordId: "purchase_demo_002" }),
+  ev("fail_05", "Purchase changed to Failed", "Purchase status changed from Pending to Failed.", "11:21", "VezaPT", { recordId: "purchase_demo_002", result: "purchase_demo_002 → Failed" }),
+  ev("fail_06", "Pack remained inactive", "No sessions were created and no trainer matching started.", "11:21", "VezaPT", { recordId: "purchase_demo_002", result: "Pack inactive" }),
+];
 
-  // Auto-seed on load if the pt_packs table is empty; retries on refresh.
-  const autoSeededRef = useRef(false);
-  useEffect(() => {
-    if (!autoSeededRef.current && packs.length === 0 && !seed.isPending) {
-      autoSeededRef.current = true;
-      seed.mutate();
-    }
-  }, [packs.length]);
+const DUPLICATE_EVENTS: TimelineEvent[] = [
+  ev("dup_01", "First event processed", "Pinch confirmed the payment and VezaPT created three sessions.", "09:04", "VezaPT", {
+    eventId: "evt_test_8X2K...",
+    idempotency: "First time this event ID was seen — processed",
+    result: "3 sessions created",
+  }),
+  ev("dup_02", "Duplicate event ignored", "The same provider event ID arrived again and was skipped.", "09:06", "VezaPT", {
+    eventId: "evt_test_8X2K...",
+    idempotency: "Event ID already stored — ignored",
+    result: "No change — sessions remain 3, not 6",
+    retries: 1,
+  }),
+];
 
+const DEMO_STEPS = [
+  "Creating purchase",
+  "Requesting Pinch checkout",
+  "Checkout opened",
+  "Awaiting confirmation",
+  "Webhook received",
+  "Payment confirmed",
+  "Pack activated",
+  "Trainer matching initiated",
+];
 
-  const checkout = useMutation({
-    mutationFn: async (v: { memberId: string; packId: string }) => {
-      pushDebug({ phase: "1. cfg", level: "info", title: "Fetching Supabase config", detail: v });
-      const cfg = await cfgFn();
-      if (!cfg.url || !cfg.anonKey) {
-        pushDebug({ phase: "1. cfg", level: "error", title: "Missing URL or anon key", detail: { hasUrl: !!cfg.url, hasAnonKey: !!cfg.anonKey } });
-        throw new Error("Supabase config unavailable (missing URL or publishable key).");
-      }
-      const endpoint = `${cfg.url.replace(/\/$/, "")}/functions/v1/pinch-buy-pack`;
-      const headers = {
-        "Content-Type": "application/json",
-        apikey: cfg.anonKey,
-        Authorization: `Bearer ${cfg.anonKey}`,
-      };
-      pushDebug({
-        phase: "2. edge fn request",
-        level: "info",
-        title: `POST ${endpoint}`,
-        detail: { headers: redactHeaders(headers), body: v },
-      });
-      let res: Response;
-      try {
-        res = await fetch(endpoint, { method: "POST", headers, body: JSON.stringify(v) });
-      } catch (err) {
-        pushDebug({ phase: "2. edge fn request", level: "error", title: "Network/CORS error", detail: err instanceof Error ? err.message : String(err) });
-        throw err;
-      }
-      const raw = await res.text();
-      let json: any = null;
-      try { json = raw ? JSON.parse(raw) : null; } catch { json = { raw }; }
-      pushDebug({
-        phase: "3. edge fn response",
-        level: res.ok ? "success" : "error",
-        title: `${res.status} ${res.statusText}`,
-        detail: { status: res.status, ok: res.ok, body: json ?? raw.slice(0, 600) },
-      });
-      if (!res.ok) {
-        const msg = json?.error ?? json?.message ?? raw?.slice(0, 300) ?? `HTTP ${res.status}`;
-        throw new Error(`pinch-buy-pack ${res.status}: ${msg}`);
-      }
-      return json ?? {};
-    },
-    onSuccess: (res: any) => {
-      const url = res?.paymentUrl ?? res?.payment_url ?? res?.url ?? null;
-      setPinchInfo({ pinch: { url, id: res?.paymentId ?? res?.id ?? null }, response: res });
-      pushDebug({ phase: "4. hosted url", level: url ? "success" : "error", title: url ? "Received hosted checkout URL" : "No paymentUrl in response", detail: { url, id: res?.paymentId ?? res?.id ?? null } });
-      setErrorMsg(null);
-      if (url) window.open(url, "_blank", "noopener,noreferrer");
-      refresh();
-    },
-    onError: (e) => {
-      pushDebug({ phase: "!! failure", level: "error", title: "Checkout mutation rejected", detail: e instanceof Error ? e.message : String(e) });
-      setErrorMsg(e instanceof Error ? e.message : String(e));
-    },
-  });
+/* ------------------------------------------------------------------ */
+/* Small presentational pieces                                         */
+/* ------------------------------------------------------------------ */
 
-  // Alternate path: bypass edge function and call Pinch directly via our TanStack server fn.
-  // This route has full server-side instrumentation and returns redacted diagnostics.
-  const serverCheckoutFn = useServerFn(createCheckout);
-  const serverCheckout = useMutation({
-    mutationFn: async (v: { memberId: string; packId: string }) => {
-      pushDebug({ phase: "S1. server fn", level: "info", title: "Calling createCheckout (TanStack server fn → Pinch)", detail: v });
-      const res = await serverCheckoutFn({ data: v });
-      return res;
-    },
-    onSuccess: (res: any) => {
-      pushDebug({
-        phase: "S2. pinch diagnostics",
-        level: res?.pinchError ? "error" : "success",
-        title: res?.pinchError ? "Pinch call failed" : "Pinch call ok",
-        detail: res?.diagnostics,
-      });
-      if (res?.pinchError) {
-        pushDebug({ phase: "S3. pinch error", level: "error", title: "Verbatim Pinch error", detail: res.pinchError });
-      }
-      if (res?.insertError) {
-        pushDebug({ phase: "S4. payments_log", level: "error", title: "Insert into payments_log failed", detail: res.insertError });
-      } else if (res?.payment) {
-        pushDebug({ phase: "S4. payments_log", level: "success", title: "Inserted payments_log row", detail: { id: res.payment.id, status: res.payment.status } });
-      }
-      if (res?.pinch?.url) {
-        setPinchInfo({ pinch: res.pinch, response: res });
-        window.open(res.pinch.url, "_blank", "noopener,noreferrer");
-      }
-      refresh();
-    },
-    onError: (e) => {
-      pushDebug({ phase: "!! server fn threw", level: "error", title: "createCheckout rejected", detail: e instanceof Error ? e.message : String(e) });
-      setErrorMsg(e instanceof Error ? e.message : String(e));
-    },
-  });
-
-  const pay = useMutation({
-    mutationFn: (v: { paymentLogId: string | number }) => paidFn({ data: v }),
-    onSuccess: (res: any) => {
-      setLastPayment(res.payment);
-      refresh();
-    },
-    onError: (e) => setErrorMsg(e instanceof Error ? e.message : String(e)),
-  });
-
-  const logPt = useMutation({
-    mutationFn: (v: { packId: string }) => logPtFn({ data: v }),
-    onSuccess: (res: any) => {
-      setErrorMsg(null);
-      setLogResult(res.row);
-      setConfirmResult(null);
-      if (res.row?.confirmation_token) {
-        setConfirmationToken(String(res.row.confirmation_token));
-      }
-      refresh();
-    },
-    onError: (e) => setErrorMsg(e instanceof Error ? e.message : String(e)),
-  });
-
-  const confirmPt = useMutation({
-    mutationFn: (v: { confirmationToken: string }) => confirmPtFn({ data: v }),
-    onSuccess: (res: any) => {
-      setErrorMsg(null);
-      setConfirmResult(res.row);
-      refresh();
-    },
-    onError: (e) => setErrorMsg(e instanceof Error ? e.message : String(e)),
-  });
-
-
-  const selectedPack = useMemo(
-    () => packs.find((p: any) => String(p.id) === packId),
-    [packs, packId],
+function StatusPill({ status, label }: { status: Status; label?: string }) {
+  const map = {
+    complete: { cls: "pill pill-verified", Icon: CheckCircle2, text: label ?? "Complete" },
+    pending: { cls: "pill pill-pending", Icon: Clock, text: label ?? "Pending" },
+    failed: { cls: "pill pill-review", Icon: XCircle, text: label ?? "Failed" },
+  }[status];
+  return (
+    <span className={map.cls}>
+      <map.Icon className="size-3.5" strokeWidth={2} />
+      {map.text}
+    </span>
   );
-  const packPrice =
-    selectedPack?.total_amount ?? selectedPack?.price_cents ?? selectedPack?.amount_cents ?? selectedPack?.price;
+}
 
-  const memberName = (id: any) => {
-    const m = members.find((x: any) => String(x.id) === String(id));
-    return m?.name ?? m?.full_name ?? m?.email ?? `#${id}`;
-  };
-  const trainerName = (id: any) => {
-    const t = trainers.find((x: any) => String(x.id) === String(id));
-    return t?.name ?? t?.full_name ?? t?.email ?? `#${id}`;
+function SourcePill({ source }: { source: Source }) {
+  return (
+    <span
+      className={
+        source === "Pinch"
+          ? "pill pill-paid"
+          : "pill border-[oklch(0.663_0.160_152.4/32%)] bg-[oklch(0.663_0.160_152.4/12%)] text-success"
+      }
+    >
+      {source}
+    </span>
+  );
+}
+
+function SummaryCard({
+  icon: Icon,
+  label,
+  value,
+  tone,
+}: {
+  icon: typeof Activity;
+  label: string;
+  value: string;
+  tone: "payment" | "workflow";
+}) {
+  return (
+    <Card className="card-elevated">
+      <CardContent className="flex items-center gap-3 p-4">
+        <span
+          className={`grid size-9 shrink-0 place-items-center rounded-xl ${
+            tone === "payment"
+              ? "bg-[var(--payment-surface)] text-payment"
+              : "bg-[oklch(0.663_0.160_152.4/14%)] text-success"
+          }`}
+        >
+          <Icon className="size-4.5" strokeWidth={1.75} />
+        </span>
+        <div className="min-w-0">
+          <div className="text-xs text-muted-foreground">{label}</div>
+          <div
+            className={`truncate text-sm font-semibold ${
+              tone === "payment" ? "text-payment" : "text-success"
+            }`}
+          >
+            {value}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function Field({ label, value, tone }: { label: string; value: string; tone?: "payment" | "workflow" }) {
+  return (
+    <div className="flex items-baseline justify-between gap-4 border-b border-border/60 py-2 last:border-0">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span
+        className={`text-sm font-medium tabular-nums ${
+          tone === "payment" ? "text-payment" : tone === "workflow" ? "text-success" : ""
+        }`}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function Timeline({
+  title,
+  events,
+  onOpen,
+  activeCount,
+}: {
+  title: string;
+  events: TimelineEvent[];
+  onOpen: (e: TimelineEvent) => void;
+  activeCount?: number;
+}) {
+  const visible = activeCount === undefined ? events : events.slice(0, activeCount);
+  return (
+    <div>
+      <h3 className="mb-3 text-sm font-semibold">{title}</h3>
+      <ol className="relative space-y-1 pl-1">
+        {visible.map((e, i) => (
+          <li key={e.id} className="relative pl-7">
+            {i < visible.length - 1 && (
+              <span className="absolute left-[9px] top-6 h-[calc(100%-0.5rem)] w-px bg-border" />
+            )}
+            <span
+              className={`absolute left-0 top-3 grid size-[19px] place-items-center rounded-full border ${
+                e.status === "failed"
+                  ? "border-[oklch(0.586_0.222_17.6/45%)] bg-[oklch(0.586_0.222_17.6/18%)] text-destructive"
+                  : e.source === "Pinch"
+                    ? "border-[var(--payment-border)] bg-[var(--payment-surface)] text-payment"
+                    : "border-[oklch(0.663_0.160_152.4/34%)] bg-[oklch(0.663_0.160_152.4/14%)] text-success"
+              }`}
+            >
+              {e.status === "failed" ? (
+                <XCircle className="size-3" strokeWidth={2.25} />
+              ) : (
+                <CheckCircle2 className="size-3" strokeWidth={2.25} />
+              )}
+            </span>
+            <button
+              type="button"
+              onClick={() => onOpen(e)}
+              className="group flex w-full items-start gap-3 rounded-xl px-3 py-2 text-left transition-colors hover:bg-white/5"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-medium">{e.name}</span>
+                  <SourcePill source={e.source} />
+                </div>
+                <p className="mt-0.5 text-xs text-muted-foreground">{e.description}</p>
+                <p className="mt-1 text-[11px] tabular-nums text-muted-foreground/80">{e.time}</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2 pt-0.5">
+                <StatusPill status={e.status} />
+                <ChevronRight className="size-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+              </div>
+            </button>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Page                                                                */
+/* ------------------------------------------------------------------ */
+
+function PinchConsole() {
+  const [selected, setSelected] = useState<TimelineEvent | null>(null);
+  const [showFailed, setShowFailed] = useState(false);
+  const [showDuplicate, setShowDuplicate] = useState(false);
+  const [demoStep, setDemoStep] = useState<number | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+
+  const runDemo = () => {
+    if (timer.current) clearTimeout(timer.current);
+    setDemoStep(0);
+    const tick = (n: number) => {
+      timer.current = setTimeout(() => {
+        setDemoStep(n);
+        if (n < DEMO_STEPS.length - 1) tick(n + 1);
+      }, 1400);
+    };
+    tick(1);
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
-              V
-            </div>
-            <div>
-              <h1 className="text-lg font-semibold tracking-tight">
-                Pinch integration console
-              </h1>
-              <p className="text-xs text-muted-foreground">
-                Technical proof · Pinch sandbox
-              </p>
-            </div>
-          </div>
-          <div className="text-xs text-muted-foreground">
-            Checkout · webhooks · payment, session and payout logs
-          </div>
+    <div className="mx-auto w-full max-w-5xl space-y-8 px-4 py-8 sm:px-6">
+      {/* Header */}
+      <header className="space-y-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+            Pinch Integration Console
+          </h1>
+          <span className="pill pill-paid uppercase tracking-wide">Test mode</span>
         </div>
+        <p className="text-sm text-muted-foreground">
+          Live payment events connecting purchase, service delivery and recurring coaching.
+        </p>
+        <p className="text-xs text-muted-foreground/80">No real funds are being transferred.</p>
       </header>
 
-      <main className="mx-auto max-w-6xl px-6 py-10 space-y-10">
-        {errorMsg && (
-          <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            {errorMsg}
-          </div>
-        )}
+      {/* Summary */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <SummaryCard icon={CreditCard} label="Payment status" value="Confirmed" tone="payment" />
+        <SummaryCard icon={Package} label="Kickstart Pack" value="Active" tone="workflow" />
+        <SummaryCard icon={Repeat} label="Recurring coaching" value="Active" tone="workflow" />
+        <SummaryCard icon={Activity} label="Integration health" value="Connected" tone="payment" />
+      </div>
 
-        {packs.length === 0 && (
-          <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm flex items-center justify-between gap-4">
+      {/* Kickstart transaction */}
+      <Card className="card-elevated">
+        <CardHeader className="gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <CardTitle>PT Kickstart Pack purchase</CardTitle>
+            <div className="flex items-center gap-2">
+              <span className="pill pill-verified">
+                <ShieldCheck className="size-3.5" /> Verified test transaction
+              </span>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            This record was updated from a Pinch test-environment webhook.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid gap-x-8 sm:grid-cols-2">
             <div>
-              <div className="font-medium">No PT packs yet.</div>
-              <div className="text-xs text-muted-foreground">
-                Seed the three demo packs (6-Week Transformation, 10-Session
-                Starter, 12-Week Elite) to enable the checkout flow.
-              </div>
+              <Field label="Member" value="Alex Morgan" />
+              <Field label="Club" value="Northside Club" />
+              <Field label="Product" value="3-session Kickstart Pack" />
+              <Field label="Amount" value="$249.00 AUD" tone="payment" />
+              <Field label="Payment provider" value="Pinch" tone="payment" />
             </div>
-            <button
-              className="inline-flex shrink-0 items-center justify-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-              disabled={seed.isPending}
-              onClick={() => seed.mutate()}
-            >
-              {seed.isPending ? "Seeding…" : "Seed demo packs"}
-            </button>
+            <div>
+              <Field label="Environment" value="Test" />
+              <Field label="Purchase status" value="Paid" tone="payment" />
+              <Field label="Pack status" value="Active" tone="workflow" />
+              <Field label="Sessions available" value="3" tone="workflow" />
+              <Field label="Payment details" value="Not stored by VezaPT" />
+            </div>
           </div>
-        )}
-        {seedResult && (
-          <div className="rounded-md border border-border bg-muted/40 p-3 text-xs font-mono">
-            {seedResult.map((r: any, i: number) => (
-              <div key={i}>
-                {r.name}: <b>{r.status}</b>
-                {r.detail && <span className="text-destructive"> — {r.detail}</span>}
-              </div>
-            ))}
+
+          <div className="rounded-2xl border border-[var(--payment-border)] bg-[var(--payment-surface)] p-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-payment">
+              <CheckCircle2 className="size-4" /> Payment confirmed
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Pinch confirmed the transaction. VezaPT activated Alex’s Kickstart Pack and initiated
+              trainer matching.
+            </p>
           </div>
-        )}
 
-        <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {/* Step 1: Checkout */}
-          <StepCard step={1} title="Member buys a pack">
-            <Label>Member</Label>
-            <Select value={memberId} onChange={setMemberId}>
-              {members.map((m: any) => (
-                <option key={m.id} value={String(m.id)}>
-                  {m.name ?? m.full_name ?? m.email ?? `#${m.id}`}
-                </option>
-              ))}
-            </Select>
-            <Label>Pack</Label>
-            <Select value={packId} onChange={setPackId}>
-              {packs.map((p: any) => (
-                <option key={p.id} value={String(p.id)}>
-                  {(p.name ?? `Pack #${p.id}`) +
-                    " — " +
-                    fmt(p.total_amount ?? p.price_cents ?? p.amount_cents ?? p.price)}
-                </option>
-              ))}
-            </Select>
-            <div className="mt-2 text-xs text-muted-foreground">
-              Total: <span className="font-medium text-foreground">{fmt(packPrice)}</span>
-            </div>
-            <button
-              className="mt-3 inline-flex w-full items-center justify-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-              disabled={!memberId || !packId || checkout.isPending}
-              onClick={() => checkout.mutate({ memberId, packId })}
-            >
-              {checkout.isPending ? "Creating…" : "Create Pinch checkout"}
-            </button>
-            <button
-              className="mt-2 inline-flex w-full items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-xs font-medium hover:bg-accent disabled:opacity-50"
-              disabled={!memberId || !packId || serverCheckout.isPending}
-              onClick={() => serverCheckout.mutate({ memberId, packId })}
-              title="Bypass the edge function — call Pinch directly from our TanStack server fn (fully instrumented)."
-            >
-              {serverCheckout.isPending ? "Debugging…" : "Debug via server (bypass edge fn)"}
-            </button>
-            {lastPayment && (
-              <div className="mt-3 rounded-md border border-border bg-muted/30 p-2 text-xs space-y-1">
-                <div>payment #{String(lastPayment.id)}</div>
-                <div>status: <span className="font-mono">{lastPayment.status}</span></div>
-                {pinchInfo?.pinch?.url && (
-                  <a
-                    className="text-primary underline break-all"
-                    href={pinchInfo.pinch.url}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Open Pinch hosted checkout ↗
-                  </a>
-                )}
-                {pinchInfo?.pinchError && (
-                  <div className="mt-1 rounded border border-destructive/40 bg-destructive/10 p-2 text-destructive whitespace-pre-wrap break-words">
-                    {pinchInfo.pinchError}
-                  </div>
-                )}
-              </div>
-            )}
-            {pinchInfo?.diagnostics && (
-              <details className="mt-2 rounded-md border border-border bg-muted/20 p-2 text-[10px]">
-                <summary className="cursor-pointer font-medium">Pinch diagnostics</summary>
-                <pre className="mt-1 overflow-x-auto">
-{JSON.stringify(pinchInfo.diagnostics, null, 2)}
-                </pre>
-              </details>
-            )}
-          </StepCard>
+          <Timeline title="Initial purchase" events={KICKSTART_EVENTS} onOpen={setSelected} />
+        </CardContent>
+      </Card>
 
-          {/* Step 2: Simulate webhook / mark paid */}
-          <StepCard step={2} title="Pinch confirms payment">
-            <p className="text-xs text-muted-foreground">
-              In production the Pinch webhook flips this to <code>paid</code>.
-              For the demo, click to simulate.
-            </p>
-            <button
-              className="mt-3 inline-flex w-full items-center justify-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-              disabled={!lastPayment?.id || pay.isPending}
-              onClick={() => pay.mutate({ paymentLogId: lastPayment.id })}
-            >
-              {pay.isPending ? "Marking…" : "Simulate webhook → paid"}
-            </button>
-            {lastPayment?.status === "paid" && (
-              <div className="mt-3 rounded-md border border-emerald-500/30 bg-emerald-500/10 p-2 text-xs text-emerald-700 dark:text-emerald-400">
-                Paid ✓ — pack unlocked for member.
-              </div>
-            )}
-          </StepCard>
-
-          {/* Step 3: Log session via RPC */}
-          <StepCard step={3} title="Trainer logs session">
-            <Label>Trainer</Label>
-            <Select value={trainerId} onChange={setTrainerId}>
-              {trainers.map((t: any) => (
-                <option key={t.id} value={String(t.id)}>
-                  {t.name ?? t.full_name ?? t.email ?? `#${t.id}`}
-                </option>
-              ))}
-            </Select>
-            <button
-              className="mt-3 inline-flex w-full items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-accent disabled:opacity-50"
-              disabled={!packId || logPt.isPending}
-              onClick={() => logPt.mutate({ packId })}
-            >
-              {logPt.isPending ? "Logging…" : "Log session"}
-            </button>
-            {logPt.isError && (
-              <div className="mt-2 rounded-md border border-destructive/30 bg-destructive/10 p-2 text-xs text-destructive">
-                {logPt.error instanceof Error ? logPt.error.message : String(logPt.error)}
-              </div>
-            )}
-            {logResult && (
-              <div className="mt-3 rounded-md border border-border bg-muted/30 p-2 text-xs space-y-1">
-                <div className="font-semibold text-foreground">Session logged</div>
-                <div>Status: <span className="font-mono">Awaiting member confirmation</span></div>
-                <div>
-                  Session #<b>{logResult.session_number_in_pack ?? "—"}</b> in pack
-                </div>
-                <div>
-                  Session value:{" "}
-                  <b>{fmt(logResult.session_value_cents)} AUD</b>
-                </div>
-                <div className="pt-1 text-[10px] text-muted-foreground break-all">
-                  session_id: {String(logResult.session_id ?? "—")}
-                </div>
-              </div>
-            )}
-          </StepCard>
-
-          {/* Step 4: Confirm via RPC */}
-          <StepCard step={4} title="Member confirms session">
-            <Label>Confirmation token</Label>
-            <input
-              className="mt-1 w-full rounded-md border border-input bg-background px-2 py-1.5 text-xs font-mono"
-              value={confirmationToken}
-              onChange={(e) => setConfirmationToken(e.target.value)}
-              placeholder="log a session in Step 3"
-            />
-            <button
-              className="mt-3 inline-flex w-full items-center justify-center rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-              disabled={!confirmationToken || confirmPt.isPending || !!confirmResult}
-              onClick={() => confirmPt.mutate({ confirmationToken })}
-            >
-              {confirmPt.isPending ? "Confirming…" : "Confirm session"}
-            </button>
-            {confirmPt.isError && (
-              <div className="mt-2 rounded-md border border-destructive/30 bg-destructive/10 p-2 text-xs text-destructive">
-                {confirmPt.error instanceof Error ? confirmPt.error.message : String(confirmPt.error)}
-              </div>
-            )}
-            {confirmResult && (
-              <div className="mt-3 rounded-md border border-emerald-500/30 bg-emerald-500/10 p-2 text-xs space-y-1 text-emerald-800 dark:text-emerald-300">
-                <div className="font-semibold">Session confirmed</div>
-                <div>Status: <span className="font-mono">{String(confirmResult.status ?? "—")}</span></div>
-                <div>Session # in cycle: <b>{confirmResult.session_number_in_cycle ?? "—"}</b></div>
-                <div>PT split: <b>{confirmResult.pt_split_pct ?? "—"}%</b> · Club split: <b>{confirmResult.club_split_pct ?? "—"}%</b></div>
-                <div>PT payout: <b>{fmt(confirmResult.pt_amount_cents)} AUD</b></div>
-                <div>Club payout: <b>{fmt(confirmResult.club_amount_cents)} AUD</b></div>
-              </div>
-            )}
-          </StepCard>
-        </section>
-
-
-
-        <section className="grid gap-6 md:grid-cols-2">
-          <TablePanel title="payments_log (recent)" rows={payments.slice(-10).reverse()} />
-          <TablePanel title="sessions (recent)" rows={sessions.slice(-10).reverse()} />
-        </section>
-
-        <section>
-          <details className="rounded-md border border-border bg-card">
-            <summary className="cursor-pointer px-4 py-3 text-sm font-medium">
-              Demo rules
-            </summary>
-            <div className="grid gap-4 p-4 text-xs md:grid-cols-2">
-              <div>
-                <div className="mb-1 font-semibold text-foreground">Payment cycle</div>
-                <p className="text-muted-foreground">
-                  Member pays up-front for the full pack via Pinch hosted checkout.
-                  Funds settle to the club account; trainer payouts are calculated
-                  per verified session and released on the fortnightly payout run.
-                </p>
-              </div>
-              <div>
-                <div className="mb-1 font-semibold text-foreground">Current thresholds</div>
-                <p className="text-muted-foreground">
-                  Split tiers are keyed on sessions delivered this calendar month.
-                  Default tiers: 0–20 sessions = base tier, 21–40 = mid tier,
-                  41+ = top tier. Live values come from the{" "}
-                  <code className="font-mono">split_tiers</code> table per club.
-                </p>
-              </div>
-              <div>
-                <div className="mb-1 font-semibold text-foreground">Confirmation requirement</div>
-                <p className="text-muted-foreground">
-                  Every logged session must be confirmed by the member before it
-                  counts toward payout. Confirmed sessions flip to{" "}
-                  <code className="font-mono">status = "verified"</code> with{" "}
-                  <code className="font-mono">member_confirmed = true</code>.
-                  Disputed sessions are held for club review and excluded from
-                  the split until resolved.
-                </p>
-              </div>
-              <div>
-                <div className="mb-1 font-semibold text-foreground">Split behaviour</div>
-                <p className="text-muted-foreground">
-                  Trainer share = matched tier %, applied to each verified
-                  session's pro-rata value (pack price ÷ sessions_total).
-                  Remainder goes to the club. Tier is re-evaluated on every
-                  confirmation, so crossing a threshold mid-month lifts payout
-                  for subsequent sessions only.
-                </p>
-              </div>
-            </div>
-          </details>
-        </section>
-
-        <DebugPanel entries={debugLog} onClear={clearDebug} />
-
-        <PinchEnvPanel />
-
-
-        <section>
-          <details className="rounded-md border border-border bg-card">
-            <summary className="cursor-pointer px-4 py-3 text-sm font-medium">
-              Diagnostics · raw table dumps
-            </summary>
-            <div className="p-4 space-y-4 text-xs">
-              {Object.entries(data).map(([name, t]) => (
-                <div key={name}>
-                  <div className="font-mono font-semibold">
-                    {name} · {t.rows.length} rows
-                    {t.error && (
-                      <span className="ml-2 text-destructive">error: {t.error}</span>
-                    )}
-                  </div>
-                  <pre className="mt-1 overflow-x-auto rounded bg-muted/40 p-2">
-                    {JSON.stringify(t.rows.slice(0, 3), null, 2)}
-                  </pre>
-                </div>
-              ))}
-            </div>
-          </details>
-        </section>
-      </main>
-
-      <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground">
-        VezaPT Pay · powered by Pinch Payments (sandbox)
-      </footer>
-    </div>
-  );
-}
-
-function DebugPanel({ entries, onClear }: { entries: DebugEntry[]; onClear: () => void }) {
-  const t0 = entries[0]?.ts;
-  return (
-    <section>
-      <details className="rounded-md border border-border bg-card" open={entries.length > 0}>
-        <summary className="cursor-pointer px-4 py-3 text-sm font-medium flex items-center justify-between">
-          <span>Pinch flow debug ({entries.length} events)</span>
-          {entries.length > 0 && (
-            <button
-              className="text-xs text-muted-foreground hover:text-foreground underline"
-              onClick={(e) => { e.preventDefault(); onClear(); }}
-            >
-              clear
-            </button>
-          )}
-        </summary>
-        <div className="p-4 space-y-2 text-xs">
-          {entries.length === 0 ? (
-            <p className="text-muted-foreground">
-              No events yet. Click <b>Create Pinch checkout</b> or <b>Debug via server</b> in Step 1
-              to capture each request / response (secrets redacted).
-            </p>
-          ) : (
-            entries.map((e, i) => {
-              const colour =
-                e.level === "error"
-                  ? "border-destructive/40 bg-destructive/5"
-                  : e.level === "success"
-                  ? "border-emerald-500/30 bg-emerald-500/5"
-                  : "border-border bg-muted/30";
-              const dot =
-                e.level === "error" ? "bg-destructive" : e.level === "success" ? "bg-emerald-500" : "bg-muted-foreground";
-              return (
-                <div key={i} className={`rounded-md border ${colour} p-2`}>
-                  <div className="flex items-center gap-2 font-mono text-[11px]">
-                    <span className={`inline-block h-2 w-2 rounded-full ${dot}`} />
-                    <span className="text-muted-foreground">+{t0 ? e.ts - t0 : 0}ms</span>
-                    <span className="font-semibold">{e.phase}</span>
-                    <span className="text-foreground">{e.title}</span>
-                  </div>
-                  {e.detail !== undefined && (
-                    <pre className="mt-1 overflow-x-auto whitespace-pre-wrap break-words rounded bg-background/60 p-2 text-[10px]">
-{typeof e.detail === "string" ? e.detail : JSON.stringify(e.detail, null, 2)}
-                    </pre>
+      {/* Guided presentation mode */}
+      <Card className="ai-card rounded-3xl">
+        <CardHeader className="gap-1">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <CardTitle className="text-base">Guided presentation mode</CardTitle>
+            <Button onClick={runDemo} size="sm">
+              <Play className="size-4" /> Run payment demo
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Replays the same event records as the test-payment flow. Animation alone is not proof of
+            payment — the records above come from the Pinch test webhook.
+          </p>
+        </CardHeader>
+        {demoStep !== null && (
+          <CardContent>
+            <ol className="space-y-2">
+              {DEMO_STEPS.map((s, i) => (
+                <li key={s} className="flex items-center gap-3 text-sm">
+                  {i <= demoStep ? (
+                    <CheckCircle2 className="size-4 text-success" />
+                  ) : (
+                    <Clock className="size-4 text-muted-foreground/60" />
                   )}
-                </div>
-              );
-            })
-          )}
-        </div>
-      </details>
-    </section>
-  );
-}
-
-function PinchEnvPanel() {
-  const check = useServerFn(pinchEnvCheck);
-  const [info, setInfo] = useState<any>(null);
-  const [err, setErr] = useState<string | null>(null);
-  return (
-    <details className="rounded-md border border-border bg-card">
-      <summary className="cursor-pointer px-4 py-3 text-sm font-medium">
-        Pinch env check (server runtime)
-      </summary>
-      <div className="space-y-3 p-4 text-xs">
-        <button
-          className="rounded bg-primary px-3 py-1 text-primary-foreground"
-          onClick={async () => {
-            setErr(null);
-            try {
-              setInfo(await check());
-            } catch (e) {
-              setErr(e instanceof Error ? e.message : String(e));
-            }
-          }}
-        >
-          Check env vars
-        </button>
-        {err && <div className="text-destructive">{err}</div>}
-        {info && (
-          <pre className="overflow-x-auto rounded bg-muted/40 p-2">
-{JSON.stringify(info, null, 2)}
-          </pre>
-        )}
-        <p className="text-muted-foreground">
-          Server runtime: TanStack Start server functions running in the
-          Cloudflare Worker deployment. Env vars come from Lovable Cloud
-          project secrets (Project Settings → Secrets), not Supabase Edge
-          Function secrets. After adding or updating a secret, republish the
-          app for it to appear in the production Worker.
-        </p>
-      </div>
-    </details>
-  );
-}
-
-
-function StepCard({
-  step,
-  title,
-  children,
-}: {
-  step: number;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-      <div className="mb-3 flex items-center gap-2">
-        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-          {step}
-        </span>
-        <h3 className="text-sm font-semibold">{title}</h3>
-      </div>
-      <div className="space-y-2">{children}</div>
-    </div>
-  );
-}
-
-function Label({ children }: { children: React.ReactNode }) {
-  return (
-    <label className="mt-2 block text-xs font-medium text-muted-foreground">
-      {children}
-    </label>
-  );
-}
-
-function Select({
-  value,
-  onChange,
-  children,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <select
-      className="mt-1 w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-    >
-      {children}
-    </select>
-  );
-}
-
-function TablePanel({ title, rows }: { title: string; rows: any[] }) {
-  const cols = rows[0] ? Object.keys(rows[0]) : [];
-  return (
-    <div className="rounded-xl border border-border bg-card">
-      <div className="border-b border-border px-4 py-2 text-sm font-semibold">
-        {title}
-      </div>
-      <div className="max-h-72 overflow-auto">
-        {rows.length === 0 ? (
-          <div className="p-4 text-xs text-muted-foreground">No rows yet.</div>
-        ) : (
-          <table className="w-full text-xs">
-            <thead className="bg-muted/40">
-              <tr>
-                {cols.map((c) => (
-                  <th key={c} className="px-2 py-1.5 text-left font-medium">
-                    {c}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r, i) => (
-                <tr key={i} className="border-t border-border">
-                  {cols.map((c) => (
-                    <td key={c} className="px-2 py-1 font-mono">
-                      {formatCell(r[c])}
-                    </td>
-                  ))}
-                </tr>
+                  <span className={i <= demoStep ? "" : "text-muted-foreground/60"}>{s}</span>
+                  {i === demoStep && i < DEMO_STEPS.length - 1 && (
+                    <StatusPill status="pending" label="In progress" />
+                  )}
+                </li>
               ))}
-            </tbody>
-          </table>
+            </ol>
+          </CardContent>
         )}
-      </div>
+      </Card>
+
+      {/* Recurring coaching */}
+      <Card className="card-elevated">
+        <CardHeader className="gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <CardTitle>Twice-Weekly Coaching</CardTitle>
+            <span className="pill pill-verified">
+              <ShieldCheck className="size-3.5" /> Verified test transaction
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            This record was updated from a Pinch test-environment webhook.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid gap-x-8 sm:grid-cols-2">
+            <div>
+              <Field label="Member" value="Alex Morgan" />
+              <Field label="Trainer" value="Sarah Nguyen" />
+              <Field label="Plan" value="2 sessions per week" />
+              <Field label="Price" value="$180.00 AUD per week" tone="payment" />
+            </div>
+            <div>
+              <Field label="Payment provider" value="Pinch" tone="payment" />
+              <Field label="Environment" value="Test" />
+              <Field label="Plan status" value="Active" tone="workflow" />
+              <Field label="Next collection" value="31 Jul 2026" />
+              <Field label="Billing frequency" value="Weekly" />
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-[oklch(0.663_0.160_152.4/32%)] bg-[oklch(0.663_0.160_152.4/12%)] p-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-success">
+              <CheckCircle2 className="size-4" /> Recurring coaching active
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Alex authorised weekly billing through Pinch. VezaPT activated the ongoing coaching
+              plan with Sarah.
+            </p>
+          </div>
+
+          <Timeline title="Recurring billing" events={RECURRING_EVENTS} onOpen={setSelected} />
+        </CardContent>
+      </Card>
+
+      {/* Integration health */}
+      <Card className="card-elevated">
+        <CardHeader>
+          <CardTitle className="text-base">Integration health</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-x-8 sm:grid-cols-2">
+            <div>
+              <Field label="API connection" value="Connected" tone="payment" />
+              <Field label="Webhook endpoint" value="Receiving events" tone="payment" />
+              <Field label="Last webhook" value={t("16:17")} />
+              <Field label="Signature verification" value="Passing" tone="workflow" />
+            </div>
+            <div>
+              <Field label="Idempotency protection" value="Active" tone="workflow" />
+              <Field label="Failed events" value="0" />
+              <Field label="Unprocessed events" value="0" />
+            </div>
+          </div>
+          <p className="mt-3 text-[11px] text-muted-foreground/80">
+            Health indicators reflect the current test environment.
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Service and payout status */}
+      <Card className="card-elevated">
+        <CardHeader>
+          <CardTitle className="text-base">Service and payout status</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-x-8 sm:grid-cols-2">
+            <div>
+              <Field label="Purchase paid" value="Yes" tone="payment" />
+              <Field label="Trainer assigned" value="Sarah Nguyen" />
+              <Field label="Session 1 check-in" value="Verified" tone="workflow" />
+            </div>
+            <div>
+              <Field label="Session 1 completion" value="Confirmed" tone="workflow" />
+              <Field label="Member dispute" value="None" />
+              <Field label="Payout status" value="Session payout eligible" tone="workflow" />
+            </div>
+          </div>
+          <p className="mt-3 text-[11px] text-muted-foreground/80">
+            Payment confirmed and pack active. A payout is only recorded once an actual payout event
+            occurs.
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Error demonstrations */}
+      <Card className="card-elevated">
+        <CardHeader className="gap-3">
+          <CardTitle className="text-base">Safeguard demonstrations</CardTitle>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={() => setShowFailed((v) => !v)}>
+              <ChevronDown
+                className={`size-4 transition-transform ${showFailed ? "rotate-180" : ""}`}
+              />
+              Show failed-payment example
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setShowDuplicate((v) => !v)}>
+              <ChevronDown
+                className={`size-4 transition-transform ${showDuplicate ? "rotate-180" : ""}`}
+              />
+              Show duplicate-webhook example
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            These are separate sample transactions. Alex’s successful journey above is unchanged.
+          </p>
+        </CardHeader>
+        {(showFailed || showDuplicate) && (
+          <CardContent className="space-y-8">
+            {showFailed && (
+              <div className="space-y-4 rounded-2xl border border-[oklch(0.586_0.222_17.6/34%)] bg-[oklch(0.586_0.222_17.6/10%)] p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-semibold">Failed payment — sample transaction</span>
+                  <StatusPill status="failed" label="Payment failed" />
+                </div>
+                <div className="grid gap-x-8 sm:grid-cols-2">
+                  <div>
+                    <Field label="Payment status" value="Failed" />
+                    <Field label="Pack status" value="Inactive" />
+                  </div>
+                  <div>
+                    <Field label="Reason" value="Test payment declined" />
+                    <Field label="Workflow outcome" value="No trainer matching initiated" />
+                  </div>
+                </div>
+                <Timeline title="Declined purchase" events={FAILED_EVENTS} onOpen={setSelected} />
+                <p className="text-sm font-medium text-destructive">
+                  VezaPT does not activate a pack unless Pinch confirms payment.
+                </p>
+              </div>
+            )}
+            {showDuplicate && (
+              <div className="space-y-4 rounded-2xl border border-border bg-surface-2 p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-semibold">Duplicate webhook — sample event</span>
+                  <StatusPill status="complete" label="Handled safely" />
+                </div>
+                <div className="grid gap-x-8 sm:grid-cols-2">
+                  <div>
+                    <Field label="First event" value="Processed" tone="workflow" />
+                    <Field label="Duplicate event" value="Ignored" />
+                  </div>
+                  <div>
+                    <Field label="Pack sessions created" value="3, not 6" tone="workflow" />
+                  </div>
+                </div>
+                <Timeline title="Duplicate handling" events={DUPLICATE_EVENTS} onOpen={setSelected} />
+                <p className="text-xs text-muted-foreground">
+                  Provider event IDs are stored and processed once.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        )}
+      </Card>
+
+      {/* Commercial flow summary */}
+      <Card className="card-elevated">
+        <CardHeader>
+          <CardTitle className="text-base">Commercial flow</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ol className="flex flex-wrap items-center gap-2 text-xs">
+            {[
+              { text: "$249 Kickstart purchase", tone: "payment" },
+              { text: "Pinch confirms payment", tone: "payment" },
+              { text: "VezaPT activates 3-session pack", tone: "workflow" },
+              { text: "Sarah delivers verified coaching", tone: "workflow" },
+              { text: "Alex accepts $180/week plan", tone: "workflow" },
+              { text: "Pinch creates recurring billing", tone: "payment" },
+              { text: "VezaPT tracks conversion and retention", tone: "workflow" },
+            ].map((s, i, arr) => (
+              <li key={s.text} className="flex items-center gap-2">
+                <span
+                  className={
+                    s.tone === "payment"
+                      ? "rounded-full border border-[var(--payment-border)] bg-[var(--payment-surface)] px-3 py-1.5 font-medium text-payment"
+                      : "rounded-full border border-[oklch(0.663_0.160_152.4/32%)] bg-[oklch(0.663_0.160_152.4/12%)] px-3 py-1.5 font-medium text-success"
+                  }
+                >
+                  {s.text}
+                </span>
+                {i < arr.length - 1 && (
+                  <ChevronRight className="size-3.5 text-muted-foreground" />
+                )}
+              </li>
+            ))}
+          </ol>
+        </CardContent>
+      </Card>
+
+      <EventDrawer event={selected} onClose={() => setSelected(null)} />
     </div>
   );
 }
 
-function formatCell(v: any): string {
-  if (v == null) return "—";
-  if (typeof v === "object") return JSON.stringify(v);
-  const s = String(v);
-  return s.length > 40 ? s.slice(0, 40) + "…" : s;
+/* ------------------------------------------------------------------ */
+/* Drawer                                                              */
+/* ------------------------------------------------------------------ */
+
+function EventDrawer({ event, onClose }: { event: TimelineEvent | null; onClose: () => void }) {
+  const [showPayload, setShowPayload] = useState(false);
+  return (
+    <Sheet open={!!event} onOpenChange={(o) => !o && onClose()}>
+      <SheetContent className="w-full overflow-y-auto sm:max-w-md">
+        {event && (
+          <>
+            <SheetHeader>
+              <SheetTitle>{event.name}</SheetTitle>
+              <SheetDescription>{event.description}</SheetDescription>
+            </SheetHeader>
+            <div className="space-y-4 px-4 pb-8">
+              <div className="flex items-center gap-2">
+                <StatusPill status={event.status} />
+                <SourcePill source={event.source} />
+              </div>
+              <div>
+                <Field label="Provider" value={event.source === "Pinch" ? "Pinch (test)" : "VezaPT"} />
+                <Field label="Event ID" value={event.detail.eventId} />
+                <Field label="Purchase / plan ID" value={event.detail.recordId} />
+                <Field label="Received" value={event.detail.received} />
+                <Field label="Processed" value={event.detail.processed} />
+                <Field label="Processing result" value={event.detail.result} />
+                <Field label="Related VezaPT record" value={event.detail.related} />
+                <Field label="Idempotency result" value={event.detail.idempotency} />
+                <Field label="Retry count" value={String(event.detail.retries)} />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowPayload((v) => !v)}
+                className="flex w-full items-center justify-between rounded-xl border border-border px-3 py-2 text-sm hover:bg-white/5"
+              >
+                Technical payload
+                <ChevronDown
+                  className={`size-4 transition-transform ${showPayload ? "rotate-180" : ""}`}
+                />
+              </button>
+              {showPayload && (
+                <div className="relative">
+                  <pre className="overflow-x-auto rounded-xl border border-border bg-surface-2 p-3 text-[11px] leading-relaxed text-muted-foreground">
+{JSON.stringify(event.detail.payload, null, 2)}
+                  </pre>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-2 top-2"
+                    onClick={() =>
+                      navigator.clipboard?.writeText(JSON.stringify(event.detail.payload, null, 2))
+                    }
+                  >
+                    <Copy className="size-3.5" />
+                  </Button>
+                  <p className="mt-2 text-[11px] text-muted-foreground/80">
+                    Sanitised payload. Keys, secrets, card and bank details are never shown.
+                  </p>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </SheetContent>
+    </Sheet>
+  );
 }
