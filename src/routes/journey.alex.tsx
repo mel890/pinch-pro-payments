@@ -3,7 +3,13 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, Circle, CalendarCheck, ArrowRight } from "lucide-react";
+import {
+  CheckCircle2,
+  Circle,
+  CalendarCheck,
+  ArrowRight,
+  Sparkles,
+} from "lucide-react";
 import { formatAUD } from "@/lib/money";
 import { CoachMeJourney } from "@/components/coach-me-journey";
 import {
