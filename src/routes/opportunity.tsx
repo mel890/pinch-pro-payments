@@ -9,7 +9,6 @@ import {
   useJourney,
   journey,
   KICKSTART,
-  INTAKE,
   MEMBER,
   TRAINER,
   TRAINER_BRIEF,
@@ -77,7 +76,7 @@ function Opportunity() {
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
             Contact them and book session one. Preferred times:{" "}
-            {INTAKE.days}, {INTAKE.times}.
+            {s.intake.days.join(", ")}, {s.intake.times}.
           </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <Stat label="Contracted payout" value={formatAUD(KICKSTART.trainerPayoutCents)} />
@@ -132,13 +131,29 @@ function Opportunity() {
         </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          <Field label="Goal" value="Build strength and gym confidence" />
-          <Field label="Experience" value={INTAKE.experience} />
-          <Field label="Preferred times" value={`${INTAKE.days}, ${INTAKE.times}`} />
-          <Field label="Coaching preference" value={INTAKE.style} />
-          <Field label="Confidence today" value={`${INTAKE.confidence}/10`} />
-          <Field label="First-session target" value="Within seven days" />
+          <Field label="Goal" value={s.intake.goal} />
+          <Field label="Experience" value={s.intake.experience} />
+          <Field
+            label="Preferred times"
+            value={`${s.intake.days.join(", ")}, ${s.intake.times}`}
+          />
+          <Field label="Coaching preference" value={s.intake.style} />
+          <Field label="Confidence today" value={`${s.intake.confidence}/10`} />
+          <Field
+            label="Injuries / conditions"
+            value={s.intake.conditions.join(", ") || "None reported"}
+          />
         </div>
+
+        {s.intake.injuryNotes && (
+          <div className="mt-3 rounded-xl border border-warning/30 bg-warning/5 p-4">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              Health notes from {MEMBER.first}
+            </p>
+            <p className="mt-1 text-sm">{s.intake.injuryNotes}</p>
+          </div>
+        )}
+
 
         <div className="mt-5 rounded-xl border border-primary/30 bg-primary/5 p-4">
           <p className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-primary">

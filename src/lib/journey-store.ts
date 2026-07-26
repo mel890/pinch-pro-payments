@@ -76,6 +76,130 @@ export const INTAKE = {
   attendance: 1.4,
 };
 
+/** Full member intake captured on the purchase page. */
+export type IntakeForm = {
+  fullName: string;
+  email: string;
+  mobile: string;
+  ageBand: string;
+  goal: string;
+  motivation: string;
+  targetWeeks: string;
+  experience: string;
+  attendance: string;
+  activities: string[];
+  conditions: string[];
+  injuryNotes: string;
+  clearedByDoctor: "Yes" | "No" | "Not sure";
+  days: string[];
+  times: string;
+  sessionsPerWeek: string;
+  style: string;
+  accountability: string;
+  confidence: number;
+  notes: string;
+  consent: boolean;
+};
+
+export const INTAKE_DEFAULTS: IntakeForm = {
+  fullName: "Alex Morgan",
+  email: "alex.morgan@example.com",
+  mobile: "0412 448 902",
+  ageBand: "35–44",
+  goal: "Build strength and feel confident using the gym",
+  motivation:
+    "I've had a membership for a year and mostly use the treadmill. I want to know what I'm doing in the weights area.",
+  targetWeeks: "12 weeks",
+  experience: "Beginner",
+  attendance: "1–2 visits per week",
+  activities: ["Treadmill / walking", "Group classes"],
+  conditions: ["Lower-back sensitivity"],
+  injuryNotes:
+    "Lower back gets sore after long days at a desk. Left knee clicks on deep squats but no pain.",
+  clearedByDoctor: "Yes",
+  days: ["Tuesday", "Thursday"],
+  times: "Evening (6–8 pm)",
+  sessionsPerWeek: "2 per week",
+  style: "Supportive and structured",
+  accountability: "Weekly check-in message",
+  confidence: 5,
+  notes: "Prefer a quieter part of the gym for the first session.",
+  consent: true,
+};
+
+export const INTAKE_OPTIONS = {
+  ageBands: ["18–24", "25–34", "35–44", "45–54", "55+"],
+  goals: [
+    "Build strength and feel confident using the gym",
+    "Lose body fat and improve fitness",
+    "Return to training after a break",
+    "Improve posture and reduce back pain",
+    "Train for an event",
+  ],
+  targetWeeks: ["6 weeks", "12 weeks", "6 months", "No fixed deadline"],
+  experience: [
+    "Complete beginner",
+    "Beginner",
+    "Some experience",
+    "Confident and consistent",
+  ],
+  attendance: [
+    "Not training yet",
+    "1–2 visits per week",
+    "3–4 visits per week",
+    "5+ visits per week",
+  ],
+  activities: [
+    "Treadmill / walking",
+    "Group classes",
+    "Cycling",
+    "Swimming",
+    "Free weights",
+    "Machines only",
+    "Sport",
+  ],
+  conditions: [
+    "None",
+    "Lower-back sensitivity",
+    "Knee injury",
+    "Shoulder injury",
+    "Asthma",
+    "Pregnancy / post-natal",
+    "High blood pressure",
+    "Recent surgery",
+  ],
+  days: [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+  ],
+  times: [
+    "Early morning (5–7 am)",
+    "Morning (7–10 am)",
+    "Midday (11 am–2 pm)",
+    "Afternoon (2–5 pm)",
+    "Evening (6–8 pm)",
+  ],
+  sessionsPerWeek: ["1 per week", "2 per week", "3 per week", "Flexible"],
+  styles: [
+    "Supportive and structured",
+    "Direct and challenging",
+    "Technical and educational",
+    "Relaxed and social",
+  ],
+  accountability: [
+    "Weekly check-in message",
+    "In-session only",
+    "App reminders",
+    "Monthly review call",
+  ],
+};
+
+
 export const BEFORE = { confidence: 5, visits: 1.4, clarity: 4 };
 export const AFTER = { confidence: 8, visits: 2.6, clarity: 8 };
 
@@ -147,6 +271,8 @@ export type ExceptionAction = {
 export type JourneyState = {
   campaignLive: boolean;
   intakeSubmitted: boolean;
+  intake: IntakeForm;
+
   paid: boolean;
   matched: boolean;
   matchConfirmed: boolean;
@@ -244,6 +370,8 @@ const BACKUP_CODES = ["481 902", "336 741", "205 618"];
 const INITIAL: JourneyState = {
   campaignLive: false,
   intakeSubmitted: false,
+  intake: { ...INTAKE_DEFAULTS },
+
   paid: false,
   matched: false,
   matchConfirmed: false,
@@ -305,6 +433,8 @@ function hydrate() {
       state = {
         ...structuredClone(INITIAL),
         ...parsed,
+        intake: { ...INTAKE_DEFAULTS, ...(parsed.intake ?? {}) },
+
         // Always re-apply the current copy/templates over stored progress.
         sessions: INITIAL.sessions.map((base) => {
           const saved = parsed.sessions.find((x) => x.n === base.n);
@@ -351,6 +481,9 @@ export const journey = {
   launchCampaign: () => patch({ campaignLive: true }),
   confirmMatch: () => patch({ matchConfirmed: true, matched: true }),
   submitIntake: () => patch({ intakeSubmitted: true }),
+  updateIntake: (next: Partial<IntakeForm>) =>
+    patch({ intake: { ...state.intake, ...next } }),
+
   pay: () =>
     patch({ paid: true, intakeSubmitted: true, matched: true, campaignLive: true }),
   accept: () => {
