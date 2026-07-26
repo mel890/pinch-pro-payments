@@ -59,27 +59,13 @@ function MeScreen() {
   );
   const done = mine.filter((s: any) => s.status === "confirmed");
 
-  const [flash, setFlash] = useState<null | {
-    trainerName: string;
-    ptPct: number;
-    ptCents: number;
-    clubCents: number;
-    tierUpgraded: boolean;
-    tierName: string;
-  }>(null);
+  const [flash, setFlash] = useState<null | { trainerName: string }>(null);
 
   const verify = useMutation({
     mutationFn: (id: string) => verifySession({ data: { sessionId: id } }),
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ["snapshot"] });
-      setFlash({
-        trainerName: res.trainerName,
-        ptPct: res.ptPct,
-        ptCents: res.ptCents,
-        clubCents: res.clubCents,
-        tierUpgraded: res.tierUpgraded,
-        tierName: res.tierName,
-      });
+      setFlash({ trainerName: res.trainerName });
     },
   });
 
