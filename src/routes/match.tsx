@@ -8,7 +8,6 @@ import {
   useJourney,
   journey,
   MATCH,
-  INTAKE,
   MEMBER,
   TRAINER,
 } from "@/lib/journey-store";
@@ -148,11 +147,11 @@ function MatchScreen() {
           Why {TRAINER.first} fits {MEMBER.first}
         </p>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <Fact label="Alex prefers" value={`${INTAKE.days}, ${INTAKE.times}`} />
+          <Fact label="Alex prefers" value={`${s.intake.days.join(", ")}, ${s.intake.times}`} />
           <Fact label="Sarah's availability" value="Tue/Thu evenings open" />
-          <Fact label="Alex's experience" value={INTAKE.experience} />
+          <Fact label="Alex's experience" value={s.intake.experience} />
           <Fact label="Sarah's speciality" value="Beginner strength" />
-          <Fact label="Coaching preference" value={INTAKE.style} />
+          <Fact label="Coaching preference" value={s.intake.style} />
           <Fact label="Acceptance reliability" value="94% within 2 hours" />
         </div>
       </Card>

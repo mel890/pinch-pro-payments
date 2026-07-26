@@ -9,7 +9,6 @@ import {
   useJourney,
   journey,
   KICKSTART,
-  INTAKE,
   MEMBER,
   TRAINER,
   TRAINER_BRIEF,
@@ -77,7 +76,7 @@ function Opportunity() {
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
             Contact them and book session one. Preferred times:{" "}
-            {INTAKE.days}, {INTAKE.times}.
+            {s.intake.days.join(", ")}, {s.intake.times}.
           </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <Stat label="Contracted payout" value={formatAUD(KICKSTART.trainerPayoutCents)} />
