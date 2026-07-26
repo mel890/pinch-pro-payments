@@ -174,6 +174,10 @@ function ManagerImpact() {
           <Button asChild variant="outline">
             <Link to="/trainer-capacity">Check team capacity</Link>
           </Button>
+          <Button asChild variant="outline">
+            <Link to="/exceptions">Session exceptions</Link>
+          </Button>
+
           <Button asChild variant="ghost">
             <Link to="/demo-console">Pinch integration console</Link>
           </Button>
