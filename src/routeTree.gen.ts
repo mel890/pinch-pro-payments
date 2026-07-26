@@ -20,6 +20,7 @@ import { Route as MeRouteImport } from './routes/me'
 import { Route as DemoConsoleRouteImport } from './routes/demo-console'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CompleteSessionRouteImport } from './routes/complete-session'
+import { Route as CampaignRouteImport } from './routes/campaign'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as JourneyAlexRouteImport } from './routes/journey.alex'
 import { Route as ConfirmSessionDemoRouteImport } from './routes/confirm-session.demo'
@@ -80,6 +81,11 @@ const CompleteSessionRoute = CompleteSessionRouteImport.update({
   path: '/complete-session',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CampaignRoute = CampaignRouteImport.update({
+  id: '/campaign',
+  path: '/campaign',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -103,6 +109,7 @@ const ApiPublicPinchWebhookRoute = ApiPublicPinchWebhookRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/campaign': typeof CampaignRoute
   '/complete-session': typeof CompleteSessionRoute
   '/dashboard': typeof DashboardRoute
   '/demo-console': typeof DemoConsoleRoute
@@ -120,6 +127,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/campaign': typeof CampaignRoute
   '/complete-session': typeof CompleteSessionRoute
   '/dashboard': typeof DashboardRoute
   '/demo-console': typeof DemoConsoleRoute
@@ -138,6 +146,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/campaign': typeof CampaignRoute
   '/complete-session': typeof CompleteSessionRoute
   '/dashboard': typeof DashboardRoute
   '/demo-console': typeof DemoConsoleRoute
@@ -157,6 +166,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/campaign'
     | '/complete-session'
     | '/dashboard'
     | '/demo-console'
@@ -174,6 +184,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/campaign'
     | '/complete-session'
     | '/dashboard'
     | '/demo-console'
@@ -191,6 +202,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/campaign'
     | '/complete-session'
     | '/dashboard'
     | '/demo-console'
@@ -209,6 +221,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CampaignRoute: typeof CampaignRoute
   CompleteSessionRoute: typeof CompleteSessionRoute
   DashboardRoute: typeof DashboardRoute
   DemoConsoleRoute: typeof DemoConsoleRoute
@@ -304,6 +317,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompleteSessionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/campaign': {
+      id: '/campaign'
+      path: '/campaign'
+      fullPath: '/campaign'
+      preLoaderRoute: typeof CampaignRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -337,6 +357,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CampaignRoute: CampaignRoute,
   CompleteSessionRoute: CompleteSessionRoute,
   DashboardRoute: DashboardRoute,
   DemoConsoleRoute: DemoConsoleRoute,
