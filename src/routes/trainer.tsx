@@ -211,39 +211,8 @@ function TrainerScreen() {
         {/* 2b. End of pack — recommend ongoing coaching to Alex */}
         <PackWrapUp />
 
-        {/* 2. Recent client wins */}
-        <section className="mt-10">
-          <h2 className="text-base font-semibold">Recent client wins</h2>
-          <div className="mt-3 space-y-2">
-            {verified.slice(0, 5).map((s: any) => {
-              const member = snap.members.find((m: any) => m.id === s.member_id);
-              const first = shortName(member?.name).split(" ")[0];
-              return (
-                <Card key={s.id} className="flex items-center justify-between border-border p-4">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="size-4 text-primary" />
-                    <div>
-                      <p className="text-sm">
-                        {first} confirmed a session
-                      </p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {s.pt_split_pct_at_time}% share applied
-                      </p>
-                    </div>
-                  </div>
-                  <p className="font-mono text-sm tabular-nums text-primary">
-                    + {formatAUD(s.pt_amount_cents)}
-                  </p>
-                </Card>
-              );
-            })}
-            {verified.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                Once a client confirms, their win lands here.
-              </p>
-            )}
-          </div>
-        </section>
+
+
 
         {/* 3. Tier progress */}
         <Card className="mt-8 border-border p-6">
