@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TrainerCapacityRouteImport } from './routes/trainer-capacity'
 import { Route as TrainerRouteImport } from './routes/trainer'
 import { Route as SessionQrRouteImport } from './routes/session-qr'
+import { Route as ScanRouteImport } from './routes/scan'
 import { Route as ReviewRouteImport } from './routes/review'
 import { Route as PayRouteImport } from './routes/pay'
 import { Route as OpportunityRouteImport } from './routes/opportunity'
@@ -41,6 +42,11 @@ const TrainerRoute = TrainerRouteImport.update({
 const SessionQrRoute = SessionQrRouteImport.update({
   id: '/session-qr',
   path: '/session-qr',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScanRoute = ScanRouteImport.update({
+  id: '/scan',
+  path: '/scan',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReviewRoute = ReviewRouteImport.update({
@@ -132,6 +138,7 @@ export interface FileRoutesByFullPath {
   '/opportunity': typeof OpportunityRoute
   '/pay': typeof PayRoute
   '/review': typeof ReviewRoute
+  '/scan': typeof ScanRoute
   '/session-qr': typeof SessionQrRoute
   '/trainer': typeof TrainerRoute
   '/trainer-capacity': typeof TrainerCapacityRoute
@@ -152,6 +159,7 @@ export interface FileRoutesByTo {
   '/opportunity': typeof OpportunityRoute
   '/pay': typeof PayRoute
   '/review': typeof ReviewRoute
+  '/scan': typeof ScanRoute
   '/session-qr': typeof SessionQrRoute
   '/trainer': typeof TrainerRoute
   '/trainer-capacity': typeof TrainerCapacityRoute
@@ -173,6 +181,7 @@ export interface FileRoutesById {
   '/opportunity': typeof OpportunityRoute
   '/pay': typeof PayRoute
   '/review': typeof ReviewRoute
+  '/scan': typeof ScanRoute
   '/session-qr': typeof SessionQrRoute
   '/trainer': typeof TrainerRoute
   '/trainer-capacity': typeof TrainerCapacityRoute
@@ -195,6 +204,7 @@ export interface FileRouteTypes {
     | '/opportunity'
     | '/pay'
     | '/review'
+    | '/scan'
     | '/session-qr'
     | '/trainer'
     | '/trainer-capacity'
@@ -215,6 +225,7 @@ export interface FileRouteTypes {
     | '/opportunity'
     | '/pay'
     | '/review'
+    | '/scan'
     | '/session-qr'
     | '/trainer'
     | '/trainer-capacity'
@@ -235,6 +246,7 @@ export interface FileRouteTypes {
     | '/opportunity'
     | '/pay'
     | '/review'
+    | '/scan'
     | '/session-qr'
     | '/trainer'
     | '/trainer-capacity'
@@ -256,6 +268,7 @@ export interface RootRouteChildren {
   OpportunityRoute: typeof OpportunityRoute
   PayRoute: typeof PayRoute
   ReviewRoute: typeof ReviewRoute
+  ScanRoute: typeof ScanRoute
   SessionQrRoute: typeof SessionQrRoute
   TrainerRoute: typeof TrainerRoute
   TrainerCapacityRoute: typeof TrainerCapacityRoute
@@ -285,6 +298,13 @@ declare module '@tanstack/react-router' {
       path: '/session-qr'
       fullPath: '/session-qr'
       preLoaderRoute: typeof SessionQrRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/scan': {
+      id: '/scan'
+      path: '/scan'
+      fullPath: '/scan'
+      preLoaderRoute: typeof ScanRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/review': {
@@ -408,6 +428,7 @@ const rootRouteChildren: RootRouteChildren = {
   OpportunityRoute: OpportunityRoute,
   PayRoute: PayRoute,
   ReviewRoute: ReviewRoute,
+  ScanRoute: ScanRoute,
   SessionQrRoute: SessionQrRoute,
   TrainerRoute: TrainerRoute,
   TrainerCapacityRoute: TrainerCapacityRoute,
