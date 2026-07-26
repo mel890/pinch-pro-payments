@@ -130,14 +130,10 @@ function MemberPurchase() {
           <PaidState form={form} />
         ) : (
           <div className="mt-8 grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
-            {complete ? (
-              <ReviewCard form={form} onEdit={() => {
-                journey.updateIntake(form);
-                setStep(0);
-                journey.reset === undefined ? null : null;
-                setEditing(setStep);
-              }} onEditStep={(i) => { setStep(i); setEditingIntake(); }} />
+            {!showWizard ? (
+              <ReviewCard form={form} onEditStep={editStep} />
             ) : (
+
               <Card className="border-primary/25 p-6">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
