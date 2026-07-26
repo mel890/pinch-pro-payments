@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Check, Clock, X } from "lucide-react";
+import { ArrowRight, Check, Clock, Sparkles, X } from "lucide-react";
 import { formatAUD } from "@/lib/money";
 import {
   useJourney,
@@ -12,6 +12,7 @@ import {
   INTAKE,
   MEMBER,
   TRAINER,
+  TRAINER_BRIEF,
 } from "@/lib/journey-store";
 
 export const Route = createFileRoute("/opportunity")({
