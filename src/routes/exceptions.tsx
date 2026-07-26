@@ -10,6 +10,8 @@ import {
   exceptions,
   packBalance,
   SESSION_STATUS_LABEL,
+  payoutStatusOf,
+
   MEMBER,
   TRAINER,
   CLUB,
@@ -22,14 +24,15 @@ export const Route = createFileRoute("/exceptions")({
       {
         name: "description",
         content:
-          "Manager exception queue for disputed sessions, manual check-ins and time-window issues, with pack credit restoration.",
+          "Manager exception queue for disputed sessions, manual completion-code overrides and window issues, with session credit restoration.",
       },
       { property: "og:title", content: "Session exceptions — VezaPT Pay" },
       {
         property: "og:description",
         content:
-          "Review disputes, manual check-ins and time issues before any payout is released.",
+          "Review disputes and manual overrides before any trainer payout becomes eligible.",
       },
+
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -72,8 +75,8 @@ function Exceptions() {
                 <ShieldCheck className="size-5 text-primary" /> No exceptions
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Every session verified through QR check-in, trainer completion
-                and member feedback.
+                Every session verified through the completion code, the trainer
+                log and member confirmation.
               </p>
             </Card>
           )}
@@ -83,7 +86,8 @@ function Exceptions() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                    Session {sess.n} · {MEMBER.name} with {TRAINER.name}
+                    Session {sess.n} · {MEMBER.name} with {TRAINER.name} ·{" "}
+                    {CLUB.name}
                   </p>
                   <p className="mt-0.5 text-lg font-semibold">{sess.title}</p>
                 </div>
@@ -96,33 +100,92 @@ function Exceptions() {
                 <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-500" />
                 {sess.reviewReason ??
                   (sess.checkinMethod === "manual"
-                    ? "Manual check-in — QR not scanned"
+                    ? "Manual override — completion code not scanned"
                     : "Requires manager review")}
               </p>
 
               <div className="mt-3 grid gap-1 rounded-xl border border-border/60 bg-background/40 p-3 text-sm sm:grid-cols-2">
-                <Row label="Booked" value={sess.scheduledLabel} />
-                <Row label="Check-in" value={sess.checkinAt ?? "None recorded"} />
+                <Row label="Booking" value={sess.scheduledLabel} />
                 <Row
-                  label="Completion"
-                  value={sess.completedAt ?? "Not recorded"}
+                  label="Completion code scanned"
+                  value={sess.checkinAt ?? "Not scanned"}
                 />
-                <Row label="Payout held" value={formatAUD(sess.payoutCents)} />
+                <Row
+                  label="Code method"
+                  value={
+                    sess.checkinMethod === "manual"
+                      ? "Manual override"
+                      : sess.checkinMethod === "backup"
+                        ? "Backup code"
+                        : sess.checkinMethod === "qr"
+                          ? "QR code"
+                          : "None"
+                  }
+                />
+                <Row
+                  label="Trainer delivery response"
+                  value={
+                    sess.fullyDelivered === null
+                      ? "Not logged"
+                      : sess.fullyDelivered
+                        ? "Full session delivered"
+                        : "Not fully delivered"
+                  }
+                />
+                <Row
+                  label="Member confirmation"
+                  value={
+                    sess.feedback
+                      ? sess.feedback.tookPlace
+                        ? "Confirmed"
+                        : "Reported an issue"
+                      : "No response"
+                  }
+                />
+                <Row
+                  label="Timeout status"
+                  value={
+                    sess.verifiedVia === "timeout"
+                      ? "Verified after 12-hour no-dispute period"
+                      : sess.status === "awaiting_confirmation"
+                        ? "12-hour no-dispute timer running"
+                        : "Not applicable"
+                  }
+                />
+                <Row
+                  label="Pack credit"
+                  value={
+                    sess.deducted
+                      ? "Deducted"
+                      : sess.reserved
+                        ? "Reserved"
+                        : "Restored"
+                  }
+                />
+                <Row
+                  label="Payout status"
+                  value={`${payoutStatusOf(sess)} · ${formatAUD(sess.payoutCents)}`}
+                />
+                {sess.issueNote && (
+                  <Row label="Trainer note" value={sess.issueNote} />
+                )}
               </div>
+
 
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button
                   size="sm"
                   onClick={() => journey.resolveException(sess.n, "verify")}
                 >
-                  Verify and release payout
+                  Verify session — payout eligible
                 </Button>
+
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => journey.resolveException(sess.n, "cancel")}
                 >
-                  Cancel — restore pack credit
+                  Cancel — restore session credit
                 </Button>
                 <Button
                   size="sm"
@@ -140,7 +203,18 @@ function Exceptions() {
                     <RotateCcw className="mr-1.5 size-4" /> Rebook session
                   </Button>
                 )}
+                <Button size="sm" variant="ghost" asChild>
+                  <a href={`mailto:alex@example.com?subject=Session ${sess.n}`}>
+                    Contact member
+                  </a>
+                </Button>
+                <Button size="sm" variant="ghost" asChild>
+                  <a href={`mailto:sarah@example.com?subject=Session ${sess.n}`}>
+                    Contact trainer
+                  </a>
+                </Button>
               </div>
+
             </Card>
           ))}
         </section>

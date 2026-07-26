@@ -182,8 +182,8 @@ function ClientJourney() {
                     {!sess.qrUsed && (
                       <Button asChild size="sm" variant="outline">
                         <Link to="/checkin">
-                          <CalendarCheck className="mr-1.5 size-4" /> Member
-                          check-in QR
+                          <CalendarCheck className="mr-1.5 size-4" /> My
+                          completion code
                         </Link>
                       </Button>
                     )}
@@ -192,15 +192,15 @@ function ClientJourney() {
                         <Link to="/scan">Trainer scans code</Link>
                       </Button>
                     )}
-                    {sess.status === "in_progress" && (
+                    {sess.status === "awaiting_log" && (
                       <Button asChild size="sm">
-                        <Link to="/complete-session">Record completion</Link>
+                        <Link to="/complete-session">Log session</Link>
                       </Button>
                     )}
-                    {sess.status === "awaiting_feedback" && (
+                    {sess.status === "awaiting_confirmation" && (
                       <Button asChild size="sm" variant="secondary">
                         <Link to="/confirm-session/demo">
-                          {MEMBER.first}'s feedback{" "}
+                          Confirm session{" "}
                           <ArrowRight className="ml-1 size-3.5" />
                         </Link>
                       </Button>
@@ -211,8 +211,10 @@ function ClientJourney() {
                       </Button>
                     )}
                     <span className="text-xs text-muted-foreground">
-                      Releases {formatAUD(sess.payoutCents)} on verification
+                      {formatAUD(sess.payoutCents)} becomes payout eligible at
+                      verification
                     </span>
+
                   </div>
                 )}
 

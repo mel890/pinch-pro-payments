@@ -583,20 +583,62 @@ function PinchConsole() {
             <div>
               <Field label="Purchase paid" value="Yes" tone="payment" />
               <Field label="Trainer assigned" value="Sarah Marino" />
-              <Field label="Session 1 check-in" value="Verified" tone="workflow" />
+              <Field
+                label="Session 1 completion code"
+                value="Scanned and validated"
+                tone="workflow"
+              />
             </div>
             <div>
-              <Field label="Session 1 completion" value="Confirmed" tone="workflow" />
-              <Field label="Member dispute" value="None" />
-              <Field label="Payout status" value="Session payout eligible" tone="workflow" />
+              <Field label="Session 1 trainer log" value="Submitted" tone="workflow" />
+              <Field label="Member confirmation" value="Confirmed" tone="workflow" />
+              <Field label="Payout status" value="Payout eligible" tone="workflow" />
             </div>
           </div>
           <p className="mt-3 text-[11px] text-muted-foreground/80">
-            Payment confirmed and pack active. A payout is only recorded once an actual payout event
-            occurs.
+            Payment for the pack was already confirmed by Pinch. Session
+            verification determines when the trainer's fulfilment amount becomes
+            payout eligible.
           </p>
         </CardContent>
       </Card>
+
+      {/* Session verification event timeline */}
+      <Card className="card-elevated">
+        <CardHeader>
+          <CardTitle className="text-base">
+            Session verification events
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ol className="space-y-1.5 text-sm">
+            {[
+              "Session delivered",
+              "Completion code generated",
+              "Completion code scanned",
+              "Code validated",
+              "Session log submitted",
+              "Member confirmation requested",
+              "Member confirmed — or no-dispute timeout completed",
+              "Session verified",
+              "Pack balance updated",
+              "Trainer payout marked eligible",
+            ].map((label, i) => (
+              <li key={label} className="flex items-start gap-2.5">
+                <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-secondary font-mono text-[10px] font-semibold">
+                  {i + 1}
+                </span>
+                <span className="text-muted-foreground">{label}</span>
+              </li>
+            ))}
+          </ol>
+          <p className="mt-3 text-[11px] text-muted-foreground/80">
+            Member confirmation does not create or authorise the original
+            payment — it releases the trainer's fulfilment amount for payout.
+          </p>
+        </CardContent>
+      </Card>
+
 
       {/* Error demonstrations */}
       <Card className="card-elevated">

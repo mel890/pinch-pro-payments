@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Check, ArrowRight, Heart, Clock, AlertTriangle } from "lucide-react";
 import { formatAUD } from "@/lib/money";
+import { VerificationSteps } from "@/components/verification-steps";
+
 import {
   useJourney,
   journey,
@@ -18,17 +20,17 @@ import {
 export const Route = createFileRoute("/confirm-session/demo")({
   head: () => ({
     meta: [
-      { title: "How did today's session go? — VezaPT Pay" },
+      { title: "Please confirm today's session — VezaPT Pay" },
       {
         name: "description",
         content:
-          "Member feedback stage: confirm the session took place, share how it helped, or raise a dispute. No response for 12 hours auto-verifies.",
+          "Member confirmation: confirm today's session took place as expected, share how it helped, or send it for review. No response for 12 hours verifies without dispute.",
       },
-      { property: "og:title", content: "Confirm your session — VezaPT Pay" },
+      { property: "og:title", content: "Confirm today's session — VezaPT Pay" },
       {
         property: "og:description",
         content:
-          "Two-minute member feedback that verifies the session and releases the trainer's payout.",
+          "A 20-second member confirmation that verifies the session and makes the trainer payout eligible.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -36,6 +38,7 @@ export const Route = createFileRoute("/confirm-session/demo")({
   }),
   component: ConfirmSession,
 });
+
 
 function ConfirmSession() {
   const s = useJourney();
@@ -73,14 +76,14 @@ function ConfirmSession() {
           </div>
           <p className="mt-3 text-xl font-semibold">
             {done.disputed
-              ? "Sent to your club for review"
-              : `Session verified. Thanks, ${MEMBER.first}.`}
+              ? "Thank you. The session has been sent for review."
+              : `Session confirmed. Thank you, ${MEMBER.first}.`}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
             {done.disputed
-              ? "Your club manager will look into this. No payout is released while it's under review."
-              : `${TRAINER.first}'s payout has been released${
-                  released ? ` — ${formatAUD(released.payoutCents)}` : ""
+              ? "Your club manager will look into this. Your session credit is preserved and no payout is eligible while it's under review."
+              : `Session verified — ${TRAINER.first}'s payout is now eligible${
+                  released ? ` (${formatAUD(released.payoutCents)})` : ""
                 }, and one session was deducted from your pack.`}
           </p>
           <p className="mt-4 text-sm text-muted-foreground">
@@ -103,18 +106,18 @@ function ConfirmSession() {
     );
   }
 
-  if (!session || session.status !== "awaiting_feedback") {
+  if (!session || session.status !== "awaiting_confirmation") {
     return (
       <Shell>
         <Card className="border-border p-6">
           <p className="text-lg font-semibold">Nothing to confirm right now</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            You'll be asked for feedback once {TRAINER.first} records your next
-            session as complete.
+            You'll be asked to confirm once {TRAINER.first} submits your session
+            log.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button asChild size="sm" variant="secondary">
-              <Link to="/checkin">Open my check-in code</Link>
+              <Link to="/checkin">Open my completion code</Link>
             </Button>
             <Button asChild size="sm" variant="outline">
               <Link to="/journey/alex">My journey</Link>
@@ -124,6 +127,7 @@ function ConfirmSession() {
       </Shell>
     );
   }
+
 
   const ready =
     tookPlace !== null &&
@@ -147,14 +151,18 @@ function ConfirmSession() {
         <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
           Session {session.n} · {session.title} · with {TRAINER.name}
         </p>
-        <h2 className="mt-1 text-2xl font-semibold">How did today's session go?</h2>
+        <h2 className="mt-1 text-2xl font-semibold">
+          Please confirm today's session
+        </h2>
+        <VerificationSteps status={session.status} className="mt-4" />
 
         <Question
-          label="Did the session take place?"
+          label="Did today's session take place as expected?"
           options={["Yes", "No"]}
           value={tookPlace === null ? null : tookPlace ? "Yes" : "No"}
           onChange={(v) => setTookPlace(v === "Yes")}
         />
+
 
         {tookPlace !== false && (
           <>
