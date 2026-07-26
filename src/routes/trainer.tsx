@@ -741,3 +741,167 @@ function Step({
     </li>
   );
 }
+
+/**
+ * End-of-pack wrap-up for Sarah: simulate the three delivered sessions, then
+ * notify Alex with the twice-weekly ongoing coaching recommendation.
+ */
+function PackWrapUp() {
+  const s = useJourney();
+  const done = confirmedCount(s);
+  const packComplete = done === 3;
+  const notified = Boolean(s.memberNotifiedAt);
+  const wins = s.sessions.filter((x) => x.win);
+
+  return (
+    <section className="mt-10">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Sparkles className="size-4 text-primary" />
+          <h2 className="text-base font-semibold">
+            End of {MEMBER.first}'s Kickstart pack
+          </h2>
+        </div>
+        {!packComplete && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => journey.simulatePackDelivery()}
+          >
+            <FastForward className="mr-1.5 size-3.5" /> Simulate all 3 sessions
+          </Button>
+        )}
+      </div>
+
+      <Card className="mt-3 border-border p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold">
+              {done} of 3 sessions verified
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {KICKSTART.name} · {formatAUD(releasedPayoutCents(s))} of{" "}
+              {formatAUD(KICKSTART.trainerPayoutCents)} released to you
+            </p>
+          </div>
+          <Progress value={(done / 3) * 100} className="h-2 w-40" />
+        </div>
+
+        {packComplete ? (
+          <>
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              <WrapStat
+                label="Confidence"
+                value={`${BEFORE.confidence} → ${AFTER.confidence}/10`}
+              />
+              <WrapStat
+                label="Weekly visits"
+                value={`${BEFORE.visits} → ${AFTER.visits}`}
+              />
+              <WrapStat
+                label="Programme clarity"
+                value={`${BEFORE.clarity} → ${AFTER.clarity}/10`}
+              />
+            </div>
+
+            {wins.length > 0 && (
+              <ul className="mt-4 space-y-1.5">
+                {wins.map((x) => (
+                  <li
+                    key={x.n}
+                    className="flex items-start gap-2 text-xs text-muted-foreground"
+                  >
+                    <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-primary" />
+                    <span>
+                      Session {x.n} · {x.win}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <Card className="mt-5 border-primary/40 bg-primary/5 p-5">
+              <Badge className="border border-primary/40 bg-primary/10 text-primary">
+                Recommended next step
+              </Badge>
+              <p className="mt-2 font-semibold">{ONGOING.name}</p>
+              <p className="mt-0.5 font-mono text-sm tabular-nums text-primary">
+                {formatAUD(ONGOING.weeklyCents)} per week · starts{" "}
+                {ONGOING.startDate}
+              </p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {MEMBER.first} still values structure, accountability and
+                technique support. Two sessions a week keeps the momentum from
+                the Kickstart pack, with a review on {ONGOING.nextReview}.
+              </p>
+              <ul className="mt-3 space-y-1.5">
+                {ONGOING.includes.map((line) => (
+                  <li
+                    key={line}
+                    className="flex items-start gap-2 text-xs text-foreground/80"
+                  >
+                    <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-primary" />
+                    {line}
+                  </li>
+                ))}
+              </ul>
+
+              {notified ? (
+                <div className="mt-4 rounded-xl border border-primary/30 bg-card/70 p-4">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+                    <BellRing className="size-4" />
+                    {MEMBER.first} notified · {s.memberNotifiedAt}
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {MEMBER.first} received the recommendation from{" "}
+                    {TRAINER.name} and can accept twice-weekly coaching from
+                    their own screen.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button asChild size="sm">
+                      <Link to="/ongoing">
+                        Open {MEMBER.first}'s offer{" "}
+                        <ArrowRight className="ml-1 size-3.5" />
+                      </Link>
+                    </Button>
+                    <Button asChild size="sm" variant="outline">
+                      <Link to="/review">View progress review</Link>
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button size="sm" onClick={() => journey.notifyMember()}>
+                    <Send className="mr-1.5 size-3.5" /> Notify {MEMBER.first} and
+                    recommend twice-weekly
+                  </Button>
+                  <Button asChild size="sm" variant="outline">
+                    <Link to="/review">Review progress first</Link>
+                  </Button>
+                </div>
+              )}
+            </Card>
+          </>
+        ) : (
+          <p className="mt-4 text-xs text-muted-foreground">
+            Once all three sessions are verified, {MEMBER.first}'s progress
+            review and the ongoing coaching recommendation unlock here.
+          </p>
+        )}
+      </Card>
+    </section>
+  );
+}
+
+function WrapStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-border bg-card/70 p-3">
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-1 font-mono text-sm font-semibold tabular-nums">
+        {value}
+      </p>
+    </div>
+  );
+}
