@@ -1,18 +1,19 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { demoStore, formatAUD } from "@/lib/demo-store";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, QrCode, Calendar, User, Dumbbell } from "lucide-react";
-
-const SESSION = {
-  client: "Alex Morgan",
-  plan: "2× Weekly PT",
-  title: "Strength and confidence",
-  valueCents: 7485,
-};
+import { ArrowRight, Check } from "lucide-react";
+import { formatAUD } from "@/lib/money";
+import {
+  useJourney,
+  journey,
+  activeSession,
+  SESSION_STATUS_LABEL,
+  MEMBER,
+  TRAINER,
+} from "@/lib/journey-store";
 
 export const Route = createFileRoute("/complete-session")({
   head: () => ({
@@ -21,162 +22,186 @@ export const Route = createFileRoute("/complete-session")({
       {
         name: "description",
         content:
-          "Log a completed PT session and generate a client confirmation QR code.",
+          "Trainer completion: confirm the session was delivered, whether the next one is booked, and capture the member's win.",
       },
       { property: "og:title", content: "Complete a session — VezaPT Pay" },
       {
         property: "og:description",
-        content: "Log a session and send a confirmation QR to your client.",
+        content:
+          "Lightweight trainer completion that moves the session to awaiting member feedback.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: CompleteSession,
 });
 
-function todayLabel() {
-  return new Intl.DateTimeFormat("en-AU", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  }).format(new Date());
-}
-
 function CompleteSession() {
+  const s = useJourney();
   const navigate = useNavigate();
+  const session = activeSession(s);
+  const [delivered, setDelivered] = useState<boolean | null>(null);
+  const [nextBooked, setNextBooked] = useState<boolean | null>(null);
   const [win, setWin] = useState("");
-  const date = todayLabel();
 
-  const handleGenerate = () => {
-    demoStore.set({
-      pendingSession: {
-        client: SESSION.client,
-        plan: SESSION.plan,
-        date,
-        title: SESSION.title,
-        valueCents: SESSION.valueCents,
-        win,
-      },
-    });
-    navigate({ to: "/session-qr" });
-  };
+  if (!session) {
+    return (
+      <Shell>
+        <Card className="border-border p-6">
+          <p className="text-lg font-semibold">Nothing to complete</p>
+          <Button asChild className="mt-4" size="sm">
+            <Link to="/journey/alex">Back to the journey</Link>
+          </Button>
+        </Card>
+      </Shell>
+    );
+  }
+
+  if (session.status === "booked" || session.status === "qr_issued") {
+    return (
+      <Shell>
+        <Card className="border-border p-6">
+          <p className="text-lg font-semibold">
+            {MEMBER.first} hasn't checked in yet
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Scan the member's one-time QR code to start session {session.n}.
+          </p>
+          <Button asChild className="mt-4" size="sm">
+            <Link to="/scan">Open the scanner</Link>
+          </Button>
+        </Card>
+      </Shell>
+    );
+  }
+
+  if (session.status === "awaiting_feedback") {
+    return (
+      <Shell>
+        <Card className="border-primary/40 bg-primary/5 p-6">
+          <div className="flex items-center gap-2 text-primary">
+            <Check className="size-5" />
+            <p className="font-semibold">Completion recorded</p>
+          </div>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {MEMBER.first} has been notified for feedback. The session verifies
+            automatically after 12 hours if there's no dispute, releasing{" "}
+            {formatAUD(session.payoutCents)}.
+          </p>
+          <Button asChild className="mt-4" size="sm" variant="secondary">
+            <Link to="/confirm-session/demo">
+              Preview member feedback <ArrowRight className="ml-1 size-4" />
+            </Link>
+          </Button>
+        </Card>
+      </Shell>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background pb-16">
-      <div className="mx-auto max-w-xl px-5 pt-8 sm:px-8 sm:pt-12">
-        <Button
-          asChild
-          variant="ghost"
-          size="sm"
-          className="-ml-2 text-muted-foreground"
-        >
-          <Link to="/">
-            <ArrowLeft className="mr-1 size-4" /> Back
-          </Link>
-        </Button>
-
-        <h1 className="mt-4 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-          Complete a session
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Confirm the details, then generate a confirmation QR for {SESSION.client.split(" ")[0]}.
-        </p>
-
-        <Card className="mt-6 border-primary/25 bg-primary/5 p-5">
-          <p className="text-xs uppercase tracking-wider text-primary">
-            Client context
+    <Shell>
+      <header className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            {TRAINER.name} · session {session.n} of 3
           </p>
-          <p className="mt-2 text-sm font-semibold text-foreground">
-            {SESSION.client}
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Goal: Build confidence using free weights
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Plan: {SESSION.plan} · Today's focus: Lower-body strength
-          </p>
-        </Card>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight">
+            {session.title} with {MEMBER.first}
+          </h1>
+        </div>
+        <Badge className="border border-primary/40 bg-primary/10 text-primary">
+          {SESSION_STATUS_LABEL[session.status]}
+        </Badge>
+      </header>
 
-        <Card className="mt-4 divide-y divide-border p-0">
-          <Row
-            icon={<User className="size-4" />}
-            label="Client"
-            value={SESSION.client}
-          />
-          <Row
-            icon={<Dumbbell className="size-4" />}
-            label="Plan"
-            value={SESSION.plan}
-          />
-          <Row
-            icon={<Calendar className="size-4" />}
-            label="Date"
-            value={date}
-          />
-          <Row label="Session" value={`45-minute ${SESSION.title}`} />
-          <Row
-            label="Session value"
-            value={formatAUD(SESSION.valueCents)}
-          />
-        </Card>
-
-        <div className="mt-6">
-          <Label htmlFor="win" className="text-sm font-medium text-foreground">
-            Today's win{" "}
-            <span className="font-normal text-muted-foreground">(optional)</span>
-          </Label>
+      <Card className="mt-5 space-y-5 p-6">
+        <Choice
+          label="Was the session delivered in full?"
+          value={delivered}
+          onChange={setDelivered}
+        />
+        <Choice
+          label="Is the next session booked?"
+          value={nextBooked}
+          onChange={setNextBooked}
+        />
+        <div>
+          <label
+            htmlFor="win"
+            className="text-[11px] uppercase tracking-wider text-muted-foreground"
+          >
+            Anything worth noting? (optional)
+          </label>
           <Textarea
             id="win"
             value={win}
             onChange={(e) => setWin(e.target.value)}
-            placeholder="e.g. Alex used the weights area confidently for the first time."
-            className="mt-2 min-h-24"
+            placeholder="e.g. Alex squatted with the bar unassisted for the first time."
+            className="mt-2 min-h-20"
           />
         </div>
 
         <Button
           size="lg"
-          className="mt-8 h-14 w-full text-base font-semibold shadow-[var(--shadow-soft)]"
-          onClick={handleGenerate}
+          className="w-full"
+          disabled={delivered === null || nextBooked === null}
+          onClick={() => {
+            journey.completeSession(session.n, {
+              delivered: delivered === true,
+              nextBooked: nextBooked === true,
+              win: win.trim() || null,
+            });
+            if (delivered === false) navigate({ to: "/exceptions" });
+          }}
         >
-          <QrCode className="mr-2 size-5" />
-          Generate confirmation QR
+          Record completion
         </Button>
-        <p className="mt-3 text-center text-xs text-muted-foreground">
-          {SESSION.client.split(" ")[0]}'s confirmation verifies the session and
-          captures what the coaching helped with.
+        <p className="text-center text-xs text-muted-foreground">
+          Completion moves the session to awaiting feedback — payout of{" "}
+          {formatAUD(session.payoutCents)} is released at verification.
         </p>
+      </Card>
+    </Shell>
+  );
+}
 
+function Choice({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: boolean | null;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <div>
+      <p className="text-sm font-medium">{label}</p>
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        {[true, false].map((opt) => (
+          <button
+            key={String(opt)}
+            type="button"
+            onClick={() => onChange(opt)}
+            className={`rounded-xl border px-4 py-3 text-sm transition-colors ${
+              value === opt
+                ? "border-primary/50 bg-primary/10 text-primary"
+                : "border-border bg-card/60 hover:border-primary/30"
+            }`}
+          >
+            {opt ? "Yes" : "No"}
+          </button>
+        ))}
       </div>
     </div>
   );
 }
 
-function Row({
-  icon,
-  label,
-  value,
-  emphasize,
-}: {
-  icon?: React.ReactNode;
-  label: string;
-  value: string;
-  emphasize?: boolean;
-}) {
+function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between px-5 py-4">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        {icon}
-        {label}
-      </div>
-      <p
-        className={`text-sm ${
-          emphasize
-            ? "text-lg font-semibold text-foreground"
-            : "font-medium text-foreground"
-        }`}
-      >
-        {value}
-      </p>
+    <div className="min-h-screen bg-background pb-16 text-foreground">
+      <div className="mx-auto max-w-xl px-5 pt-8 sm:px-8 sm:pt-12">{children}</div>
     </div>
   );
 }

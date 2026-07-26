@@ -11,16 +11,18 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TrainerCapacityRouteImport } from './routes/trainer-capacity'
 import { Route as TrainerRouteImport } from './routes/trainer'
-import { Route as SessionQrRouteImport } from './routes/session-qr'
+import { Route as ScanRouteImport } from './routes/scan'
 import { Route as ReviewRouteImport } from './routes/review'
 import { Route as PayRouteImport } from './routes/pay'
 import { Route as OpportunityRouteImport } from './routes/opportunity'
 import { Route as OngoingRouteImport } from './routes/ongoing'
 import { Route as MeRouteImport } from './routes/me'
 import { Route as MatchRouteImport } from './routes/match'
+import { Route as ExceptionsRouteImport } from './routes/exceptions'
 import { Route as DemoConsoleRouteImport } from './routes/demo-console'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CompleteSessionRouteImport } from './routes/complete-session'
+import { Route as CheckinRouteImport } from './routes/checkin'
 import { Route as CampaignRouteImport } from './routes/campaign'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as JourneyAlexRouteImport } from './routes/journey.alex'
@@ -37,9 +39,9 @@ const TrainerRoute = TrainerRouteImport.update({
   path: '/trainer',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SessionQrRoute = SessionQrRouteImport.update({
-  id: '/session-qr',
-  path: '/session-qr',
+const ScanRoute = ScanRouteImport.update({
+  id: '/scan',
+  path: '/scan',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReviewRoute = ReviewRouteImport.update({
@@ -72,6 +74,11 @@ const MatchRoute = MatchRouteImport.update({
   path: '/match',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ExceptionsRoute = ExceptionsRouteImport.update({
+  id: '/exceptions',
+  path: '/exceptions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DemoConsoleRoute = DemoConsoleRouteImport.update({
   id: '/demo-console',
   path: '/demo-console',
@@ -85,6 +92,11 @@ const DashboardRoute = DashboardRouteImport.update({
 const CompleteSessionRoute = CompleteSessionRouteImport.update({
   id: '/complete-session',
   path: '/complete-session',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckinRoute = CheckinRouteImport.update({
+  id: '/checkin',
+  path: '/checkin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CampaignRoute = CampaignRouteImport.update({
@@ -116,16 +128,18 @@ const ApiPublicPinchWebhookRoute = ApiPublicPinchWebhookRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/campaign': typeof CampaignRoute
+  '/checkin': typeof CheckinRoute
   '/complete-session': typeof CompleteSessionRoute
   '/dashboard': typeof DashboardRoute
   '/demo-console': typeof DemoConsoleRoute
+  '/exceptions': typeof ExceptionsRoute
   '/match': typeof MatchRoute
   '/me': typeof MeRoute
   '/ongoing': typeof OngoingRoute
   '/opportunity': typeof OpportunityRoute
   '/pay': typeof PayRoute
   '/review': typeof ReviewRoute
-  '/session-qr': typeof SessionQrRoute
+  '/scan': typeof ScanRoute
   '/trainer': typeof TrainerRoute
   '/trainer-capacity': typeof TrainerCapacityRoute
   '/confirm-session/demo': typeof ConfirmSessionDemoRoute
@@ -135,16 +149,18 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/campaign': typeof CampaignRoute
+  '/checkin': typeof CheckinRoute
   '/complete-session': typeof CompleteSessionRoute
   '/dashboard': typeof DashboardRoute
   '/demo-console': typeof DemoConsoleRoute
+  '/exceptions': typeof ExceptionsRoute
   '/match': typeof MatchRoute
   '/me': typeof MeRoute
   '/ongoing': typeof OngoingRoute
   '/opportunity': typeof OpportunityRoute
   '/pay': typeof PayRoute
   '/review': typeof ReviewRoute
-  '/session-qr': typeof SessionQrRoute
+  '/scan': typeof ScanRoute
   '/trainer': typeof TrainerRoute
   '/trainer-capacity': typeof TrainerCapacityRoute
   '/confirm-session/demo': typeof ConfirmSessionDemoRoute
@@ -155,16 +171,18 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/campaign': typeof CampaignRoute
+  '/checkin': typeof CheckinRoute
   '/complete-session': typeof CompleteSessionRoute
   '/dashboard': typeof DashboardRoute
   '/demo-console': typeof DemoConsoleRoute
+  '/exceptions': typeof ExceptionsRoute
   '/match': typeof MatchRoute
   '/me': typeof MeRoute
   '/ongoing': typeof OngoingRoute
   '/opportunity': typeof OpportunityRoute
   '/pay': typeof PayRoute
   '/review': typeof ReviewRoute
-  '/session-qr': typeof SessionQrRoute
+  '/scan': typeof ScanRoute
   '/trainer': typeof TrainerRoute
   '/trainer-capacity': typeof TrainerCapacityRoute
   '/confirm-session/demo': typeof ConfirmSessionDemoRoute
@@ -176,16 +194,18 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/campaign'
+    | '/checkin'
     | '/complete-session'
     | '/dashboard'
     | '/demo-console'
+    | '/exceptions'
     | '/match'
     | '/me'
     | '/ongoing'
     | '/opportunity'
     | '/pay'
     | '/review'
-    | '/session-qr'
+    | '/scan'
     | '/trainer'
     | '/trainer-capacity'
     | '/confirm-session/demo'
@@ -195,16 +215,18 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/campaign'
+    | '/checkin'
     | '/complete-session'
     | '/dashboard'
     | '/demo-console'
+    | '/exceptions'
     | '/match'
     | '/me'
     | '/ongoing'
     | '/opportunity'
     | '/pay'
     | '/review'
-    | '/session-qr'
+    | '/scan'
     | '/trainer'
     | '/trainer-capacity'
     | '/confirm-session/demo'
@@ -214,16 +236,18 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/campaign'
+    | '/checkin'
     | '/complete-session'
     | '/dashboard'
     | '/demo-console'
+    | '/exceptions'
     | '/match'
     | '/me'
     | '/ongoing'
     | '/opportunity'
     | '/pay'
     | '/review'
-    | '/session-qr'
+    | '/scan'
     | '/trainer'
     | '/trainer-capacity'
     | '/confirm-session/demo'
@@ -234,16 +258,18 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CampaignRoute: typeof CampaignRoute
+  CheckinRoute: typeof CheckinRoute
   CompleteSessionRoute: typeof CompleteSessionRoute
   DashboardRoute: typeof DashboardRoute
   DemoConsoleRoute: typeof DemoConsoleRoute
+  ExceptionsRoute: typeof ExceptionsRoute
   MatchRoute: typeof MatchRoute
   MeRoute: typeof MeRoute
   OngoingRoute: typeof OngoingRoute
   OpportunityRoute: typeof OpportunityRoute
   PayRoute: typeof PayRoute
   ReviewRoute: typeof ReviewRoute
-  SessionQrRoute: typeof SessionQrRoute
+  ScanRoute: typeof ScanRoute
   TrainerRoute: typeof TrainerRoute
   TrainerCapacityRoute: typeof TrainerCapacityRoute
   ConfirmSessionDemoRoute: typeof ConfirmSessionDemoRoute
@@ -267,11 +293,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TrainerRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/session-qr': {
-      id: '/session-qr'
-      path: '/session-qr'
-      fullPath: '/session-qr'
-      preLoaderRoute: typeof SessionQrRouteImport
+    '/scan': {
+      id: '/scan'
+      path: '/scan'
+      fullPath: '/scan'
+      preLoaderRoute: typeof ScanRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/review': {
@@ -316,6 +342,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MatchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/exceptions': {
+      id: '/exceptions'
+      path: '/exceptions'
+      fullPath: '/exceptions'
+      preLoaderRoute: typeof ExceptionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/demo-console': {
       id: '/demo-console'
       path: '/demo-console'
@@ -335,6 +368,13 @@ declare module '@tanstack/react-router' {
       path: '/complete-session'
       fullPath: '/complete-session'
       preLoaderRoute: typeof CompleteSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkin': {
+      id: '/checkin'
+      path: '/checkin'
+      fullPath: '/checkin'
+      preLoaderRoute: typeof CheckinRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/campaign': {
@@ -378,16 +418,18 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CampaignRoute: CampaignRoute,
+  CheckinRoute: CheckinRoute,
   CompleteSessionRoute: CompleteSessionRoute,
   DashboardRoute: DashboardRoute,
   DemoConsoleRoute: DemoConsoleRoute,
+  ExceptionsRoute: ExceptionsRoute,
   MatchRoute: MatchRoute,
   MeRoute: MeRoute,
   OngoingRoute: OngoingRoute,
   OpportunityRoute: OpportunityRoute,
   PayRoute: PayRoute,
   ReviewRoute: ReviewRoute,
-  SessionQrRoute: SessionQrRoute,
+  ScanRoute: ScanRoute,
   TrainerRoute: TrainerRoute,
   TrainerCapacityRoute: TrainerCapacityRoute,
   ConfirmSessionDemoRoute: ConfirmSessionDemoRoute,

@@ -14,9 +14,9 @@ import { formatAUD } from "@/lib/money";
 import { CoachMeJourney } from "@/components/coach-me-journey";
 import {
   useJourney,
-  journey,
   confirmedCount,
   releasedPayoutCents,
+  SESSION_STATUS_LABEL,
   KICKSTART,
   INTAKE,
   MEMBER,
@@ -127,10 +127,14 @@ function ClientJourney() {
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    <Pill on={sess.booked}>Booked</Pill>
-                    <Pill on={sess.completed}>Completed</Pill>
-                    <Pill on={sess.confirmed}>Member confirmed</Pill>
+                    <Pill on={sess.qrUsed}>Checked in</Pill>
+                    <Pill on={sess.completed}>Trainer completed</Pill>
+                    <Pill on={sess.confirmed}>Verified</Pill>
+                    <span className="rounded-full border border-border px-2.5 py-0.5 text-[11px] text-muted-foreground">
+                      {SESSION_STATUS_LABEL[sess.status]}
+                    </span>
                   </div>
+
                 </div>
 
                 <p className="mt-4 text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -175,36 +179,43 @@ function ClientJourney() {
 
                 {!locked && !sess.confirmed && (
                   <div className="mt-4 flex flex-wrap items-center gap-2">
-                    {!sess.booked && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => journey.update(sess.n, { booked: true })}
-                      >
-                        <CalendarCheck className="mr-1.5 size-4" /> Book session
+                    {!sess.qrUsed && (
+                      <Button asChild size="sm" variant="outline">
+                        <Link to="/checkin">
+                          <CalendarCheck className="mr-1.5 size-4" /> Member
+                          check-in QR
+                        </Link>
                       </Button>
                     )}
-                    {sess.booked && !sess.completed && (
-                      <Button
-                        size="sm"
-                        onClick={() => journey.update(sess.n, { completed: true })}
-                      >
-                        Record session delivered
+                    {!sess.qrUsed && (
+                      <Button asChild size="sm" variant="secondary">
+                        <Link to="/scan">Trainer scans code</Link>
                       </Button>
                     )}
-                    {sess.completed && (
+                    {sess.status === "in_progress" && (
+                      <Button asChild size="sm">
+                        <Link to="/complete-session">Record completion</Link>
+                      </Button>
+                    )}
+                    {sess.status === "awaiting_feedback" && (
                       <Button asChild size="sm" variant="secondary">
                         <Link to="/confirm-session/demo">
-                          Send to {MEMBER.first} to confirm{" "}
+                          {MEMBER.first}'s feedback{" "}
                           <ArrowRight className="ml-1 size-3.5" />
                         </Link>
                       </Button>
                     )}
+                    {sess.status === "review_required" && (
+                      <Button asChild size="sm" variant="outline">
+                        <Link to="/exceptions">Open exception queue</Link>
+                      </Button>
+                    )}
                     <span className="text-xs text-muted-foreground">
-                      Releases {formatAUD(sess.payoutCents)} on confirmation
+                      Releases {formatAUD(sess.payoutCents)} on verification
                     </span>
                   </div>
                 )}
+
               </Card>
             );
           })}
