@@ -192,8 +192,8 @@
 
 @utility pill-verified {
   color: var(--color-success);
-  background: var(--accent);
-  border-color: oklch(0.871 0.162 149.8 / 26%);
+  background: oklch(0.663 0.160 152.4 / 16%);
+  border-color: oklch(0.663 0.160 152.4 / 32%);
 }
 
 @utility pill-paid {
@@ -204,27 +204,28 @@
 
 @utility pill-pending {
   color: var(--color-warning);
-  background: var(--warning-surface);
-  border-color: oklch(0.808 0.112 75.5 / 28%);
+  background: oklch(0.784 0.159 73.0 / 16%);
+  border-color: oklch(0.784 0.159 73.0 / 32%);
 }
 
 @utility pill-review {
   color: var(--color-destructive);
-  background: var(--destructive-surface);
-  border-color: oklch(0.714 0.146 25.9 / 30%);
+  background: oklch(0.586 0.222 17.6 / 18%);
+  border-color: oklch(0.586 0.222 17.6 / 34%);
 }
 
 @utility card-elevated {
   background: var(--elevated);
   border: 1px solid oklch(1 0 0 / 12%);
-  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
 }
 
 @utility ai-card {
-  background: oklch(0.221 0.015 157.5);
-  background-image: linear-gradient(135deg, rgba(126, 242, 154, 0.08), rgba(97, 217, 208, 0.04));
-  border: 1px solid oklch(0.871 0.162 149.8 / 20%);
+  background: var(--surface-2);
+  background-image: linear-gradient(135deg, rgba(0, 194, 203, 0.12), rgba(124, 58, 237, 0.08));
+  border: 1px solid oklch(0.740 0.126 200.7 / 24%);
 }
+
 
 @utility hover-lift {
   transition:
