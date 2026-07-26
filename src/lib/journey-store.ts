@@ -203,7 +203,7 @@ let state: JourneyState = structuredClone(INITIAL);
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 
-const STORAGE_KEY = "vezapt-journey-v1";
+const STORAGE_KEY = "vezapt-journey-v2";
 let hydrated = false;
 
 function save() {
@@ -223,7 +223,23 @@ function hydrate() {
     if (!raw) return;
     const parsed = JSON.parse(raw) as JourneyState;
     if (parsed && Array.isArray(parsed.sessions)) {
-      state = { ...structuredClone(INITIAL), ...parsed };
+      state = {
+        ...structuredClone(INITIAL),
+        ...parsed,
+        // Always re-apply the current copy/templates over stored progress.
+        sessions: INITIAL.sessions.map((base) => {
+          const saved = parsed.sessions.find((x) => x.n === base.n);
+          return saved
+            ? {
+                ...base,
+                booked: !!saved.booked,
+                completed: !!saved.completed,
+                confirmed: !!saved.confirmed,
+                win: saved.win ?? null,
+              }
+            : base;
+        }),
+      };
       emit();
     }
   } catch {
