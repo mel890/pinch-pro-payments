@@ -434,7 +434,7 @@ function ReviewCard({
   onEditStep,
 }: {
   form: IntakeForm;
-  onEdit?: () => void;
+
   onEditStep: (i: number) => void;
 }) {
   return (
