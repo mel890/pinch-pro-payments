@@ -567,3 +567,163 @@ function StatusPill({ status }: { status: string }) {
     </span>
   );
 }
+
+/** Live client opportunities + the obvious end-of-session QR steps for Sarah. */
+function OpportunityBoard({ onRefresh }: { onRefresh: () => void }) {
+  const s = useJourney();
+  const session = activeSession(s);
+  const waitingAcceptance = s.paid && !s.accepted && !s.declineReason;
+
+  return (
+    <section className="mt-10">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Inbox className="size-4 text-primary" />
+          <h2 className="text-base font-semibold">Client opportunities</h2>
+        </div>
+        <Button size="sm" variant="outline" onClick={onRefresh}>
+          <RefreshCw className="mr-1.5 size-3.5" /> Refresh
+        </Button>
+      </div>
+
+      <div className="mt-3 space-y-3">
+        {waitingAcceptance && (
+          <Card className="border-primary/40 bg-primary/5 p-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <Badge className="border border-primary/40 bg-primary/10 text-primary">
+                  New prepaid opportunity
+                </Badge>
+                <p className="mt-2 font-semibold">
+                  {MEMBER.name} purchased a {KICKSTART.name}
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {s.intake.goal} · prefers {s.intake.days.join(", ")},{" "}
+                  {s.intake.times}
+                </p>
+              </div>
+              <p className="font-mono text-sm font-semibold tabular-nums text-primary">
+                {formatAUD(KICKSTART.trainerPayoutCents)}
+              </p>
+            </div>
+            <Button asChild size="sm" className="mt-4">
+              <Link to="/opportunity">
+                Review and accept <ArrowRight className="ml-1 size-3.5" />
+              </Link>
+            </Button>
+          </Card>
+        )}
+
+        {s.accepted && session && (
+          <Card className="border-border p-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="font-semibold">
+                  {MEMBER.name} · session {session.n} of 3
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {session.title} · {session.scheduledLabel}
+                </p>
+              </div>
+              <span className="rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-[10px] uppercase tracking-wider text-primary">
+                {SESSION_STATUS_LABEL[session.status]}
+              </span>
+            </div>
+          </Card>
+        )}
+
+        {!waitingAcceptance && !s.accepted && (
+          <Card className="border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+            No opportunities waiting. New prepaid clients appear here the moment
+            they purchase.
+          </Card>
+        )}
+      </div>
+
+      {/* Obvious end-of-session steps */}
+      <Card className="mt-4 border-primary/30 bg-primary/5 p-5">
+        <div className="flex items-center gap-2">
+          <ScanLine className="size-4 text-primary" />
+          <h3 className="text-sm font-semibold uppercase tracking-wider">
+            At the end of every session — scan {MEMBER.first}'s QR code
+          </h3>
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {MEMBER.first}'s code is unique and single-use. Scanning it is what
+          releases your payout for that session.
+        </p>
+
+        <ol className="mt-4 space-y-3">
+          <Step
+            n={1}
+            title={`Ask ${MEMBER.first} to open their check-in screen`}
+            body="Their VezaPT app shows a one-time QR code and a 6-digit backup code."
+            to="/checkin"
+            cta="Open member QR screen"
+          />
+          <Step
+            n={2}
+            title={`Scan ${MEMBER.first}'s unique QR code`}
+            body="Use your scanner. If the camera fails, key in the backup code instead."
+            to="/scan"
+            cta="Open scanner"
+            primary
+          />
+          <Step
+            n={3}
+            title="Log the session"
+            body="Confirm it was fully delivered, book the next session and note one win."
+            to="/complete-session"
+            cta="Log session"
+          />
+          <Step
+            n={4}
+            title={`${MEMBER.first} confirms`}
+            body="Feedback (or a 12-hour no-dispute timeout) verifies the session and releases payment."
+            to="/confirm-session/demo"
+            cta="Member confirmation"
+          />
+        </ol>
+      </Card>
+    </section>
+  );
+}
+
+function Step({
+  n,
+  title,
+  body,
+  to,
+  cta,
+  primary,
+}: {
+  n: number;
+  title: string;
+  body: string;
+  to: string;
+  cta: string;
+  primary?: boolean;
+}) {
+  return (
+    <li className="flex flex-wrap items-start gap-3 rounded-xl border border-border bg-card/70 p-4">
+      <span
+        className={`grid size-7 shrink-0 place-items-center rounded-full font-mono text-xs font-semibold ${
+          primary
+            ? "bg-primary text-primary-foreground"
+            : "bg-secondary text-foreground"
+        }`}
+      >
+        {n}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold">{title}</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">{body}</p>
+      </div>
+      <Button asChild size="sm" variant={primary ? "default" : "outline"}>
+        <Link to={to}>
+          {cta} <ArrowRight className="ml-1 size-3.5" />
+        </Link>
+      </Button>
+    </li>
+  );
+}
