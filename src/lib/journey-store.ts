@@ -1,10 +1,10 @@
 import { useEffect, useSyncExternalStore } from "react";
 
-/** One complete member journey: Alex Morgan @ Northside Club with Sarah Nguyen. */
+/** One complete member journey: Alex Morgan @ Northside Club with Sarah Marino. */
 
 export const CLUB = { name: "Northside Club", members: 800 };
 export const MEMBER = { name: "Alex Morgan", first: "Alex" };
-export const TRAINER = { name: "Sarah Nguyen", first: "Sarah" };
+export const TRAINER = { name: "Sarah Marino", first: "Sarah" };
 
 export const KICKSTART = {
   name: "PT Kickstart Pack",
