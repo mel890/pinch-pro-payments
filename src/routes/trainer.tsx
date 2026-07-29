@@ -217,48 +217,8 @@ function TrainerScreen() {
 
 
 
-        {/* 3. Tier progress */}
-        <Card className="mt-8 border-border p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="size-4 text-primary" />
-              <h2 className="text-base font-semibold">Tier progress</h2>
-            </div>
-            {toNext > 0 ? (
-              <Badge variant="secondary">
-                {toNext} more confirmed sessions to reach your next earnings tier
-              </Badge>
-            ) : (
-              <Badge className="border border-primary/40 bg-primary/10 text-primary">
-                <Trophy className="mr-1 size-3" /> Peak tier
-              </Badge>
-            )}
-          </div>
-          <div className="mt-4">
-            <Progress value={progress} className="h-2.5" />
-            <div className="mt-2 flex justify-between font-mono text-[10px] text-muted-foreground">
-              <span>0</span>
-              <span>10</span>
-              <span>20</span>
-              <span>30+</span>
-            </div>
-          </div>
-          <div className="mt-4 grid gap-2 sm:grid-cols-3">
-            {(snap.tiers as any[]).map((t) => (
-              <TierChip
-                key={t.id}
-                min={t.sessions_min}
-                max={t.sessions_max}
-                pct={t.pt_split_pct}
-                active={verifiedCount >= t.sessions_min && (t.sessions_max == null || verifiedCount <= t.sessions_max)}
-              />
-            ))}
-          </div>
-          <p className="mt-4 text-xs text-muted-foreground">
-            Your higher rate applies only to sessions delivered after each
-            threshold.
-          </p>
-        </Card>
+
+
 
         {/* 4. Session queue */}
         <section className="mt-8">
