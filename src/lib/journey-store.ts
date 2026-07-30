@@ -614,7 +614,7 @@ export const journey = {
   /** 12-hour no-dispute timeout verifies the session. */
   timeoutVerify: (n: number) =>
     journeyPatchSession(n, (s) =>
-      s.status !== "awaiting_confirmation"
+      s.status !== "awaiting_feedback"
         ? s
         : {
             ...s,
