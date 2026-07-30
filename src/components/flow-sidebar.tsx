@@ -54,13 +54,13 @@ const manager: Item[] = [
 
 const trainer: Item[] = [
   { title: "Trainer home", url: "/trainer", icon: ShieldCheck },
-  { title: "Scan completion code", url: "/scan", icon: ScanLine },
+  { title: "Scan check-in code", url: "/scan", icon: ScanLine },
   { title: "Log session", url: "/complete-session", icon: ClipboardCheck },
 ];
 
 const member: Item[] = [
   { title: "Client home", url: "/me", icon: User },
-  { title: "My completion code", url: "/checkin", icon: QrCode },
+  { title: "My check-in code", url: "/checkin", icon: QrCode },
   { title: "Confirm session", url: "/confirm-session/demo", icon: MessageCircle },
 ];
 

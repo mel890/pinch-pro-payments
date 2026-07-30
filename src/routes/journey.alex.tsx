@@ -182,26 +182,25 @@ function ClientJourney() {
                     {!sess.qrUsed && (
                       <Button asChild size="sm" variant="outline">
                         <Link to="/checkin">
-                          <CalendarCheck className="mr-1.5 size-4" /> My
-                          completion code
+                          <CalendarCheck className="mr-1.5 size-4" /> My check-in
+                          code
                         </Link>
                       </Button>
                     )}
                     {!sess.qrUsed && (
                       <Button asChild size="sm" variant="secondary">
-                        <Link to="/scan">Trainer scans code</Link>
+                        <Link to="/scan">Trainer scans QR</Link>
                       </Button>
                     )}
-                    {sess.status === "awaiting_log" && (
+                    {sess.status === "in_progress" && (
                       <Button asChild size="sm">
-                        <Link to="/complete-session">Log session</Link>
+                        <Link to="/complete-session">Complete session</Link>
                       </Button>
                     )}
-                    {sess.status === "awaiting_confirmation" && (
+                    {sess.status === "awaiting_feedback" && (
                       <Button asChild size="sm" variant="secondary">
                         <Link to="/confirm-session/demo">
-                          Confirm session{" "}
-                          <ArrowRight className="ml-1 size-3.5" />
+                          Give feedback <ArrowRight className="ml-1 size-3.5" />
                         </Link>
                       </Button>
                     )}

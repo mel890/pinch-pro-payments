@@ -106,18 +106,18 @@ function ConfirmSession() {
     );
   }
 
-  if (!session || session.status !== "awaiting_confirmation") {
+  if (!session || session.status !== "awaiting_feedback") {
     return (
       <Shell>
         <Card className="border-border p-6">
           <p className="text-lg font-semibold">Nothing to confirm right now</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            You'll be asked to confirm once {TRAINER.first} submits your session
-            log.
+            You'll be asked for feedback once {TRAINER.first} completes your
+            session.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button asChild size="sm" variant="secondary">
-              <Link to="/checkin">Open my completion code</Link>
+              <Link to="/checkin">Open my check-in code</Link>
             </Button>
             <Button asChild size="sm" variant="outline">
               <Link to="/journey/alex">My journey</Link>

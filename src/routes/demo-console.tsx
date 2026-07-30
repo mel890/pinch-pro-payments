@@ -584,7 +584,7 @@ function PinchConsole() {
               <Field label="Purchase paid" value="Yes" tone="payment" />
               <Field label="Trainer assigned" value="Sarah Marino" />
               <Field
-                label="Session 1 completion code"
+                label="Session 1 check-in code"
                 value="Scanned and validated"
                 tone="workflow"
               />
@@ -614,8 +614,8 @@ function PinchConsole() {
           <ol className="space-y-1.5 text-sm">
             {[
               "Session delivered",
-              "Completion code generated",
-              "Completion code scanned",
+              "Check-in code generated",
+              "Check-in code scanned",
               "Code validated",
               "Session log submitted",
               "Member confirmation requested",

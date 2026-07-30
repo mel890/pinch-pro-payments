@@ -61,52 +61,49 @@ function LogSession() {
     );
   }
 
-  if (
-    session.status === "booked" ||
-    session.status === "in_progress" ||
-    session.status === "code_ready"
-  ) {
+  if (session.status === "booked" || session.status === "qr_issued") {
     return (
       <Shell>
         <Card className="border-border p-6">
           <p className="text-lg font-semibold">
-            {MEMBER.first}'s completion code hasn't been scanned yet
+            {MEMBER.first} hasn't checked in yet
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Ask {MEMBER.first} to open their completion code, then scan it to
-            start verification for session {session.n}.
+            Ask {MEMBER.first} to open their check-in code, then scan it to start
+            session {session.n}.
           </p>
           <Button asChild className="mt-4" size="sm">
-            <Link to="/scan">Open scanner</Link>
+            <Link to="/scan">Scan client QR</Link>
           </Button>
         </Card>
       </Shell>
     );
   }
 
-  if (session.status === "awaiting_confirmation") {
+  if (session.status === "awaiting_feedback") {
     return (
       <Shell>
         <Card className="border-primary/40 bg-primary/5 p-6">
           <div className="flex items-center gap-2 text-primary">
             <Check className="size-5" />
-            <p className="font-semibold">Session submitted</p>
+            <p className="font-semibold">Session complete</p>
           </div>
           <p className="mt-2 text-sm text-muted-foreground">
-            {MEMBER.first} has been asked to confirm. If no dispute is raised
-            within 12 hours the session verifies automatically, making{" "}
+            {MEMBER.first} has been sent a short feedback message. If no dispute is
+            raised within 12 hours the session verifies automatically, making{" "}
             {formatAUD(session.payoutCents)} payout eligible.
           </p>
           <VerificationSteps status={session.status} className="mt-4" />
           <Button asChild className="mt-4" size="sm" variant="secondary">
             <Link to="/confirm-session/demo">
-              Open member confirmation <ArrowRight className="ml-1 size-4" />
+              Open member feedback <ArrowRight className="ml-1 size-4" />
             </Link>
           </Button>
         </Card>
       </Shell>
     );
   }
+
 
   return (
     <Shell>

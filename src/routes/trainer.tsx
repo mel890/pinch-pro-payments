@@ -591,7 +591,7 @@ function OpportunityBoard({ onRefresh }: { onRefresh: () => void }) {
             )}
 
             <p className="mt-2 text-xs text-muted-foreground">
-              Use {MEMBER.first}'s completion code at the end of the session.
+              Use {MEMBER.first}'s check-in code at the end of the session.
             </p>
           </Card>
         )}
@@ -614,7 +614,7 @@ function OpportunityBoard({ onRefresh }: { onRefresh: () => void }) {
         </div>
         <p className="mt-1 text-xs text-muted-foreground">
           At the end of each session, follow these steps. {MEMBER.first}'s unique
-          completion code confirms that {MEMBER.first} and {TRAINER.first} are
+          check-in code confirms that {MEMBER.first} and {TRAINER.first} are
           together at the end of the booked session. Scanning starts the
           verification process.
         </p>
@@ -622,14 +622,14 @@ function OpportunityBoard({ onRefresh }: { onRefresh: () => void }) {
         <ol className="mt-4 space-y-3">
           <Step
             n={1}
-            title={`Ask ${MEMBER.first} to open their completion code`}
+            title={`Ask ${MEMBER.first} to open their check-in code`}
             body={`${MEMBER.first}'s VezaPT screen shows a unique QR code and six-digit backup code.`}
             to="/checkin"
             cta="Open member code"
           />
           <Step
             n={2}
-            title={`Scan ${MEMBER.first}'s completion code`}
+            title={`Scan ${MEMBER.first}'s check-in code`}
             body="Use the scanner or enter the backup code."
             to="/scan"
             cta="Open scanner"
