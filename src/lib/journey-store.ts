@@ -205,11 +205,10 @@ export const AFTER = { confidence: 8, visits: 2.6, clarity: 8 };
 
 export type SessionStatus =
   | "booked"
+  | "qr_issued"
+  | "checked_in"
   | "in_progress"
-  | "code_ready"
-  | "code_accepted"
-  | "awaiting_log"
-  | "awaiting_confirmation"
+  | "awaiting_feedback"
   | "verified"
   | "review_required"
   | "cancelled"
@@ -217,14 +216,13 @@ export type SessionStatus =
 
 export type PayoutStatus =
   | "Not started"
-  | "Session in progress"
-  | "Verification in progress"
-  | "Awaiting member confirmation"
+  | "Pending delivery"
+  | "Awaiting verification"
   | "Payout eligible"
   | "Review required"
   | "Paid";
 
-/** How the completion code was presented at the end of the session. */
+/** How the member checked in at the start of the session. */
 export type CodeMethod = "qr" | "backup" | "manual" | null;
 /** Legacy alias. */
 export type CheckinMethod = CodeMethod;
