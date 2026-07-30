@@ -2,25 +2,24 @@ import { Check } from "lucide-react";
 import type { SessionStatus } from "@/lib/journey-store";
 
 export const VERIFY_STEPS = [
-  "Deliver",
-  "Scan",
-  "Log",
-  "Confirm",
-  "Verify",
+  "Booked",
+  "QR",
+  "Checked in",
+  "Feedback",
+  "Verified",
 ] as const;
 
 /** Which of the five stages the session is currently sitting in (0-indexed). */
 export function stepIndexOf(status: SessionStatus): number {
   switch (status) {
     case "booked":
-    case "in_progress":
       return 0;
-    case "code_ready":
+    case "qr_issued":
       return 1;
-    case "code_accepted":
-    case "awaiting_log":
+    case "checked_in":
+    case "in_progress":
       return 2;
-    case "awaiting_confirmation":
+    case "awaiting_feedback":
       return 3;
     case "verified":
       return 4;
