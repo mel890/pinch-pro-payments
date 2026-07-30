@@ -143,13 +143,13 @@ function ScanScreen() {
                 }`}
               />
               <Row label="Pack credit" value="Reserved (not yet deducted)" />
-              <Row label="Payout" value="Verification in progress" />
+              <Row label="Payout" value="Held until verification" />
             </div>
             <Button
               className="w-full"
               onClick={() => navigate({ to: "/complete-session" })}
             >
-              Log {MEMBER.first}'s session <ArrowRight className="ml-1 size-4" />
+              Complete {MEMBER.first}'s session <ArrowRight className="ml-1 size-4" />
             </Button>
           </div>
         ) : (
@@ -166,7 +166,7 @@ function ScanScreen() {
               Open scanner — simulate successful scan
             </Button>
             <p className="text-center text-xs text-muted-foreground">
-              Scanning starts the verification process.
+              Scanning checks the member in and starts the session.
             </p>
 
             <div>
