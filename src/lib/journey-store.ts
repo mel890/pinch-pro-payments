@@ -512,25 +512,18 @@ export const journey = {
       sessions: state.sessions.map((s) => (s.n === n ? { ...s, ...next } : s)),
     }),
 
-  /* ---------- Deliver → Scan → Log → Confirm → Verify ---------- */
+  /* ---------- Booked → QR issued → Checked in → In progress → Awaiting feedback → Verified ---------- */
 
-  /** Trainer taps "Complete session" at the end of delivery. */
-  startCompletion: (n: number) =>
-    journeyPatchSession(n, (s) =>
-      s.status === "booked" || s.status === "in_progress"
-        ? { ...s, status: "in_progress" }
-        : s,
-    ),
+  /** Kept for older screens: no state change of its own. */
+  startCompletion: (_n: number) => {},
 
-  /** Member opens their session completion screen: one-time QR + backup code. */
+  /** Member opens their one-time check-in code before the session. */
   issueCompletionCode: (n: number) =>
     journeyPatchSession(n, (s) =>
-      s.qrUsed || (s.status !== "booked" && s.status !== "in_progress")
-        ? s
-        : { ...s, qrIssued: true, status: "code_ready" },
+      s.qrUsed || s.status !== "booked" ? s : { ...s, qrIssued: true, status: "qr_issued" },
     ),
 
-  /** Trainer scans the completion code (or keys the backup code). Reserves the session. */
+  /** Trainer scans the member's check-in QR (or keys the backup code). Reserves the session. */
   scanCompletionCode: (n: number, method: Exclude<CodeMethod, null>) =>
     journeyPatchSession(n, (s) =>
       s.qrUsed
@@ -542,13 +535,14 @@ export const journey = {
             checkinMethod: method,
             checkinAt: nowLabel(),
             reserved: true,
-            status: "awaiting_log",
+            status: "in_progress",
             reviewReason:
               method === "manual"
-                ? "Manual override — completion code not scanned"
+                ? "Manual check-in — QR code not scanned"
                 : s.reviewReason,
           },
     ),
+
 
   /** Trainer session log. */
   logSession: (
