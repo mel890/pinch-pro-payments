@@ -20,17 +20,17 @@ import {
 export const Route = createFileRoute("/scan")({
   head: () => ({
     meta: [
-      { title: "Scan completion code — VezaPT Pay" },
+      { title: "Scan check-in code — VezaPT Pay" },
       {
         name: "description",
         content:
           "Trainer scanner: validates the member, trainer, booking, pack, completion window and single-use status before the session log.",
       },
-      { property: "og:title", content: "Scan completion code — VezaPT Pay" },
+      { property: "og:title", content: "Scan check-in code — VezaPT Pay" },
       {
         property: "og:description",
         content:
-          "Scan the member's single-use completion code to start verification.",
+          "Scan the member's single-use check-in code to start verification.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -49,7 +49,7 @@ const CHECKS = [
 ];
 
 const INVALID_STATES = [
-  { label: "Expired code", message: "This completion code has expired." },
+  { label: "Expired code", message: "This check-in code has expired." },
   { label: "Already used", message: "This code has already been used." },
   {
     label: "Wrong trainer",
@@ -100,7 +100,7 @@ function ScanScreen() {
             {TRAINER.name} · {CLUB.name}
           </p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-            Scan {MEMBER.first}'s completion code
+            Scan {MEMBER.first}'s check-in code
           </h1>
         </div>
         <Badge className="border border-primary/40 bg-primary/10 text-primary">
@@ -115,7 +115,7 @@ function ScanScreen() {
           <div className="space-y-3">
             <div className="flex items-center gap-2 text-primary">
               <Check className="size-5" />
-              <p className="font-semibold">Completion code accepted</p>
+              <p className="font-semibold">Check-in code accepted</p>
             </div>
             <p className="text-sm text-muted-foreground">
               {MEMBER.first} and {TRAINER.first} were verified together at the end
@@ -159,7 +159,7 @@ function ScanScreen() {
               <div className="flex flex-col items-center gap-2 text-muted-foreground">
                 <ScanLine className="size-8 animate-pulse text-primary" />
                 <span className="text-sm">
-                  Point the camera at {MEMBER.first}'s completion code
+                  Point the camera at {MEMBER.first}'s check-in code
                 </span>
               </div>
             </div>

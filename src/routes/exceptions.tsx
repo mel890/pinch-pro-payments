@@ -75,7 +75,7 @@ function Exceptions() {
                 <ShieldCheck className="size-5 text-primary" /> No exceptions
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Every session verified through the completion code, the trainer
+                Every session verified through the check-in code, the trainer
                 log and member confirmation.
               </p>
             </Card>
@@ -100,14 +100,14 @@ function Exceptions() {
                 <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-500" />
                 {sess.reviewReason ??
                   (sess.checkinMethod === "manual"
-                    ? "Manual override — completion code not scanned"
+                    ? "Manual override — check-in code not scanned"
                     : "Requires manager review")}
               </p>
 
               <div className="mt-3 grid gap-1 rounded-xl border border-border/60 bg-background/40 p-3 text-sm sm:grid-cols-2">
                 <Row label="Booking" value={sess.scheduledLabel} />
                 <Row
-                  label="Completion code scanned"
+                  label="Check-in code scanned"
                   value={sess.checkinAt ?? "Not scanned"}
                 />
                 <Row

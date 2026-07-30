@@ -24,13 +24,13 @@ export const Route = createFileRoute("/checkin")({
       {
         name: "description",
         content:
-          "Member session completion screen: a single-use completion code plus six-digit backup code, shown to the trainer at the end of the booked session.",
+          "Member session completion screen: a single-use check-in code plus six-digit backup code, shown to the trainer at the end of the booked session.",
       },
       { property: "og:title", content: "Confirm today's session — VezaPT Pay" },
       {
         property: "og:description",
         content:
-          "Show your completion code to your trainer at the end of your session to start verification.",
+          "Show your check-in code to your trainer at the end of your session to start verification.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -91,7 +91,7 @@ function CompletionCodeScreen() {
         {used ? (
           <div className="flex flex-col items-center gap-2 py-8 text-center">
             <CheckCircle2 className="size-10 text-primary" />
-            <p className="text-lg font-semibold">Completion code accepted</p>
+            <p className="text-lg font-semibold">Check-in code accepted</p>
             <p className="text-sm text-muted-foreground">
               This code has been used once and is no longer valid. Verification
               is now in progress.
@@ -148,7 +148,7 @@ function CompletionCodeScreen() {
         </div>
 
         <p className="text-center text-xs text-muted-foreground">
-          {MEMBER.first}'s unique completion code confirms that {MEMBER.first} and{" "}
+          {MEMBER.first}'s unique check-in code confirms that {MEMBER.first} and{" "}
           {TRAINER.first} are together at the end of the booked session. Scanning
           starts the verification process.
         </p>

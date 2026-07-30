@@ -249,12 +249,12 @@ export type SessionPlan = {
   /** Deliver → Scan → Log → Confirm → Verify. */
   status: SessionStatus;
   scheduledLabel: string;
-  /** Completion code lifecycle. */
+  /** Check-in code lifecycle. */
   qrIssued: boolean;
   qrUsed: boolean;
   backupCode: string;
   checkinMethod: CodeMethod;
-  /** Timestamp the completion code was accepted. */
+  /** Timestamp the check-in code was accepted. */
   checkinAt: string | null;
   completedAt: string | null;
   fullyDelivered: boolean | null;
@@ -826,7 +826,7 @@ export function payoutStatusOf(s: SessionPlan): PayoutStatus {
 }
 
 
-/** Pack balance: 3 credits, reserved when the completion code is scanned, deducted at verification. */
+/** Pack balance: 3 credits, reserved when the check-in code is scanned, deducted at verification. */
 export function packBalance(s: JourneyState) {
   const total = s.sessions.length;
   const deducted = s.sessions.filter((x) => x.deducted).length;
