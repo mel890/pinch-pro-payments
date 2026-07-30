@@ -147,7 +147,7 @@ function Exceptions() {
                   value={
                     sess.verifiedVia === "timeout"
                       ? "Verified after 12-hour no-dispute period"
-                      : sess.status === "awaiting_confirmation"
+                      : sess.status === "awaiting_feedback"
                         ? "12-hour no-dispute timer running"
                         : "Not applicable"
                   }
