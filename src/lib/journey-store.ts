@@ -785,11 +785,10 @@ function nowLabel(): string {
 
 export const SESSION_STATUS_LABEL: Record<SessionStatus, string> = {
   booked: "Booked",
-  in_progress: "Session in progress",
-  code_ready: "Completion code ready",
-  code_accepted: "Completion code accepted",
-  awaiting_log: "Awaiting trainer log",
-  awaiting_confirmation: "Awaiting member confirmation",
+  qr_issued: "QR issued",
+  checked_in: "Checked in",
+  in_progress: "In progress",
+  awaiting_feedback: "Awaiting feedback",
   verified: "Verified",
   review_required: "Review required",
   cancelled: "Cancelled",
@@ -798,12 +797,11 @@ export const SESSION_STATUS_LABEL: Record<SessionStatus, string> = {
 
 /** What the member/trainer should do next, in plain language. */
 export const SESSION_NEXT_ACTION: Record<SessionStatus, string> = {
-  booked: "Deliver the booked session",
-  in_progress: "Ask the member to open their completion code",
-  code_ready: "Scan the member's completion code",
-  code_accepted: "Log the session",
-  awaiting_log: "Log the session",
-  awaiting_confirmation: "Waiting on the member — auto-verifies after 12 hours",
+  booked: "Ask the member to open their check-in code",
+  qr_issued: "Scan the member's check-in QR",
+  checked_in: "Deliver the session",
+  in_progress: "Deliver the session, then tap Complete session",
+  awaiting_feedback: "Waiting on member feedback — verifies after 12 hours with no dispute",
   verified: "Nothing — payout eligible",
   review_required: "Manager review required",
   cancelled: "Rebook the session",
@@ -814,14 +812,12 @@ export function payoutStatusOf(s: SessionPlan): PayoutStatus {
   switch (s.status) {
     case "verified":
       return "Payout eligible";
-    case "awaiting_confirmation":
-      return "Awaiting member confirmation";
-    case "code_ready":
-    case "code_accepted":
-    case "awaiting_log":
-      return "Verification in progress";
+    case "awaiting_feedback":
+      return "Awaiting verification";
+    case "checked_in":
     case "in_progress":
-      return "Session in progress";
+    case "qr_issued":
+      return "Pending delivery";
     case "review_required":
       return "Review required";
     default:
