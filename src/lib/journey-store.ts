@@ -575,7 +575,7 @@ export const journey = {
         nextBooked: input.nextBooked,
         win: input.win ?? s.win,
         issueNote: input.issue?.trim() || null,
-        status: "awaiting_confirmation" as SessionStatus,
+        status: "awaiting_feedback" as SessionStatus,
       };
     });
     const idx = sessions.findIndex((s) => s.n === n);
