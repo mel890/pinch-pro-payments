@@ -118,9 +118,8 @@ function ScanScreen() {
               <p className="font-semibold">Check-in code accepted</p>
             </div>
             <p className="text-sm text-muted-foreground">
-              {MEMBER.first} and {TRAINER.first} were verified together at the end
-              of the booked session. Verification is in progress — the session is
-              not verified yet.
+              {MEMBER.first} is checked in and the session is now in progress. One
+              session is reserved from the pack — no payout is released yet.
             </p>
             <ul className="space-y-1.5">
               {CHECKS.map((c) => (
