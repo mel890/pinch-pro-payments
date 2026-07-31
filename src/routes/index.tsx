@@ -913,12 +913,22 @@ function PitchDemo() {
 
       <main className="mx-auto grid max-w-[1500px] gap-6 px-4 py-6 sm:px-6 xl:grid-cols-[52fr_48fr]">
         <div className={tab === "manager" ? "block" : "hidden xl:block"}>
-          <ManagerDashboard step={step} />
+          <ManagerDashboard
+            step={step}
+            activeActions={activeActions}
+            toggleAction={toggleAction}
+          />
         </div>
         <div className="grid gap-6 sm:grid-cols-2">
           <div className={tab === "pt" ? "block" : "hidden xl:block"}>
             <Phone label="PT app · Sarah" tone="violet">
-              <PtApp step={step} perWeek={perWeek} setPerWeek={setPerWeek} />
+              <PtApp
+                step={step}
+                perWeek={perWeek}
+                setPerWeek={setPerWeek}
+                activeActions={activeActions}
+              />
+
             </Phone>
           </div>
           <div className={tab === "member" ? "block" : "hidden xl:block"}>
