@@ -217,20 +217,6 @@ export const GROWTH_ACTIONS: GrowthAction[] = [
     counterBase: 23,
   },
   {
-    id: "referral",
-    label: "Ask for a referral",
-    bonus: 25,
-    kind: "member",
-    ptInstruction:
-      "Share your referral link with Alex. Paid when the referred person converts.",
-    memberSms:
-      "You've been smashing it 👏 Got a mate who wants to start? Send them my way anytime.",
-    memberCta: "Share with a mate ▶",
-    memberReply: "Sent my mate Priya your way 🙌",
-    counterLabel: "Referrals converted",
-    counterBase: 7,
-  },
-  {
     id: "ig",
     label: "IG post & tag",
     bonus: 20,
