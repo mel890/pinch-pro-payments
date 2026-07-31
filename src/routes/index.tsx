@@ -52,25 +52,35 @@ const STEPS = [
 
 const SESSION_TITLES = ["Understand", "Progress", "Review"] as const;
 
-function metrics(step: number) {
+/** How many of the 3 sessions the script has unlocked at this step. */
+export function sessionsAvailable(step: number): number {
+  if (step >= 5) return 3;
+  if (step >= 4) return 1;
+  return 0;
+}
+
+const CONFIDENCE = [5, 6, 7, 8] as const;
+const VISITS = [1.4, 1.9, 2.3, 2.6] as const;
+const CLARITY = [4, 6, 7, 8] as const;
+
+function metrics(step: number, v: number) {
   return {
     packs: 12 + (step >= 1 ? 1 : 0),
-    verified: 148 + (step >= 5 ? 3 : step >= 4 ? 1 : 0),
+    verified: 148 + v,
     conversions: 5 + (step >= 9 ? 1 : 0),
     recurring: step >= 9 ? 1800 : 1620,
     r30: step >= 9 ? 94 : 92,
     r60: step >= 9 ? 81 : 78,
     r90: step >= 9 ? 66 : 61,
-    confidence: step >= 5 ? 8 : step >= 4 ? 6 : 5,
-    visits: step >= 5 ? 2.6 : step >= 4 ? 1.9 : 1.4,
-    clarity: step >= 5 ? 8 : step >= 4 ? 6 : 4,
+    confidence: CONFIDENCE[v],
+    visits: VISITS[v],
+    clarity: CLARITY[v],
   };
 }
 
-function stage(step: number) {
+function stage(step: number, v: number) {
   if (step >= 9) return "Converted";
-  if (step >= 5) return "In sessions 3/3";
-  if (step >= 4) return "In sessions 1/3";
+  if (step >= 4) return `In sessions ${v}/3`;
   if (step >= 3) return "Matched · booked";
   if (step >= 2) return "Matched";
   if (step >= 1) return "Bought";
@@ -262,18 +272,20 @@ export const GROWTH_ACTIONS: GrowthAction[] = [
 
 function ManagerDashboard({
   step,
+  verified,
   activeActions,
   toggleAction,
   askedActions,
   doneActions,
 }: {
   step: number;
+  verified: number;
   activeActions: string[];
   toggleAction: (id: string) => void;
   askedActions: string[];
   doneActions: string[];
 }) {
-  const m = metrics(step);
+  const m = metrics(step, verified);
   const completedList = GROWTH_ACTIONS.filter((a) => doneActions.includes(a.id));
   const completedActions = completedList.length;
 
@@ -355,19 +367,19 @@ function ManagerDashboard({
                 : "border-white/15 text-white/70"
             }`}
           >
-            {stage(step)}
+            {stage(step, verified)}
           </span>
         </div>
 
         <ol className="mt-4 grid grid-cols-5 gap-2">
           {[
-            { l: "Bought", at: 1 },
-            { l: "Matched", at: 2 },
-            { l: "1/3", at: 4 },
-            { l: "3/3", at: 5 },
-            { l: "Converted", at: 9 },
+            { l: "Bought", at: 1, min: 0 },
+            { l: "Matched", at: 2, min: 0 },
+            { l: "1/3", at: 4, min: 1 },
+            { l: "3/3", at: 5, min: 3 },
+            { l: "Converted", at: 9, min: 0 },
           ].map((n) => {
-            const on = step >= n.at;
+            const on = step >= n.at && verified >= n.min;
             return (
               <li key={n.l} className="text-center">
                 <div
@@ -574,6 +586,10 @@ function Phone({
 
 function PtApp({
   step,
+  verified,
+  scanSession,
+  playSessions,
+  playing,
   perWeek,
   setPerWeek,
   activeActions,
@@ -582,6 +598,10 @@ function PtApp({
   askAction,
 }: {
   step: number;
+  verified: number;
+  scanSession: () => void;
+  playSessions: () => void;
+  playing: boolean;
   perWeek: number;
   setPerWeek: (n: number) => void;
   activeActions: string[];
@@ -589,7 +609,9 @@ function PtApp({
   doneActions: string[];
   askAction: (id: string) => void;
 }) {
-  const sessionsDone = step >= 5 ? 3 : step >= 4 ? 1 : 0;
+  const sessionsDone = verified;
+  const available = sessionsAvailable(step);
+  const nextSession = sessionsDone < available ? sessionsDone : -1;
   return (
     <div className="min-h-full bg-pitch-ptbg px-4 pb-6 pt-9 text-white">
       <div className="flex items-center gap-2">
@@ -644,33 +666,55 @@ function PtApp({
           <div className="mt-3 space-y-2">
             {SESSION_TITLES.map((t, i) => {
               const done = i < sessionsDone;
+              const isNext = i === nextSession;
               return (
                 <div
                   key={t}
                   className={`flex items-center justify-between rounded-xl border px-3 py-2.5 text-sm transition-colors duration-500 ${
                     done
                       ? "border-pitch-green/35 bg-pitch-green/10"
-                      : "border-white/10 bg-white/[0.02] text-white/45"
+                      : isNext
+                        ? "border-pitch-violet/45 bg-pitch-violet/10"
+                        : "border-white/10 bg-white/[0.02] text-white/45"
                   }`}
                 >
                   <span>
                     {i + 1}. {t}
                   </span>
                   {done ? (
-                    <span className="flex items-center gap-1 text-xs font-medium text-pitch-green">
-                      <Check className="size-3.5" /> Verified
+                    <span className="pitch-pop flex items-center gap-1 text-xs font-medium text-pitch-green">
+                      <Check className="size-3.5" /> Session {i + 1} verified ✓
                     </span>
+                  ) : isNext ? (
+                    <button
+                      type="button"
+                      onClick={scanSession}
+                      className="flex items-center gap-1.5 rounded-lg bg-pitch-violet px-2.5 py-1 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+                    >
+                      <ScanLine className="size-3.5" /> Scan check-in
+                    </button>
                   ) : (
                     <span className="flex items-center gap-1 text-xs">
-                      <ScanLine className="size-3.5" /> Scan to start
+                      <ScanLine className="size-3.5" /> Awaiting check-in
                     </span>
                   )}
                 </div>
               );
             })}
           </div>
+          {step >= 5 && sessionsDone < 3 && (
+            <button
+              type="button"
+              onClick={playSessions}
+              disabled={playing}
+              className="mt-3 w-full rounded-xl border border-pitch-violet/40 bg-pitch-violet/10 px-3 py-2 text-xs font-semibold text-pitch-violet disabled:opacity-60"
+            >
+              {playing ? "Playing sessions…" : "▶ Play sessions"}
+            </button>
+          )}
         </div>
       )}
+
 
       {step >= 6 && (
         <div className="pitch-rise mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
@@ -835,6 +879,7 @@ type Msg = { id: string; from: "club" | "alex"; body: React.ReactNode };
 
 function memberThread(
   step: number,
+  verified: number,
   askedActions: string[],
   doneActions: string[],
   completeAction: (id: string) => void,
@@ -874,38 +919,29 @@ function memberThread(
       from: "club",
       body: <span>You're matched with Sarah 🎉 First session booked.</span>,
     });
-  if (step >= 4)
+  for (let i = 0; i < sessionsAvailable(step); i++) {
+    const n = i + 1;
+    const done = i < verified;
     msgs.push({
-      id: "s1",
+      id: `s${n}`,
       from: "club",
       body: (
         <span>
-          Session 1 of 3 — show this at check-in.
-          <FakeQr />
-          <span className="mt-2 block text-[11px] opacity-70">
-            Goal: Build strength &amp; train consistently
+          Session {n} of 3 — show this at check-in 💪
+          <span
+            className={`mt-2 block ${done ? "opacity-40" : ""}`}
+          >
+            <FakeQr />
           </span>
-        </span>
-      ),
-    });
-  if (step >= 5) {
-    msgs.push({
-      id: "s2",
-      from: "club",
-      body: (
-        <span>
-          Session 2 of 3 — show this at check-in.
-          <FakeQr />
-        </span>
-      ),
-    });
-    msgs.push({
-      id: "s3",
-      from: "club",
-      body: (
-        <span>
-          Session 3 of 3 — show this at check-in.
-          <FakeQr />
+          {done ? (
+            <span className="mt-2 block rounded-lg bg-[#22C55E]/15 px-2 py-1 text-[12px] font-semibold text-[#15803d]">
+              Checked in ✓
+            </span>
+          ) : (
+            <span className="mt-2 block text-[11px] opacity-70">
+              Goal: Build strength &amp; train consistently
+            </span>
+          )}
         </span>
       ),
     });
@@ -999,20 +1035,28 @@ function memberThread(
 
 function MemberPhone({
   step,
+  verified,
   askedActions,
   doneActions,
   completeAction,
 }: {
   step: number;
+  verified: number;
   askedActions: string[];
   doneActions: string[];
   completeAction: (id: string) => void;
 }) {
-  const msgs = memberThread(step, askedActions, doneActions, completeAction);
+  const msgs = memberThread(
+    step,
+    verified,
+    askedActions,
+    doneActions,
+    completeAction,
+  );
   const endRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [step, askedActions.length, doneActions.length]);
+  }, [step, verified, askedActions.length, doneActions.length]);
 
 
   const showLinkPage = step === 8;
@@ -1098,6 +1142,8 @@ function PitchDemo() {
   const [activeActions, setActiveActions] = useState<string[]>(["review"]);
   const [askedActions, setAskedActions] = useState<string[]>([]);
   const [doneActions, setDoneActions] = useState<string[]>([]);
+  const [scanned, setScanned] = useState(0);
+  const [playing, setPlaying] = useState(false);
 
   const toggleAction = useCallback((id: string) => {
     setActiveActions((a) =>
@@ -1119,11 +1165,34 @@ function PitchDemo() {
     setDoneActions((d) => (d.includes(id) ? d : [...d, id]));
   }, []);
 
+  const verified =
+    step >= 6 ? 3 : Math.min(scanned, sessionsAvailable(step));
+
+  const scanSession = useCallback(() => {
+    setScanned((n) => Math.min(3, n + 1));
+  }, []);
+
+  const playSessions = useCallback(() => {
+    setPlaying(true);
+  }, []);
+
+  useEffect(() => {
+    if (!playing) return;
+    if (verified >= sessionsAvailable(step)) {
+      setPlaying(false);
+      return;
+    }
+    const t = setTimeout(() => setScanned((n) => Math.min(3, n + 1)), 1100);
+    return () => clearTimeout(t);
+  }, [playing, verified, step]);
+
   const next = useCallback(() => setStep((s) => Math.min(9, s + 1)), []);
   const prev = useCallback(() => setStep((s) => Math.max(0, s - 1)), []);
   const reset = useCallback(() => {
     setStep(0);
     setPerWeek(2);
+    setScanned(0);
+    setPlaying(false);
     setActiveActions(["review"]);
     setAskedActions([]);
     setDoneActions([]);
@@ -1219,6 +1288,7 @@ function PitchDemo() {
         <div className={tab === "manager" ? "block" : "hidden xl:block"}>
           <ManagerDashboard
             step={step}
+            verified={verified}
             activeActions={activeActions}
             toggleAction={toggleAction}
             askedActions={askedActions}
@@ -1230,6 +1300,10 @@ function PitchDemo() {
             <Phone label="PT app · Sarah" tone="violet">
               <PtApp
                 step={step}
+                verified={verified}
+                scanSession={scanSession}
+                playSessions={playSessions}
+                playing={playing}
                 perWeek={perWeek}
                 setPerWeek={setPerWeek}
                 activeActions={activeActions}
@@ -1244,6 +1318,7 @@ function PitchDemo() {
             <Phone label="Member phone · Alex" tone="green">
               <MemberPhone
                 step={step}
+                verified={verified}
                 askedActions={askedActions}
                 doneActions={doneActions}
                 completeAction={completeAction}
