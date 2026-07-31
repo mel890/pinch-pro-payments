@@ -367,7 +367,7 @@ function ManagerDashboard({
                 : "border-white/15 text-white/70"
             }`}
           >
-            {stage(step)}
+            {stage(step, verified)}
           </span>
         </div>
 
@@ -375,11 +375,11 @@ function ManagerDashboard({
           {[
             { l: "Bought", at: 1 },
             { l: "Matched", at: 2 },
-            { l: "1/3", at: 4 },
-            { l: "3/3", at: 5 },
+            { l: "1/3", at: 4, min: 1 },
+            { l: "3/3", at: 5, min: 3 },
             { l: "Converted", at: 9 },
           ].map((n) => {
-            const on = step >= n.at;
+            const on = step >= n.at && verified >= (n.min ?? 0);
             return (
               <li key={n.l} className="text-center">
                 <div
