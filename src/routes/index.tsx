@@ -776,7 +776,36 @@ function memberThread(step: number): Msg[] {
     });
     msgs.push({ id: "fb-a", from: "alex", body: <span>😀</span> });
   }
+  for (const a of GROWTH_ACTIONS) {
+    if (!askedActions.includes(a.id)) continue;
+    const done = doneActions.includes(a.id);
+    msgs.push({
+      id: `ga-${a.id}`,
+      from: "club",
+      body: (
+        <span>
+          {a.memberSms}
+          {!done && (
+            <button
+              type="button"
+              onClick={() => completeAction(a.id)}
+              className="mt-2 block w-full rounded-xl bg-pitch-green px-3 py-1.5 text-[12px] font-semibold text-white"
+            >
+              {a.memberCta}
+            </button>
+          )}
+        </span>
+      ),
+    });
+    if (done)
+      msgs.push({
+        id: `ga-${a.id}-a`,
+        from: "alex",
+        body: <span>{a.memberReply}</span>,
+      });
+  }
   if (step >= 7)
+
     msgs.push({
       id: "rec",
       from: "club",
