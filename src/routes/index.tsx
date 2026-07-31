@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import vezaptLogo from "@/assets/vezapt-logo.png.asset.json";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ChevronLeft,
@@ -1183,10 +1185,13 @@ function PitchDemo() {
     <div className="min-h-screen bg-[#060d16] text-white">
       <header className="sticky top-0 z-40 border-b border-white/10 bg-[#060d16]/90 backdrop-blur-xl">
         <div className="mx-auto grid max-w-[1500px] grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 py-3 sm:px-6">
-          <div className="flex min-w-0 items-baseline gap-2">
-            <span className="truncate text-lg font-semibold tracking-tight">
-              Veza<span className="text-pitch-cyan">PT</span>
-            </span>
+          <div className="flex min-w-0 items-center gap-2">
+            <img
+              src={vezaptLogo.url}
+              alt="VezaPT"
+              className="h-7 w-auto shrink-0"
+            />
+
             <span
               className="text-xs font-medium"
               style={{ color: "#D62654" }}
