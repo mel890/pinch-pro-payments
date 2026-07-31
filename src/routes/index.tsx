@@ -811,12 +811,23 @@ function memberThread(step: number): Msg[] {
   return msgs;
 }
 
-function MemberPhone({ step }: { step: number }) {
-  const msgs = memberThread(step);
+function MemberPhone({
+  step,
+  askedActions,
+  doneActions,
+  completeAction,
+}: {
+  step: number;
+  askedActions: string[];
+  doneActions: string[];
+  completeAction: (id: string) => void;
+}) {
+  const msgs = memberThread(step, askedActions, doneActions, completeAction);
   const endRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [step]);
+  }, [step, askedActions.length, doneActions.length]);
+
 
   const showLinkPage = step === 8;
 
