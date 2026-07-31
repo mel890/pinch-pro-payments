@@ -495,6 +495,27 @@ function PtApp({ step, perWeek, setPerWeek }: { step: number; perWeek: number; s
         </div>
       )}
 
+      {step >= 6 && (
+        <div
+          className="pitch-pop mt-4 rounded-2xl border p-4"
+          style={{
+            borderColor: "rgba(214,38,84,0.45)",
+            background: "rgba(214,38,84,0.12)",
+          }}
+        >
+          <p className="text-[10px] uppercase tracking-[0.16em]" style={{ color: "#ff7ea2" }}>
+            Growth Action bonus
+          </p>
+          <p className="mt-1.5 text-sm text-white/85">
+            Google review from Alex
+          </p>
+          <p className="mt-2 font-mono text-lg font-semibold" style={{ color: "#ff7ea2" }}>
+            +$15 · via Pinch
+          </p>
+        </div>
+      )}
+
+
       {step >= 7 && (
         <div className="pitch-rise mt-4 rounded-2xl border border-pitch-violet/40 bg-pitch-violet/10 p-4">
           <p className="text-[10px] uppercase tracking-[0.16em] text-pitch-violet">
