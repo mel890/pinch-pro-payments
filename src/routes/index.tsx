@@ -175,8 +175,32 @@ function Bar({
 
 /* ── Manager dashboard (cyan) ────────────────────────────────────────── */
 
-function ManagerDashboard({ step }: { step: number }) {
+export const GROWTH_ACTIONS: {
+  id: string;
+  label: string;
+  bonus: number;
+  optional?: boolean;
+}[] = [
+  { id: "review", label: "Request a Google review", bonus: 15 },
+  { id: "referral", label: "Ask for a referral", bonus: 25 },
+  { id: "cardio", label: "Book 2 extra cardio sessions", bonus: 20 },
+  { id: "rebook", label: "Rebook next month's pack", bonus: 20, optional: true },
+];
+
+function ManagerDashboard({
+  step,
+  activeActions,
+  toggleAction,
+}: {
+  step: number;
+  activeActions: string[];
+  toggleAction: (id: string) => void;
+}) {
   const m = metrics(step);
+  const activeList = GROWTH_ACTIONS.filter((a) => activeActions.includes(a.id));
+  const completedActions = step >= 6 ? activeList.length : 0;
+  const activeBonusTotal = activeList.reduce((t, a) => t + a.bonus, 0);
+
   return (
     <section className="rounded-3xl border border-white/10 bg-pitch-navy p-5 shadow-[0_30px_90px_rgba(0,0,0,0.45)] sm:p-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
@@ -299,36 +323,75 @@ function ManagerDashboard({ step }: { step: number }) {
         </p>
       )}
 
-      {/* Growth Actions (manager-set) */}
+      {/* Growth Actions (club-defined) */}
       <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-        <p className="text-[10px] uppercase tracking-[0.16em] text-white/45">
-          Growth Actions · manager-set
-        </p>
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-medium text-white">Google review</p>
-            <p className="text-xs text-white/50">
-              Trainer bonus when a member leaves a review
-            </p>
-          </div>
-          <span
-            className="rounded-full border px-3 py-1 font-mono text-xs font-semibold"
-            style={{
-              borderColor: "rgba(214,38,84,0.45)",
-              background: "rgba(214,38,84,0.12)",
-              color: "#ff7ea2",
-            }}
-          >
-            +$15 · via Pinch
-          </span>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-[10px] uppercase tracking-[0.16em] text-white/45">
+            Growth Actions
+          </p>
+          <p className="font-mono text-xs tabular-nums text-white/60">
+            Actions completed:{" "}
+            <span className="text-pitch-cyan">{completedActions}</span>
+          </p>
         </div>
-        {step >= 6 && (
+
+        <div className="mt-3 space-y-2">
+          {GROWTH_ACTIONS.map((a) => {
+            const on = activeActions.includes(a.id);
+            return (
+              <div
+                key={a.id}
+                className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 transition-colors duration-300 ${
+                  on
+                    ? "border-pitch-cyan/50 bg-pitch-cyan/10"
+                    : `border-white/10 bg-white/[0.02] ${a.optional ? "opacity-55" : ""}`
+                }`}
+              >
+                <div className="min-w-0">
+                  <p
+                    className={`truncate text-sm ${on ? "text-pitch-cyan" : "text-white/75"}`}
+                  >
+                    {a.label}
+                    {a.optional && !on && (
+                      <span className="ml-2 text-[10px] uppercase tracking-wider text-white/35">
+                        optional
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-[11px] text-white/45">
+                    +${a.bonus} trainer bonus
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => toggleAction(a.id)}
+                  aria-pressed={on}
+                  className={`shrink-0 rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors duration-300 ${
+                    on
+                      ? "border-pitch-cyan/60 bg-pitch-cyan/20 text-pitch-cyan"
+                      : "border-white/20 text-white/60"
+                  }`}
+                >
+                  {on ? "Active" : "Activate"}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+
+        <p className="mt-3 text-[11px] text-white/45">
+          Club-configurable — bonuses paid via Pinch
+        </p>
+
+        {step >= 6 && activeActions.length > 0 && (
           <p className="pitch-pop mt-3 flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium" style={{ borderColor: "rgba(214,38,84,0.45)", background: "rgba(214,38,84,0.12)", color: "#ff7ea2" }}>
-            <Check className="size-3.5" /> Alex left a Google review — $15 bonus
-            paid to Sarah · via Pinch
+            <Check className="size-3.5" /> {completedActions} action
+            {completedActions === 1 ? "" : "s"} completed by Alex — $
+            {activeBonusTotal} bonus paid to Sarah · via Pinch
           </p>
         )}
       </div>
+
 
 
       {/* Revenue line */}
@@ -400,7 +463,7 @@ function Phone({
 
 /* ── PT app (violet) ─────────────────────────────────────────────────── */
 
-function PtApp({ step, perWeek, setPerWeek }: { step: number; perWeek: number; setPerWeek: (n: number) => void }) {
+function PtApp({ step, perWeek, setPerWeek, activeActions }: { step: number; perWeek: number; setPerWeek: (n: number) => void; activeActions: string[] }) {
   const sessionsDone = step >= 5 ? 3 : step >= 4 ? 1 : 0;
   return (
     <div className="min-h-full bg-pitch-ptbg px-4 pb-6 pt-9 text-white">
@@ -495,25 +558,41 @@ function PtApp({ step, perWeek, setPerWeek }: { step: number; perWeek: number; s
         </div>
       )}
 
-      {step >= 6 && (
+      {activeActions.length > 0 && (
         <div
-          className="pitch-pop mt-4 rounded-2xl border p-4"
+          className="pitch-rise mt-4 rounded-2xl border p-4"
           style={{
             borderColor: "rgba(214,38,84,0.45)",
             background: "rgba(214,38,84,0.12)",
           }}
         >
           <p className="text-[10px] uppercase tracking-[0.16em]" style={{ color: "#ff7ea2" }}>
-            Growth Action bonus
+            Growth Actions · bonus eligible
           </p>
-          <p className="mt-1.5 text-sm text-white/85">
-            Google review from Alex
-          </p>
-          <p className="mt-2 font-mono text-lg font-semibold" style={{ color: "#ff7ea2" }}>
-            +$15 · via Pinch
+          <div className="mt-2 space-y-2">
+            {GROWTH_ACTIONS.filter((a) => activeActions.includes(a.id)).map(
+              (a) => (
+                <div
+                  key={a.id}
+                  className="flex items-center justify-between gap-3 rounded-xl bg-black/25 px-3 py-2"
+                >
+                  <span className="text-xs text-white/85">{a.label}</span>
+                  <span
+                    className="shrink-0 font-mono text-xs font-semibold"
+                    style={{ color: "#ff7ea2" }}
+                  >
+                    +${a.bonus}
+                  </span>
+                </div>
+              ),
+            )}
+          </div>
+          <p className="mt-2 text-[10px] text-white/55">
+            {step >= 6 ? "Completed · paid via Pinch" : "Paid via Pinch on completion"}
           </p>
         </div>
       )}
+
 
 
       {step >= 7 && (
@@ -819,13 +898,22 @@ function PitchDemo() {
   const [step, setStep] = useState(0);
   const [perWeek, setPerWeek] = useState(2);
   const [tab, setTab] = useState<"manager" | "pt" | "member">("manager");
+  const [activeActions, setActiveActions] = useState<string[]>([]);
+
+  const toggleAction = useCallback((id: string) => {
+    setActiveActions((a) =>
+      a.includes(id) ? a.filter((x) => x !== id) : [...a, id],
+    );
+  }, []);
 
   const next = useCallback(() => setStep((s) => Math.min(9, s + 1)), []);
   const prev = useCallback(() => setStep((s) => Math.max(0, s - 1)), []);
   const reset = useCallback(() => {
     setStep(0);
     setPerWeek(2);
+    setActiveActions([]);
   }, []);
+
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -913,12 +1001,22 @@ function PitchDemo() {
 
       <main className="mx-auto grid max-w-[1500px] gap-6 px-4 py-6 sm:px-6 xl:grid-cols-[52fr_48fr]">
         <div className={tab === "manager" ? "block" : "hidden xl:block"}>
-          <ManagerDashboard step={step} />
+          <ManagerDashboard
+            step={step}
+            activeActions={activeActions}
+            toggleAction={toggleAction}
+          />
         </div>
         <div className="grid gap-6 sm:grid-cols-2">
           <div className={tab === "pt" ? "block" : "hidden xl:block"}>
             <Phone label="PT app · Sarah" tone="violet">
-              <PtApp step={step} perWeek={perWeek} setPerWeek={setPerWeek} />
+              <PtApp
+                step={step}
+                perWeek={perWeek}
+                setPerWeek={setPerWeek}
+                activeActions={activeActions}
+              />
+
             </Phone>
           </div>
           <div className={tab === "member" ? "block" : "hidden xl:block"}>
