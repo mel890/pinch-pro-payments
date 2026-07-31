@@ -299,36 +299,75 @@ function ManagerDashboard({ step }: { step: number }) {
         </p>
       )}
 
-      {/* Growth Actions (manager-set) */}
+      {/* Growth Actions (club-defined) */}
       <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-        <p className="text-[10px] uppercase tracking-[0.16em] text-white/45">
-          Growth Actions · manager-set
-        </p>
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-medium text-white">Google review</p>
-            <p className="text-xs text-white/50">
-              Trainer bonus when a member leaves a review
-            </p>
-          </div>
-          <span
-            className="rounded-full border px-3 py-1 font-mono text-xs font-semibold"
-            style={{
-              borderColor: "rgba(214,38,84,0.45)",
-              background: "rgba(214,38,84,0.12)",
-              color: "#ff7ea2",
-            }}
-          >
-            +$15 · via Pinch
-          </span>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-[10px] uppercase tracking-[0.16em] text-white/45">
+            Growth Actions
+          </p>
+          <p className="font-mono text-xs tabular-nums text-white/60">
+            Actions completed:{" "}
+            <span className="text-pitch-cyan">{completedActions}</span>
+          </p>
         </div>
-        {step >= 6 && (
+
+        <div className="mt-3 space-y-2">
+          {GROWTH_ACTIONS.map((a) => {
+            const on = activeActions.includes(a.id);
+            return (
+              <div
+                key={a.id}
+                className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 transition-colors duration-300 ${
+                  on
+                    ? "border-pitch-cyan/50 bg-pitch-cyan/10"
+                    : `border-white/10 bg-white/[0.02] ${a.optional ? "opacity-55" : ""}`
+                }`}
+              >
+                <div className="min-w-0">
+                  <p
+                    className={`truncate text-sm ${on ? "text-pitch-cyan" : "text-white/75"}`}
+                  >
+                    {a.label}
+                    {a.optional && !on && (
+                      <span className="ml-2 text-[10px] uppercase tracking-wider text-white/35">
+                        optional
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-[11px] text-white/45">
+                    +${a.bonus} trainer bonus
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => toggleAction(a.id)}
+                  aria-pressed={on}
+                  className={`shrink-0 rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors duration-300 ${
+                    on
+                      ? "border-pitch-cyan/60 bg-pitch-cyan/20 text-pitch-cyan"
+                      : "border-white/20 text-white/60"
+                  }`}
+                >
+                  {on ? "Active" : "Activate"}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+
+        <p className="mt-3 text-[11px] text-white/45">
+          Club-configurable — bonuses paid via Pinch
+        </p>
+
+        {step >= 6 && activeActions.length > 0 && (
           <p className="pitch-pop mt-3 flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium" style={{ borderColor: "rgba(214,38,84,0.45)", background: "rgba(214,38,84,0.12)", color: "#ff7ea2" }}>
-            <Check className="size-3.5" /> Alex left a Google review — $15 bonus
-            paid to Sarah · via Pinch
+            <Check className="size-3.5" /> {completedActions} action
+            {completedActions === 1 ? "" : "s"} completed by Alex — $
+            {activeBonusTotal} bonus paid to Sarah · via Pinch
           </p>
         )}
       </div>
+
 
 
       {/* Revenue line */}
