@@ -879,6 +879,7 @@ type Msg = { id: string; from: "club" | "alex"; body: React.ReactNode };
 
 function memberThread(
   step: number,
+  verified: number,
   askedActions: string[],
   doneActions: string[],
   completeAction: (id: string) => void,
@@ -918,38 +919,29 @@ function memberThread(
       from: "club",
       body: <span>You're matched with Sarah 🎉 First session booked.</span>,
     });
-  if (step >= 4)
+  for (let i = 0; i < sessionsAvailable(step); i++) {
+    const n = i + 1;
+    const done = i < verified;
     msgs.push({
-      id: "s1",
+      id: `s${n}`,
       from: "club",
       body: (
         <span>
-          Session 1 of 3 — show this at check-in.
-          <FakeQr />
-          <span className="mt-2 block text-[11px] opacity-70">
-            Goal: Build strength &amp; train consistently
+          Session {n} of 3 — show this at check-in 💪
+          <span
+            className={`mt-2 block ${done ? "opacity-40" : ""}`}
+          >
+            <FakeQr />
           </span>
-        </span>
-      ),
-    });
-  if (step >= 5) {
-    msgs.push({
-      id: "s2",
-      from: "club",
-      body: (
-        <span>
-          Session 2 of 3 — show this at check-in.
-          <FakeQr />
-        </span>
-      ),
-    });
-    msgs.push({
-      id: "s3",
-      from: "club",
-      body: (
-        <span>
-          Session 3 of 3 — show this at check-in.
-          <FakeQr />
+          {done ? (
+            <span className="mt-2 block rounded-lg bg-[#22C55E]/15 px-2 py-1 text-[12px] font-semibold text-[#15803d]">
+              Checked in ✓
+            </span>
+          ) : (
+            <span className="mt-2 block text-[11px] opacity-70">
+              Goal: Build strength &amp; train consistently
+            </span>
+          )}
         </span>
       ),
     });
@@ -1043,20 +1035,28 @@ function memberThread(
 
 function MemberPhone({
   step,
+  verified,
   askedActions,
   doneActions,
   completeAction,
 }: {
   step: number;
+  verified: number;
   askedActions: string[];
   doneActions: string[];
   completeAction: (id: string) => void;
 }) {
-  const msgs = memberThread(step, askedActions, doneActions, completeAction);
+  const msgs = memberThread(
+    step,
+    verified,
+    askedActions,
+    doneActions,
+    completeAction,
+  );
   const endRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [step, askedActions.length, doneActions.length]);
+  }, [step, verified, askedActions.length, doneActions.length]);
 
 
   const showLinkPage = step === 8;
@@ -1142,6 +1142,8 @@ function PitchDemo() {
   const [activeActions, setActiveActions] = useState<string[]>(["review"]);
   const [askedActions, setAskedActions] = useState<string[]>([]);
   const [doneActions, setDoneActions] = useState<string[]>([]);
+  const [scanned, setScanned] = useState(0);
+  const [playing, setPlaying] = useState(false);
 
   const toggleAction = useCallback((id: string) => {
     setActiveActions((a) =>
@@ -1163,11 +1165,34 @@ function PitchDemo() {
     setDoneActions((d) => (d.includes(id) ? d : [...d, id]));
   }, []);
 
+  const verified =
+    step >= 6 ? 3 : Math.min(scanned, sessionsAvailable(step));
+
+  const scanSession = useCallback(() => {
+    setScanned((n) => Math.min(3, n + 1));
+  }, []);
+
+  const playSessions = useCallback(() => {
+    setPlaying(true);
+  }, []);
+
+  useEffect(() => {
+    if (!playing) return;
+    if (verified >= sessionsAvailable(step)) {
+      setPlaying(false);
+      return;
+    }
+    const t = setTimeout(() => setScanned((n) => Math.min(3, n + 1)), 1100);
+    return () => clearTimeout(t);
+  }, [playing, verified, step]);
+
   const next = useCallback(() => setStep((s) => Math.min(9, s + 1)), []);
   const prev = useCallback(() => setStep((s) => Math.max(0, s - 1)), []);
   const reset = useCallback(() => {
     setStep(0);
     setPerWeek(2);
+    setScanned(0);
+    setPlaying(false);
     setActiveActions(["review"]);
     setAskedActions([]);
     setDoneActions([]);
@@ -1263,6 +1288,7 @@ function PitchDemo() {
         <div className={tab === "manager" ? "block" : "hidden xl:block"}>
           <ManagerDashboard
             step={step}
+            verified={verified}
             activeActions={activeActions}
             toggleAction={toggleAction}
             askedActions={askedActions}
@@ -1274,6 +1300,10 @@ function PitchDemo() {
             <Phone label="PT app · Sarah" tone="violet">
               <PtApp
                 step={step}
+                verified={verified}
+                scanSession={scanSession}
+                playSessions={playSessions}
+                playing={playing}
                 perWeek={perWeek}
                 setPerWeek={setPerWeek}
                 activeActions={activeActions}
@@ -1288,6 +1318,7 @@ function PitchDemo() {
             <Phone label="Member phone · Alex" tone="green">
               <MemberPhone
                 step={step}
+                verified={verified}
                 askedActions={askedActions}
                 doneActions={doneActions}
                 completeAction={completeAction}
