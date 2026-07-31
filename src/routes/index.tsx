@@ -373,13 +373,13 @@ function ManagerDashboard({
 
         <ol className="mt-4 grid grid-cols-5 gap-2">
           {[
-            { l: "Bought", at: 1 },
-            { l: "Matched", at: 2 },
+            { l: "Bought", at: 1, min: 0 },
+            { l: "Matched", at: 2, min: 0 },
             { l: "1/3", at: 4, min: 1 },
             { l: "3/3", at: 5, min: 3 },
-            { l: "Converted", at: 9 },
+            { l: "Converted", at: 9, min: 0 },
           ].map((n) => {
-            const on = step >= n.at && verified >= (n.min ?? 0);
+            const on = step >= n.at && verified >= n.min;
             return (
               <li key={n.l} className="text-center">
                 <div
@@ -586,6 +586,10 @@ function Phone({
 
 function PtApp({
   step,
+  verified,
+  scanSession,
+  playSessions,
+  playing,
   perWeek,
   setPerWeek,
   activeActions,
@@ -594,6 +598,10 @@ function PtApp({
   askAction,
 }: {
   step: number;
+  verified: number;
+  scanSession: () => void;
+  playSessions: () => void;
+  playing: boolean;
   perWeek: number;
   setPerWeek: (n: number) => void;
   activeActions: string[];
@@ -601,7 +609,9 @@ function PtApp({
   doneActions: string[];
   askAction: (id: string) => void;
 }) {
-  const sessionsDone = step >= 5 ? 3 : step >= 4 ? 1 : 0;
+  const sessionsDone = verified;
+  const available = sessionsAvailable(step);
+  const nextSession = sessionsDone < available ? sessionsDone : -1;
   return (
     <div className="min-h-full bg-pitch-ptbg px-4 pb-6 pt-9 text-white">
       <div className="flex items-center gap-2">
