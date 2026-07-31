@@ -272,18 +272,20 @@ export const GROWTH_ACTIONS: GrowthAction[] = [
 
 function ManagerDashboard({
   step,
+  verified,
   activeActions,
   toggleAction,
   askedActions,
   doneActions,
 }: {
   step: number;
+  verified: number;
   activeActions: string[];
   toggleAction: (id: string) => void;
   askedActions: string[];
   doneActions: string[];
 }) {
-  const m = metrics(step);
+  const m = metrics(step, verified);
   const completedList = GROWTH_ACTIONS.filter((a) => doneActions.includes(a.id));
   const completedActions = completedList.length;
 
