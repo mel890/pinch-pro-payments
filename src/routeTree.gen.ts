@@ -27,6 +27,7 @@ import { Route as CampaignRouteImport } from './routes/campaign'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as JourneyAlexRouteImport } from './routes/journey.alex'
 import { Route as ConfirmSessionDemoRouteImport } from './routes/confirm-session.demo'
+import { Route as ApiPublicTmpCreateSubscriptionRouteImport } from './routes/api/public/tmp-create-subscription'
 import { Route as ApiPublicTmpCreatePlanRouteImport } from './routes/api/public/tmp-create-plan'
 import { Route as ApiPublicPinchWebhookRouteImport } from './routes/api/public/pinch-webhook'
 
@@ -120,6 +121,12 @@ const ConfirmSessionDemoRoute = ConfirmSessionDemoRouteImport.update({
   path: '/confirm-session/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTmpCreateSubscriptionRoute =
+  ApiPublicTmpCreateSubscriptionRouteImport.update({
+    id: '/api/public/tmp-create-subscription',
+    path: '/api/public/tmp-create-subscription',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicTmpCreatePlanRoute = ApiPublicTmpCreatePlanRouteImport.update({
   id: '/api/public/tmp-create-plan',
   path: '/api/public/tmp-create-plan',
@@ -152,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/journey/alex': typeof JourneyAlexRoute
   '/api/public/pinch-webhook': typeof ApiPublicPinchWebhookRoute
   '/api/public/tmp-create-plan': typeof ApiPublicTmpCreatePlanRoute
+  '/api/public/tmp-create-subscription': typeof ApiPublicTmpCreateSubscriptionRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -174,6 +182,7 @@ export interface FileRoutesByTo {
   '/journey/alex': typeof JourneyAlexRoute
   '/api/public/pinch-webhook': typeof ApiPublicPinchWebhookRoute
   '/api/public/tmp-create-plan': typeof ApiPublicTmpCreatePlanRoute
+  '/api/public/tmp-create-subscription': typeof ApiPublicTmpCreateSubscriptionRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -197,6 +206,7 @@ export interface FileRoutesById {
   '/journey/alex': typeof JourneyAlexRoute
   '/api/public/pinch-webhook': typeof ApiPublicPinchWebhookRoute
   '/api/public/tmp-create-plan': typeof ApiPublicTmpCreatePlanRoute
+  '/api/public/tmp-create-subscription': typeof ApiPublicTmpCreateSubscriptionRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -221,6 +231,7 @@ export interface FileRouteTypes {
     | '/journey/alex'
     | '/api/public/pinch-webhook'
     | '/api/public/tmp-create-plan'
+    | '/api/public/tmp-create-subscription'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -243,6 +254,7 @@ export interface FileRouteTypes {
     | '/journey/alex'
     | '/api/public/pinch-webhook'
     | '/api/public/tmp-create-plan'
+    | '/api/public/tmp-create-subscription'
   id:
     | '__root__'
     | '/'
@@ -265,6 +277,7 @@ export interface FileRouteTypes {
     | '/journey/alex'
     | '/api/public/pinch-webhook'
     | '/api/public/tmp-create-plan'
+    | '/api/public/tmp-create-subscription'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -288,6 +301,7 @@ export interface RootRouteChildren {
   JourneyAlexRoute: typeof JourneyAlexRoute
   ApiPublicPinchWebhookRoute: typeof ApiPublicPinchWebhookRoute
   ApiPublicTmpCreatePlanRoute: typeof ApiPublicTmpCreatePlanRoute
+  ApiPublicTmpCreateSubscriptionRoute: typeof ApiPublicTmpCreateSubscriptionRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -418,6 +432,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConfirmSessionDemoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/tmp-create-subscription': {
+      id: '/api/public/tmp-create-subscription'
+      path: '/api/public/tmp-create-subscription'
+      fullPath: '/api/public/tmp-create-subscription'
+      preLoaderRoute: typeof ApiPublicTmpCreateSubscriptionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/tmp-create-plan': {
       id: '/api/public/tmp-create-plan'
       path: '/api/public/tmp-create-plan'
@@ -456,7 +477,18 @@ const rootRouteChildren: RootRouteChildren = {
   JourneyAlexRoute: JourneyAlexRoute,
   ApiPublicPinchWebhookRoute: ApiPublicPinchWebhookRoute,
   ApiPublicTmpCreatePlanRoute: ApiPublicTmpCreatePlanRoute,
+  ApiPublicTmpCreateSubscriptionRoute: ApiPublicTmpCreateSubscriptionRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
