@@ -338,6 +338,8 @@ function ManagerDashboard({
         <div className="mt-3 space-y-2">
           {GROWTH_ACTIONS.map((a) => {
             const on = activeActions.includes(a.id);
+            const asked = askedActions.includes(a.id);
+            const done = doneActions.includes(a.id);
             return (
               <div
                 key={a.id}
@@ -360,6 +362,20 @@ function ManagerDashboard({
                   </p>
                   <p className="text-[11px] text-white/45">
                     +${a.bonus} trainer bonus
+                    {on && (
+                      <>
+                        {" · "}
+                        <span className="font-mono tabular-nums">
+                          {asked ? 1 : 0} asked · {done ? 1 : 0} completed
+                        </span>
+                        {" · "}
+                        <span
+                          style={{ color: done ? "#ff7ea2" : "rgba(255,255,255,0.4)" }}
+                        >
+                          {done ? "Paid via Pinch" : asked ? "Pending" : "Not asked"}
+                        </span>
+                      </>
+                    )}
                   </p>
                 </div>
                 <button
@@ -383,14 +399,30 @@ function ManagerDashboard({
           Club-configurable — bonuses paid via Pinch
         </p>
 
-        {step >= 6 && activeActions.length > 0 && (
-          <p className="pitch-pop mt-3 flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium" style={{ borderColor: "rgba(214,38,84,0.45)", background: "rgba(214,38,84,0.12)", color: "#ff7ea2" }}>
-            <Check className="size-3.5" /> {completedActions} action
-            {completedActions === 1 ? "" : "s"} completed by Alex — $
-            {activeBonusTotal} bonus paid to Sarah · via Pinch
-          </p>
+        {completedList.length > 0 && (
+          <div className="mt-3 space-y-2">
+            {completedList.map((a) => (
+              <div key={a.id} className="grid gap-1">
+                <p className="font-mono text-[11px] tabular-nums text-white/55">
+                  {a.counterLabel}:{" "}
+                  <span className="text-pitch-cyan">{a.counterBase + 1}</span>
+                </p>
+                <p
+                  className="pitch-pop flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium"
+                  style={{
+                    borderColor: "rgba(214,38,84,0.45)",
+                    background: "rgba(214,38,84,0.12)",
+                    color: "#ff7ea2",
+                  }}
+                >
+                  <Check className="size-3.5" /> +${a.bonus} → Sarah · via Pinch
+                </p>
+              </div>
+            ))}
+          </div>
         )}
       </div>
+
 
 
 
