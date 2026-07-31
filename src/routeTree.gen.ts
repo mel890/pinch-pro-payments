@@ -13,6 +13,7 @@ import { Route as TrainerCapacityRouteImport } from './routes/trainer-capacity'
 import { Route as TrainerRouteImport } from './routes/trainer'
 import { Route as ScanRouteImport } from './routes/scan'
 import { Route as ReviewRouteImport } from './routes/review'
+import { Route as PitchDemoRouteImport } from './routes/pitch-demo'
 import { Route as PayRouteImport } from './routes/pay'
 import { Route as OpportunityRouteImport } from './routes/opportunity'
 import { Route as OngoingRouteImport } from './routes/ongoing'
@@ -49,6 +50,11 @@ const ScanRoute = ScanRouteImport.update({
 const ReviewRoute = ReviewRouteImport.update({
   id: '/review',
   path: '/review',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PitchDemoRoute = PitchDemoRouteImport.update({
+  id: '/pitch-demo',
+  path: '/pitch-demo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PayRoute = PayRouteImport.update({
@@ -151,6 +157,7 @@ export interface FileRoutesByFullPath {
   '/ongoing': typeof OngoingRoute
   '/opportunity': typeof OpportunityRoute
   '/pay': typeof PayRoute
+  '/pitch-demo': typeof PitchDemoRoute
   '/review': typeof ReviewRoute
   '/scan': typeof ScanRoute
   '/trainer': typeof TrainerRoute
@@ -174,6 +181,7 @@ export interface FileRoutesByTo {
   '/ongoing': typeof OngoingRoute
   '/opportunity': typeof OpportunityRoute
   '/pay': typeof PayRoute
+  '/pitch-demo': typeof PitchDemoRoute
   '/review': typeof ReviewRoute
   '/scan': typeof ScanRoute
   '/trainer': typeof TrainerRoute
@@ -198,6 +206,7 @@ export interface FileRoutesById {
   '/ongoing': typeof OngoingRoute
   '/opportunity': typeof OpportunityRoute
   '/pay': typeof PayRoute
+  '/pitch-demo': typeof PitchDemoRoute
   '/review': typeof ReviewRoute
   '/scan': typeof ScanRoute
   '/trainer': typeof TrainerRoute
@@ -223,6 +232,7 @@ export interface FileRouteTypes {
     | '/ongoing'
     | '/opportunity'
     | '/pay'
+    | '/pitch-demo'
     | '/review'
     | '/scan'
     | '/trainer'
@@ -246,6 +256,7 @@ export interface FileRouteTypes {
     | '/ongoing'
     | '/opportunity'
     | '/pay'
+    | '/pitch-demo'
     | '/review'
     | '/scan'
     | '/trainer'
@@ -269,6 +280,7 @@ export interface FileRouteTypes {
     | '/ongoing'
     | '/opportunity'
     | '/pay'
+    | '/pitch-demo'
     | '/review'
     | '/scan'
     | '/trainer'
@@ -293,6 +305,7 @@ export interface RootRouteChildren {
   OngoingRoute: typeof OngoingRoute
   OpportunityRoute: typeof OpportunityRoute
   PayRoute: typeof PayRoute
+  PitchDemoRoute: typeof PitchDemoRoute
   ReviewRoute: typeof ReviewRoute
   ScanRoute: typeof ScanRoute
   TrainerRoute: typeof TrainerRoute
@@ -332,6 +345,13 @@ declare module '@tanstack/react-router' {
       path: '/review'
       fullPath: '/review'
       preLoaderRoute: typeof ReviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pitch-demo': {
+      id: '/pitch-demo'
+      path: '/pitch-demo'
+      fullPath: '/pitch-demo'
+      preLoaderRoute: typeof PitchDemoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pay': {
@@ -469,6 +489,7 @@ const rootRouteChildren: RootRouteChildren = {
   OngoingRoute: OngoingRoute,
   OpportunityRoute: OpportunityRoute,
   PayRoute: PayRoute,
+  PitchDemoRoute: PitchDemoRoute,
   ReviewRoute: ReviewRoute,
   ScanRoute: ScanRoute,
   TrainerRoute: TrainerRoute,
@@ -482,13 +503,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
