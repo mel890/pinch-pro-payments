@@ -1005,6 +1005,8 @@ function PitchDemo() {
             step={step}
             activeActions={activeActions}
             toggleAction={toggleAction}
+            askedActions={askedActions}
+            doneActions={doneActions}
           />
         </div>
         <div className="grid gap-6 sm:grid-cols-2">
@@ -1015,17 +1017,26 @@ function PitchDemo() {
                 perWeek={perWeek}
                 setPerWeek={setPerWeek}
                 activeActions={activeActions}
+                askedActions={askedActions}
+                doneActions={doneActions}
+                askAction={askAction}
               />
 
             </Phone>
           </div>
           <div className={tab === "member" ? "block" : "hidden xl:block"}>
             <Phone label="Member phone · Alex" tone="green">
-              <MemberPhone step={step} />
+              <MemberPhone
+                step={step}
+                askedActions={askedActions}
+                doneActions={doneActions}
+                completeAction={completeAction}
+              />
             </Phone>
           </div>
         </div>
       </main>
+
     </div>
   );
 }
