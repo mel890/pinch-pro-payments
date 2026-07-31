@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import vezaptLogo from "@/assets/vezapt-logo.png.asset.json";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ChevronLeft,
