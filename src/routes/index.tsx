@@ -241,33 +241,6 @@ export const GROWTH_ACTIONS: GrowthAction[] = [
     counterLabel: "Tagged posts",
     counterBase: 11,
   },
-  {
-    id: "cardio",
-    label: "Book 2 extra cardio sessions",
-    bonus: 20,
-    kind: "trainer",
-    ptInstruction: "You book them — paid as soon as both are in the calendar.",
-    memberSms:
-      "Added 2 short cardio sessions this week to help you hit your goal, Alex — you in? 💪",
-    memberCta: "Sounds good ▶",
-    memberReply: "I'm in 💪",
-    counterLabel: "Extra sessions booked",
-    counterBase: 34,
-  },
-  {
-    id: "rebook",
-    label: "Rebook next month's pack",
-    bonus: 20,
-    kind: "trainer",
-    ptInstruction: "You lock in next month's pack — paid on rebooking.",
-    memberSms:
-      "Great work these 3 sessions — you've got real momentum. Want me to lock in next month?",
-    memberCta: "Lock it in ▶",
-    memberReply: "Locked in for next month ✅",
-    counterLabel: "Packs rebooked",
-    counterBase: 9,
-    optional: true,
-  },
 ];
 
 function ManagerDashboard({
