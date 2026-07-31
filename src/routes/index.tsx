@@ -175,31 +175,108 @@ function Bar({
 
 /* ── Manager dashboard (cyan) ────────────────────────────────────────── */
 
-export const GROWTH_ACTIONS: {
+export type GrowthAction = {
   id: string;
   label: string;
   bonus: number;
+  /** who controls the outcome — member-completed bonuses stay pending until Alex acts */
+  kind: "member" | "trainer";
+  ptInstruction: string;
+  memberSms: string;
+  memberCta: string;
+  memberReply: string;
+  counterLabel: string;
+  counterBase: number;
   optional?: boolean;
-}[] = [
-  { id: "review", label: "Request a Google review", bonus: 15 },
-  { id: "referral", label: "Ask for a referral", bonus: 25 },
-  { id: "cardio", label: "Book 2 extra cardio sessions", bonus: 20 },
-  { id: "rebook", label: "Rebook next month's pack", bonus: 20, optional: true },
+};
+
+export const GROWTH_ACTIONS: GrowthAction[] = [
+  {
+    id: "review",
+    label: "Request a Google review",
+    bonus: 15,
+    kind: "member",
+    ptInstruction: "Ask Alex for a Google review. Paid when the review is left.",
+    memberSms:
+      "Loved our sessions, Alex 💪 If you've got 30 secs, a quick Google review would mean a lot — no pressure.",
+    memberCta: "Leave a Google review ▶",
+    memberReply: "Done ✓ left you 5 stars ⭐",
+    counterLabel: "Reviews captured",
+    counterBase: 23,
+  },
+  {
+    id: "referral",
+    label: "Ask for a referral",
+    bonus: 25,
+    kind: "member",
+    ptInstruction:
+      "Share your referral link with Alex. Paid when the referred person converts.",
+    memberSms:
+      "You've been smashing it 👏 Got a mate who wants to start? Send them my way anytime.",
+    memberCta: "Share with a mate ▶",
+    memberReply: "Sent my mate Priya your way 🙌",
+    counterLabel: "Referrals converted",
+    counterBase: 7,
+  },
+  {
+    id: "ig",
+    label: "IG post & tag",
+    bonus: 20,
+    kind: "member",
+    ptInstruction: "Invite Alex to post & tag. Paid when the tagged post goes live.",
+    memberSms:
+      "If you post a gym pic, tag me @sarahnguyen.pt & I'll repost you 🙌 only if you're keen!",
+    memberCta: "Post & tag @sarahnguyen.pt ▶",
+    memberReply: "Posted & tagged you 📸",
+    counterLabel: "Tagged posts",
+    counterBase: 11,
+  },
+  {
+    id: "cardio",
+    label: "Book 2 extra cardio sessions",
+    bonus: 20,
+    kind: "trainer",
+    ptInstruction: "You book them — paid as soon as both are in the calendar.",
+    memberSms:
+      "Added 2 short cardio sessions this week to help you hit your goal, Alex — you in? 💪",
+    memberCta: "Sounds good ▶",
+    memberReply: "I'm in 💪",
+    counterLabel: "Extra sessions booked",
+    counterBase: 34,
+  },
+  {
+    id: "rebook",
+    label: "Rebook next month's pack",
+    bonus: 20,
+    kind: "trainer",
+    ptInstruction: "You lock in next month's pack — paid on rebooking.",
+    memberSms:
+      "Great work these 3 sessions — you've got real momentum. Want me to lock in next month?",
+    memberCta: "Lock it in ▶",
+    memberReply: "Locked in for next month ✅",
+    counterLabel: "Packs rebooked",
+    counterBase: 9,
+    optional: true,
+  },
 ];
 
 function ManagerDashboard({
   step,
   activeActions,
   toggleAction,
+  askedActions,
+  doneActions,
 }: {
   step: number;
   activeActions: string[];
   toggleAction: (id: string) => void;
+  askedActions: string[];
+  doneActions: string[];
 }) {
   const m = metrics(step);
-  const activeList = GROWTH_ACTIONS.filter((a) => activeActions.includes(a.id));
-  const completedActions = step >= 6 ? activeList.length : 0;
-  const activeBonusTotal = activeList.reduce((t, a) => t + a.bonus, 0);
+  const completedList = GROWTH_ACTIONS.filter((a) => doneActions.includes(a.id));
+  const completedActions = completedList.length;
+
 
   return (
     <section className="rounded-3xl border border-white/10 bg-pitch-navy p-5 shadow-[0_30px_90px_rgba(0,0,0,0.45)] sm:p-6">
@@ -338,6 +415,8 @@ function ManagerDashboard({
         <div className="mt-3 space-y-2">
           {GROWTH_ACTIONS.map((a) => {
             const on = activeActions.includes(a.id);
+            const asked = askedActions.includes(a.id);
+            const done = doneActions.includes(a.id);
             return (
               <div
                 key={a.id}
@@ -360,6 +439,20 @@ function ManagerDashboard({
                   </p>
                   <p className="text-[11px] text-white/45">
                     +${a.bonus} trainer bonus
+                    {on && (
+                      <>
+                        {" · "}
+                        <span className="font-mono tabular-nums">
+                          {asked ? 1 : 0} asked · {done ? 1 : 0} completed
+                        </span>
+                        {" · "}
+                        <span
+                          style={{ color: done ? "#ff7ea2" : "rgba(255,255,255,0.4)" }}
+                        >
+                          {done ? "Paid via Pinch" : asked ? "Pending" : "Not asked"}
+                        </span>
+                      </>
+                    )}
                   </p>
                 </div>
                 <button
@@ -383,14 +476,30 @@ function ManagerDashboard({
           Club-configurable — bonuses paid via Pinch
         </p>
 
-        {step >= 6 && activeActions.length > 0 && (
-          <p className="pitch-pop mt-3 flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium" style={{ borderColor: "rgba(214,38,84,0.45)", background: "rgba(214,38,84,0.12)", color: "#ff7ea2" }}>
-            <Check className="size-3.5" /> {completedActions} action
-            {completedActions === 1 ? "" : "s"} completed by Alex — $
-            {activeBonusTotal} bonus paid to Sarah · via Pinch
-          </p>
+        {completedList.length > 0 && (
+          <div className="mt-3 space-y-2">
+            {completedList.map((a) => (
+              <div key={a.id} className="grid gap-1">
+                <p className="font-mono text-[11px] tabular-nums text-white/55">
+                  {a.counterLabel}:{" "}
+                  <span className="text-pitch-cyan">{a.counterBase + 1}</span>
+                </p>
+                <p
+                  className="pitch-pop flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium"
+                  style={{
+                    borderColor: "rgba(214,38,84,0.45)",
+                    background: "rgba(214,38,84,0.12)",
+                    color: "#ff7ea2",
+                  }}
+                >
+                  <Check className="size-3.5" /> +${a.bonus} → Sarah · via Pinch
+                </p>
+              </div>
+            ))}
+          </div>
         )}
       </div>
+
 
 
 
@@ -463,7 +572,23 @@ function Phone({
 
 /* ── PT app (violet) ─────────────────────────────────────────────────── */
 
-function PtApp({ step, perWeek, setPerWeek, activeActions }: { step: number; perWeek: number; setPerWeek: (n: number) => void; activeActions: string[] }) {
+function PtApp({
+  step,
+  perWeek,
+  setPerWeek,
+  activeActions,
+  askedActions,
+  doneActions,
+  askAction,
+}: {
+  step: number;
+  perWeek: number;
+  setPerWeek: (n: number) => void;
+  activeActions: string[];
+  askedActions: string[];
+  doneActions: string[];
+  askAction: (id: string) => void;
+}) {
   const sessionsDone = step >= 5 ? 3 : step >= 4 ? 1 : 0;
   return (
     <div className="min-h-full bg-pitch-ptbg px-4 pb-6 pt-9 text-white">
@@ -558,40 +683,67 @@ function PtApp({ step, perWeek, setPerWeek, activeActions }: { step: number; per
         </div>
       )}
 
-      {activeActions.length > 0 && (
-        <div
-          className="pitch-rise mt-4 rounded-2xl border p-4"
-          style={{
-            borderColor: "rgba(214,38,84,0.45)",
-            background: "rgba(214,38,84,0.12)",
-          }}
-        >
-          <p className="text-[10px] uppercase tracking-[0.16em]" style={{ color: "#ff7ea2" }}>
-            Growth Actions · bonus eligible
-          </p>
-          <div className="mt-2 space-y-2">
-            {GROWTH_ACTIONS.filter((a) => activeActions.includes(a.id)).map(
-              (a) => (
-                <div
-                  key={a.id}
-                  className="flex items-center justify-between gap-3 rounded-xl bg-black/25 px-3 py-2"
-                >
-                  <span className="text-xs text-white/85">{a.label}</span>
+      {step >= 6 && activeActions.length > 0 && (
+        <div className="pitch-rise mt-4 space-y-3">
+          {GROWTH_ACTIONS.filter((a) => activeActions.includes(a.id)).map((a) => {
+            const asked = askedActions.includes(a.id);
+            const done = doneActions.includes(a.id);
+            return (
+              <div
+                key={a.id}
+                className="rounded-2xl border border-pitch-violet/40 bg-pitch-violet/10 p-4"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-[10px] uppercase tracking-[0.16em] text-pitch-violet">
+                    Bonus Opportunity
+                  </p>
                   <span
-                    className="shrink-0 font-mono text-xs font-semibold"
-                    style={{ color: "#ff7ea2" }}
+                    className="shrink-0 rounded-full px-2 py-0.5 font-mono text-[11px] font-semibold"
+                    style={{
+                      background: done ? "rgba(214,38,84,0.18)" : "rgba(255,255,255,0.06)",
+                      color: done ? "#ff7ea2" : "rgba(255,255,255,0.45)",
+                    }}
                   >
-                    +${a.bonus}
+                    +${a.bonus} · via Pinch
                   </span>
                 </div>
-              ),
-            )}
-          </div>
-          <p className="mt-2 text-[10px] text-white/55">
-            {step >= 6 ? "Completed · paid via Pinch" : "Paid via Pinch on completion"}
-          </p>
+                <p className="mt-1.5 text-sm font-semibold">{a.label}</p>
+                <p className="mt-1 text-xs text-white/60">{a.ptInstruction}</p>
+
+                {done ? (
+                  <p
+                    className="pitch-pop mt-3 flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold"
+                    style={{ background: "rgba(214,38,84,0.18)", color: "#ff7ea2" }}
+                  >
+                    <Check className="size-4" /> Completed ✓ +${a.bonus} · via Pinch
+                  </p>
+                ) : asked ? (
+                  <p className="mt-3 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-center text-xs font-medium text-white/55">
+                    Pending — awaiting Alex
+                  </p>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => askAction(a.id)}
+                    className="mt-3 w-full rounded-xl bg-pitch-violet px-4 py-2.5 text-sm font-semibold"
+                  >
+                    {a.kind === "trainer" ? "Mark as done" : "Mark as asked"}
+                  </button>
+                )}
+
+                {!done && (
+                  <p className="mt-2 text-center text-[10px] text-white/40">
+                    {a.kind === "trainer"
+                      ? "Paid via Pinch when you complete it"
+                      : "Paid via Pinch only when Alex completes it"}
+                  </p>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
+
 
 
 
@@ -681,7 +833,12 @@ function FakeQr() {
 
 type Msg = { id: string; from: "club" | "alex"; body: React.ReactNode };
 
-function memberThread(step: number): Msg[] {
+function memberThread(
+  step: number,
+  askedActions: string[],
+  doneActions: string[],
+  completeAction: (id: string) => void,
+): Msg[] {
   const msgs: Msg[] = [
     {
       id: "hello",
@@ -776,7 +933,36 @@ function memberThread(step: number): Msg[] {
     });
     msgs.push({ id: "fb-a", from: "alex", body: <span>😀</span> });
   }
+  for (const a of GROWTH_ACTIONS) {
+    if (!askedActions.includes(a.id)) continue;
+    const done = doneActions.includes(a.id);
+    msgs.push({
+      id: `ga-${a.id}`,
+      from: "club",
+      body: (
+        <span>
+          {a.memberSms}
+          {!done && (
+            <button
+              type="button"
+              onClick={() => completeAction(a.id)}
+              className="mt-2 block w-full rounded-xl bg-pitch-green px-3 py-1.5 text-[12px] font-semibold text-white"
+            >
+              {a.memberCta}
+            </button>
+          )}
+        </span>
+      ),
+    });
+    if (done)
+      msgs.push({
+        id: `ga-${a.id}-a`,
+        from: "alex",
+        body: <span>{a.memberReply}</span>,
+      });
+  }
   if (step >= 7)
+
     msgs.push({
       id: "rec",
       from: "club",
@@ -811,12 +997,23 @@ function memberThread(step: number): Msg[] {
   return msgs;
 }
 
-function MemberPhone({ step }: { step: number }) {
-  const msgs = memberThread(step);
+function MemberPhone({
+  step,
+  askedActions,
+  doneActions,
+  completeAction,
+}: {
+  step: number;
+  askedActions: string[];
+  doneActions: string[];
+  completeAction: (id: string) => void;
+}) {
+  const msgs = memberThread(step, askedActions, doneActions, completeAction);
   const endRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [step]);
+  }, [step, askedActions.length, doneActions.length]);
+
 
   const showLinkPage = step === 8;
 
@@ -898,12 +1095,28 @@ function PitchDemo() {
   const [step, setStep] = useState(0);
   const [perWeek, setPerWeek] = useState(2);
   const [tab, setTab] = useState<"manager" | "pt" | "member">("manager");
-  const [activeActions, setActiveActions] = useState<string[]>([]);
+  const [activeActions, setActiveActions] = useState<string[]>(["review"]);
+  const [askedActions, setAskedActions] = useState<string[]>([]);
+  const [doneActions, setDoneActions] = useState<string[]>([]);
 
   const toggleAction = useCallback((id: string) => {
     setActiveActions((a) =>
       a.includes(id) ? a.filter((x) => x !== id) : [...a, id],
     );
+    setAskedActions((a) => a.filter((x) => x !== id));
+    setDoneActions((a) => a.filter((x) => x !== id));
+  }, []);
+
+  const askAction = useCallback((id: string) => {
+    setAskedActions((a) => (a.includes(id) ? a : [...a, id]));
+    const meta = GROWTH_ACTIONS.find((a) => a.id === id);
+    if (meta?.kind === "trainer") {
+      setDoneActions((d) => (d.includes(id) ? d : [...d, id]));
+    }
+  }, []);
+
+  const completeAction = useCallback((id: string) => {
+    setDoneActions((d) => (d.includes(id) ? d : [...d, id]));
   }, []);
 
   const next = useCallback(() => setStep((s) => Math.min(9, s + 1)), []);
@@ -911,8 +1124,11 @@ function PitchDemo() {
   const reset = useCallback(() => {
     setStep(0);
     setPerWeek(2);
-    setActiveActions([]);
+    setActiveActions(["review"]);
+    setAskedActions([]);
+    setDoneActions([]);
   }, []);
+
 
 
   useEffect(() => {
@@ -1005,6 +1221,8 @@ function PitchDemo() {
             step={step}
             activeActions={activeActions}
             toggleAction={toggleAction}
+            askedActions={askedActions}
+            doneActions={doneActions}
           />
         </div>
         <div className="grid gap-6 sm:grid-cols-2">
@@ -1015,17 +1233,26 @@ function PitchDemo() {
                 perWeek={perWeek}
                 setPerWeek={setPerWeek}
                 activeActions={activeActions}
+                askedActions={askedActions}
+                doneActions={doneActions}
+                askAction={askAction}
               />
 
             </Phone>
           </div>
           <div className={tab === "member" ? "block" : "hidden xl:block"}>
             <Phone label="Member phone · Alex" tone="green">
-              <MemberPhone step={step} />
+              <MemberPhone
+                step={step}
+                askedActions={askedActions}
+                doneActions={doneActions}
+                completeAction={completeAction}
+              />
             </Phone>
           </div>
         </div>
       </main>
+
     </div>
   );
 }
