@@ -495,25 +495,41 @@ function PtApp({ step, perWeek, setPerWeek }: { step: number; perWeek: number; s
         </div>
       )}
 
-      {step >= 6 && (
+      {activeActions.length > 0 && (
         <div
-          className="pitch-pop mt-4 rounded-2xl border p-4"
+          className="pitch-rise mt-4 rounded-2xl border p-4"
           style={{
             borderColor: "rgba(214,38,84,0.45)",
             background: "rgba(214,38,84,0.12)",
           }}
         >
           <p className="text-[10px] uppercase tracking-[0.16em]" style={{ color: "#ff7ea2" }}>
-            Growth Action bonus
+            Growth Actions · bonus eligible
           </p>
-          <p className="mt-1.5 text-sm text-white/85">
-            Google review from Alex
-          </p>
-          <p className="mt-2 font-mono text-lg font-semibold" style={{ color: "#ff7ea2" }}>
-            +$15 · via Pinch
+          <div className="mt-2 space-y-2">
+            {GROWTH_ACTIONS.filter((a) => activeActions.includes(a.id)).map(
+              (a) => (
+                <div
+                  key={a.id}
+                  className="flex items-center justify-between gap-3 rounded-xl bg-black/25 px-3 py-2"
+                >
+                  <span className="text-xs text-white/85">{a.label}</span>
+                  <span
+                    className="shrink-0 font-mono text-xs font-semibold"
+                    style={{ color: "#ff7ea2" }}
+                  >
+                    +${a.bonus}
+                  </span>
+                </div>
+              ),
+            )}
+          </div>
+          <p className="mt-2 text-[10px] text-white/55">
+            {step >= 6 ? "Completed · paid via Pinch" : "Paid via Pinch on completion"}
           </p>
         </div>
       )}
+
 
 
       {step >= 7 && (
