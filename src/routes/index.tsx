@@ -374,8 +374,7 @@ function ManagerDashboard({
       </div>
 
       {/* Member progress */}
-      <div className="mt-4 grid gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:grid-cols-3">
-        <Bar label="Confidence" value={m.confidence} max={10} suffix="/10" />
+      <div className="mt-4 grid gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:grid-cols-2">
         <Bar label="Weekly visits" value={m.visits} max={3} decimals={1} />
         <Bar label="Programme clarity" value={m.clarity} max={10} suffix="/10" />
       </div>
