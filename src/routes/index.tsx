@@ -299,6 +299,38 @@ function ManagerDashboard({ step }: { step: number }) {
         </p>
       )}
 
+      {/* Growth Actions (manager-set) */}
+      <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+        <p className="text-[10px] uppercase tracking-[0.16em] text-white/45">
+          Growth Actions · manager-set
+        </p>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium text-white">Google review</p>
+            <p className="text-xs text-white/50">
+              Trainer bonus when a member leaves a review
+            </p>
+          </div>
+          <span
+            className="rounded-full border px-3 py-1 font-mono text-xs font-semibold"
+            style={{
+              borderColor: "rgba(214,38,84,0.45)",
+              background: "rgba(214,38,84,0.12)",
+              color: "#ff7ea2",
+            }}
+          >
+            +$15 · via Pinch
+          </span>
+        </div>
+        {step >= 6 && (
+          <p className="pitch-pop mt-3 flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium" style={{ borderColor: "rgba(214,38,84,0.45)", background: "rgba(214,38,84,0.12)", color: "#ff7ea2" }}>
+            <Check className="size-3.5" /> Alex left a Google review — $15 bonus
+            paid to Sarah · via Pinch
+          </p>
+        )}
+      </div>
+
+
       {/* Revenue line */}
       <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
         <p className="text-[10px] uppercase tracking-[0.16em] text-white/45">
