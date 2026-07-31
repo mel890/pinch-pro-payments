@@ -463,7 +463,23 @@ function Phone({
 
 /* ── PT app (violet) ─────────────────────────────────────────────────── */
 
-function PtApp({ step, perWeek, setPerWeek, activeActions }: { step: number; perWeek: number; setPerWeek: (n: number) => void; activeActions: string[] }) {
+function PtApp({
+  step,
+  perWeek,
+  setPerWeek,
+  activeActions,
+  askedActions,
+  doneActions,
+  askAction,
+}: {
+  step: number;
+  perWeek: number;
+  setPerWeek: (n: number) => void;
+  activeActions: string[];
+  askedActions: string[];
+  doneActions: string[];
+  askAction: (id: string) => void;
+}) {
   const sessionsDone = step >= 5 ? 3 : step >= 4 ? 1 : 0;
   return (
     <div className="min-h-full bg-pitch-ptbg px-4 pb-6 pt-9 text-white">
