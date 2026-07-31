@@ -175,12 +175,17 @@ function Bar({
 
 /* ── Manager dashboard (cyan) ────────────────────────────────────────── */
 
-export const GROWTH_ACTIONS = [
+export const GROWTH_ACTIONS: {
+  id: string;
+  label: string;
+  bonus: number;
+  optional?: boolean;
+}[] = [
   { id: "review", label: "Request a Google review", bonus: 15 },
   { id: "referral", label: "Ask for a referral", bonus: 25 },
   { id: "cardio", label: "Book 2 extra cardio sessions", bonus: 20 },
   { id: "rebook", label: "Rebook next month's pack", bonus: 20, optional: true },
-] as const;
+];
 
 function ManagerDashboard({
   step,
