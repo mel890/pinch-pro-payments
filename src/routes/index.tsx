@@ -52,25 +52,35 @@ const STEPS = [
 
 const SESSION_TITLES = ["Understand", "Progress", "Review"] as const;
 
-function metrics(step: number) {
+/** How many of the 3 sessions the script has unlocked at this step. */
+export function sessionsAvailable(step: number): number {
+  if (step >= 5) return 3;
+  if (step >= 4) return 1;
+  return 0;
+}
+
+const CONFIDENCE = [5, 6, 7, 8] as const;
+const VISITS = [1.4, 1.9, 2.3, 2.6] as const;
+const CLARITY = [4, 6, 7, 8] as const;
+
+function metrics(step: number, v: number) {
   return {
     packs: 12 + (step >= 1 ? 1 : 0),
-    verified: 148 + (step >= 5 ? 3 : step >= 4 ? 1 : 0),
+    verified: 148 + v,
     conversions: 5 + (step >= 9 ? 1 : 0),
     recurring: step >= 9 ? 1800 : 1620,
     r30: step >= 9 ? 94 : 92,
     r60: step >= 9 ? 81 : 78,
     r90: step >= 9 ? 66 : 61,
-    confidence: step >= 5 ? 8 : step >= 4 ? 6 : 5,
-    visits: step >= 5 ? 2.6 : step >= 4 ? 1.9 : 1.4,
-    clarity: step >= 5 ? 8 : step >= 4 ? 6 : 4,
+    confidence: CONFIDENCE[v],
+    visits: VISITS[v],
+    clarity: CLARITY[v],
   };
 }
 
-function stage(step: number) {
+function stage(step: number, v: number) {
   if (step >= 9) return "Converted";
-  if (step >= 5) return "In sessions 3/3";
-  if (step >= 4) return "In sessions 1/3";
+  if (step >= 4) return `In sessions ${v}/3`;
   if (step >= 3) return "Matched · booked";
   if (step >= 2) return "Matched";
   if (step >= 1) return "Bought";
