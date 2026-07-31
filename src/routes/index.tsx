@@ -5,7 +5,6 @@ import {
   ChevronRight,
   RotateCcw,
   Check,
-  QrCode,
   Sparkles,
   Minus,
   Plus,
@@ -864,12 +863,12 @@ function PitchDemo() {
           <ManagerDashboard step={step} />
         </div>
         <div className="grid gap-6 sm:grid-cols-2">
-          <div className={tab === "pt" ? "block" : "hidden sm:block"}>
+          <div className={tab === "pt" ? "block" : "hidden xl:block"}>
             <Phone label="PT app · Sarah" tone="violet">
               <PtApp step={step} perWeek={perWeek} setPerWeek={setPerWeek} />
             </Phone>
           </div>
-          <div className={tab === "member" ? "block" : "hidden sm:block"}>
+          <div className={tab === "member" ? "block" : "hidden xl:block"}>
             <Phone label="Member phone · Alex" tone="green">
               <MemberPhone step={step} />
             </Phone>
