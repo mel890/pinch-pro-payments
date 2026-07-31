@@ -898,12 +898,28 @@ function PitchDemo() {
   const [step, setStep] = useState(0);
   const [perWeek, setPerWeek] = useState(2);
   const [tab, setTab] = useState<"manager" | "pt" | "member">("manager");
-  const [activeActions, setActiveActions] = useState<string[]>([]);
+  const [activeActions, setActiveActions] = useState<string[]>(["review"]);
+  const [askedActions, setAskedActions] = useState<string[]>([]);
+  const [doneActions, setDoneActions] = useState<string[]>([]);
 
   const toggleAction = useCallback((id: string) => {
     setActiveActions((a) =>
       a.includes(id) ? a.filter((x) => x !== id) : [...a, id],
     );
+    setAskedActions((a) => a.filter((x) => x !== id));
+    setDoneActions((a) => a.filter((x) => x !== id));
+  }, []);
+
+  const askAction = useCallback((id: string) => {
+    setAskedActions((a) => (a.includes(id) ? a : [...a, id]));
+    const meta = GROWTH_ACTIONS.find((a) => a.id === id);
+    if (meta?.kind === "trainer") {
+      setDoneActions((d) => (d.includes(id) ? d : [...d, id]));
+    }
+  }, []);
+
+  const completeAction = useCallback((id: string) => {
+    setDoneActions((d) => (d.includes(id) ? d : [...d, id]));
   }, []);
 
   const next = useCallback(() => setStep((s) => Math.min(9, s + 1)), []);
@@ -911,8 +927,11 @@ function PitchDemo() {
   const reset = useCallback(() => {
     setStep(0);
     setPerWeek(2);
-    setActiveActions([]);
+    setActiveActions(["review"]);
+    setAskedActions([]);
+    setDoneActions([]);
   }, []);
+
 
 
   useEffect(() => {
