@@ -175,31 +175,108 @@ function Bar({
 
 /* ── Manager dashboard (cyan) ────────────────────────────────────────── */
 
-export const GROWTH_ACTIONS: {
+export type GrowthAction = {
   id: string;
   label: string;
   bonus: number;
+  /** who controls the outcome — member-completed bonuses stay pending until Alex acts */
+  kind: "member" | "trainer";
+  ptInstruction: string;
+  memberSms: string;
+  memberCta: string;
+  memberReply: string;
+  counterLabel: string;
+  counterBase: number;
   optional?: boolean;
-}[] = [
-  { id: "review", label: "Request a Google review", bonus: 15 },
-  { id: "referral", label: "Ask for a referral", bonus: 25 },
-  { id: "cardio", label: "Book 2 extra cardio sessions", bonus: 20 },
-  { id: "rebook", label: "Rebook next month's pack", bonus: 20, optional: true },
+};
+
+export const GROWTH_ACTIONS: GrowthAction[] = [
+  {
+    id: "review",
+    label: "Request a Google review",
+    bonus: 15,
+    kind: "member",
+    ptInstruction: "Ask Alex for a Google review. Paid when the review is left.",
+    memberSms:
+      "Loved our sessions, Alex 💪 If you've got 30 secs, a quick Google review would mean a lot — no pressure.",
+    memberCta: "Leave a Google review ▶",
+    memberReply: "Done ✓ left you 5 stars ⭐",
+    counterLabel: "Reviews captured",
+    counterBase: 23,
+  },
+  {
+    id: "referral",
+    label: "Ask for a referral",
+    bonus: 25,
+    kind: "member",
+    ptInstruction:
+      "Share your referral link with Alex. Paid when the referred person converts.",
+    memberSms:
+      "You've been smashing it 👏 Got a mate who wants to start? Send them my way anytime.",
+    memberCta: "Share with a mate ▶",
+    memberReply: "Sent my mate Priya your way 🙌",
+    counterLabel: "Referrals converted",
+    counterBase: 7,
+  },
+  {
+    id: "ig",
+    label: "IG post & tag",
+    bonus: 20,
+    kind: "member",
+    ptInstruction: "Invite Alex to post & tag. Paid when the tagged post goes live.",
+    memberSms:
+      "If you post a gym pic, tag me @sarahnguyen.pt & I'll repost you 🙌 only if you're keen!",
+    memberCta: "Post & tag @sarahnguyen.pt ▶",
+    memberReply: "Posted & tagged you 📸",
+    counterLabel: "Tagged posts",
+    counterBase: 11,
+  },
+  {
+    id: "cardio",
+    label: "Book 2 extra cardio sessions",
+    bonus: 20,
+    kind: "trainer",
+    ptInstruction: "You book them — paid as soon as both are in the calendar.",
+    memberSms:
+      "Added 2 short cardio sessions this week to help you hit your goal, Alex — you in? 💪",
+    memberCta: "Sounds good ▶",
+    memberReply: "I'm in 💪",
+    counterLabel: "Extra sessions booked",
+    counterBase: 34,
+  },
+  {
+    id: "rebook",
+    label: "Rebook next month's pack",
+    bonus: 20,
+    kind: "trainer",
+    ptInstruction: "You lock in next month's pack — paid on rebooking.",
+    memberSms:
+      "Great work these 3 sessions — you've got real momentum. Want me to lock in next month?",
+    memberCta: "Lock it in ▶",
+    memberReply: "Locked in for next month ✅",
+    counterLabel: "Packs rebooked",
+    counterBase: 9,
+    optional: true,
+  },
 ];
 
 function ManagerDashboard({
   step,
   activeActions,
   toggleAction,
+  askedActions,
+  doneActions,
 }: {
   step: number;
   activeActions: string[];
   toggleAction: (id: string) => void;
+  askedActions: string[];
+  doneActions: string[];
 }) {
   const m = metrics(step);
-  const activeList = GROWTH_ACTIONS.filter((a) => activeActions.includes(a.id));
-  const completedActions = step >= 6 ? activeList.length : 0;
-  const activeBonusTotal = activeList.reduce((t, a) => t + a.bonus, 0);
+  const completedList = GROWTH_ACTIONS.filter((a) => doneActions.includes(a.id));
+  const completedActions = completedList.length;
+
 
   return (
     <section className="rounded-3xl border border-white/10 bg-pitch-navy p-5 shadow-[0_30px_90px_rgba(0,0,0,0.45)] sm:p-6">
