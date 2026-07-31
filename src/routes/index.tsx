@@ -819,13 +819,22 @@ function PitchDemo() {
   const [step, setStep] = useState(0);
   const [perWeek, setPerWeek] = useState(2);
   const [tab, setTab] = useState<"manager" | "pt" | "member">("manager");
+  const [activeActions, setActiveActions] = useState<string[]>([]);
+
+  const toggleAction = useCallback((id: string) => {
+    setActiveActions((a) =>
+      a.includes(id) ? a.filter((x) => x !== id) : [...a, id],
+    );
+  }, []);
 
   const next = useCallback(() => setStep((s) => Math.min(9, s + 1)), []);
   const prev = useCallback(() => setStep((s) => Math.max(0, s - 1)), []);
   const reset = useCallback(() => {
     setStep(0);
     setPerWeek(2);
+    setActiveActions([]);
   }, []);
+
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
