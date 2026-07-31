@@ -385,6 +385,27 @@ function ManagerDashboard({
         </p>
       )}
 
+      {/* Revenue line */}
+      <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+        <p className="text-[10px] uppercase tracking-[0.16em] text-white/45">
+          Revenue from this journey
+        </p>
+        <dl className="mt-3 space-y-2 text-sm">
+          <Row k="Kickstart pack (one-off)" v={step >= 1 ? "$249" : "—"} />
+          <Row k="Campaign fee to club" v={step >= 1 ? "$50" : "—"} />
+          <Row
+            k="Recurring coaching"
+            v={step >= 9 ? "$180/wk" : "—"}
+            accent={step >= 9}
+          />
+        </dl>
+        {step >= 9 && (
+          <p className="pitch-rise mt-3 flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium" style={{ borderColor: "rgba(214,38,84,0.45)", background: "rgba(214,38,84,0.12)", color: "#ff7ea2" }}>
+            <TrendingUp className="size-3.5" /> Recurring billing active · via Pinch
+          </p>
+        )}
+      </div>
+
       {/* Growth Actions (club-defined) */}
       <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -482,30 +503,6 @@ function ManagerDashboard({
               </div>
             ))}
           </div>
-        )}
-      </div>
-
-
-
-
-      {/* Revenue line */}
-      <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-        <p className="text-[10px] uppercase tracking-[0.16em] text-white/45">
-          Revenue from this journey
-        </p>
-        <dl className="mt-3 space-y-2 text-sm">
-          <Row k="Kickstart pack (one-off)" v={step >= 1 ? "$249" : "—"} />
-          <Row k="Campaign fee to club" v={step >= 1 ? "$50" : "—"} />
-          <Row
-            k="Recurring coaching"
-            v={step >= 9 ? "$180/wk" : "—"}
-            accent={step >= 9}
-          />
-        </dl>
-        {step >= 9 && (
-          <p className="pitch-rise mt-3 flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium" style={{ borderColor: "rgba(214,38,84,0.45)", background: "rgba(214,38,84,0.12)", color: "#ff7ea2" }}>
-            <TrendingUp className="size-3.5" /> Recurring billing active · via Pinch
-          </p>
         )}
       </div>
     </section>
