@@ -558,40 +558,67 @@ function PtApp({ step, perWeek, setPerWeek, activeActions }: { step: number; per
         </div>
       )}
 
-      {activeActions.length > 0 && (
-        <div
-          className="pitch-rise mt-4 rounded-2xl border p-4"
-          style={{
-            borderColor: "rgba(214,38,84,0.45)",
-            background: "rgba(214,38,84,0.12)",
-          }}
-        >
-          <p className="text-[10px] uppercase tracking-[0.16em]" style={{ color: "#ff7ea2" }}>
-            Growth Actions · bonus eligible
-          </p>
-          <div className="mt-2 space-y-2">
-            {GROWTH_ACTIONS.filter((a) => activeActions.includes(a.id)).map(
-              (a) => (
-                <div
-                  key={a.id}
-                  className="flex items-center justify-between gap-3 rounded-xl bg-black/25 px-3 py-2"
-                >
-                  <span className="text-xs text-white/85">{a.label}</span>
+      {step >= 6 && activeActions.length > 0 && (
+        <div className="pitch-rise mt-4 space-y-3">
+          {GROWTH_ACTIONS.filter((a) => activeActions.includes(a.id)).map((a) => {
+            const asked = askedActions.includes(a.id);
+            const done = doneActions.includes(a.id);
+            return (
+              <div
+                key={a.id}
+                className="rounded-2xl border border-pitch-violet/40 bg-pitch-violet/10 p-4"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-[10px] uppercase tracking-[0.16em] text-pitch-violet">
+                    Bonus Opportunity
+                  </p>
                   <span
-                    className="shrink-0 font-mono text-xs font-semibold"
-                    style={{ color: "#ff7ea2" }}
+                    className="shrink-0 rounded-full px-2 py-0.5 font-mono text-[11px] font-semibold"
+                    style={{
+                      background: done ? "rgba(214,38,84,0.18)" : "rgba(255,255,255,0.06)",
+                      color: done ? "#ff7ea2" : "rgba(255,255,255,0.45)",
+                    }}
                   >
-                    +${a.bonus}
+                    +${a.bonus} · via Pinch
                   </span>
                 </div>
-              ),
-            )}
-          </div>
-          <p className="mt-2 text-[10px] text-white/55">
-            {step >= 6 ? "Completed · paid via Pinch" : "Paid via Pinch on completion"}
-          </p>
+                <p className="mt-1.5 text-sm font-semibold">{a.label}</p>
+                <p className="mt-1 text-xs text-white/60">{a.ptInstruction}</p>
+
+                {done ? (
+                  <p
+                    className="pitch-pop mt-3 flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold"
+                    style={{ background: "rgba(214,38,84,0.18)", color: "#ff7ea2" }}
+                  >
+                    <Check className="size-4" /> Completed ✓ +${a.bonus} · via Pinch
+                  </p>
+                ) : asked ? (
+                  <p className="mt-3 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-center text-xs font-medium text-white/55">
+                    Pending — awaiting Alex
+                  </p>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => askAction(a.id)}
+                    className="mt-3 w-full rounded-xl bg-pitch-violet px-4 py-2.5 text-sm font-semibold"
+                  >
+                    {a.kind === "trainer" ? "Mark as done" : "Mark as asked"}
+                  </button>
+                )}
+
+                {!done && (
+                  <p className="mt-2 text-center text-[10px] text-white/40">
+                    {a.kind === "trainer"
+                      ? "Paid via Pinch when you complete it"
+                      : "Paid via Pinch only when Alex completes it"}
+                  </p>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
+
 
 
 
