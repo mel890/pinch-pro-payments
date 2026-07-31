@@ -666,33 +666,55 @@ function PtApp({
           <div className="mt-3 space-y-2">
             {SESSION_TITLES.map((t, i) => {
               const done = i < sessionsDone;
+              const isNext = i === nextSession;
               return (
                 <div
                   key={t}
                   className={`flex items-center justify-between rounded-xl border px-3 py-2.5 text-sm transition-colors duration-500 ${
                     done
                       ? "border-pitch-green/35 bg-pitch-green/10"
-                      : "border-white/10 bg-white/[0.02] text-white/45"
+                      : isNext
+                        ? "border-pitch-violet/45 bg-pitch-violet/10"
+                        : "border-white/10 bg-white/[0.02] text-white/45"
                   }`}
                 >
                   <span>
                     {i + 1}. {t}
                   </span>
                   {done ? (
-                    <span className="flex items-center gap-1 text-xs font-medium text-pitch-green">
-                      <Check className="size-3.5" /> Verified
+                    <span className="pitch-pop flex items-center gap-1 text-xs font-medium text-pitch-green">
+                      <Check className="size-3.5" /> Session {i + 1} verified ✓
                     </span>
+                  ) : isNext ? (
+                    <button
+                      type="button"
+                      onClick={scanSession}
+                      className="flex items-center gap-1.5 rounded-lg bg-pitch-violet px-2.5 py-1 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+                    >
+                      <ScanLine className="size-3.5" /> Scan check-in
+                    </button>
                   ) : (
                     <span className="flex items-center gap-1 text-xs">
-                      <ScanLine className="size-3.5" /> Scan to start
+                      <ScanLine className="size-3.5" /> Awaiting check-in
                     </span>
                   )}
                 </div>
               );
             })}
           </div>
+          {step >= 5 && sessionsDone < 3 && (
+            <button
+              type="button"
+              onClick={playSessions}
+              disabled={playing}
+              className="mt-3 w-full rounded-xl border border-pitch-violet/40 bg-pitch-violet/10 px-3 py-2 text-xs font-semibold text-pitch-violet disabled:opacity-60"
+            >
+              {playing ? "Playing sessions…" : "▶ Play sessions"}
+            </button>
+          )}
         </div>
       )}
+
 
       {step >= 6 && (
         <div className="pitch-rise mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
