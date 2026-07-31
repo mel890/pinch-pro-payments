@@ -175,8 +175,27 @@ function Bar({
 
 /* ── Manager dashboard (cyan) ────────────────────────────────────────── */
 
-function ManagerDashboard({ step }: { step: number }) {
+export const GROWTH_ACTIONS = [
+  { id: "review", label: "Request a Google review", bonus: 15 },
+  { id: "referral", label: "Ask for a referral", bonus: 25 },
+  { id: "cardio", label: "Book 2 extra cardio sessions", bonus: 20 },
+  { id: "rebook", label: "Rebook next month's pack", bonus: 20, optional: true },
+] as const;
+
+function ManagerDashboard({
+  step,
+  activeActions,
+  toggleAction,
+}: {
+  step: number;
+  activeActions: string[];
+  toggleAction: (id: string) => void;
+}) {
   const m = metrics(step);
+  const activeList = GROWTH_ACTIONS.filter((a) => activeActions.includes(a.id));
+  const completedActions = step >= 6 ? activeList.length : 0;
+  const activeBonusTotal = activeList.reduce((t, a) => t + a.bonus, 0);
+
   return (
     <section className="rounded-3xl border border-white/10 bg-pitch-navy p-5 shadow-[0_30px_90px_rgba(0,0,0,0.45)] sm:p-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
