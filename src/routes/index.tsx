@@ -681,7 +681,12 @@ function FakeQr() {
 
 type Msg = { id: string; from: "club" | "alex"; body: React.ReactNode };
 
-function memberThread(step: number): Msg[] {
+function memberThread(
+  step: number,
+  askedActions: string[],
+  doneActions: string[],
+  completeAction: (id: string) => void,
+): Msg[] {
   const msgs: Msg[] = [
     {
       id: "hello",
