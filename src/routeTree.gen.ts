@@ -27,6 +27,7 @@ import { Route as CampaignRouteImport } from './routes/campaign'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as JourneyAlexRouteImport } from './routes/journey.alex'
 import { Route as ConfirmSessionDemoRouteImport } from './routes/confirm-session.demo'
+import { Route as ApiPublicTmpCreatePlanRouteImport } from './routes/api/public/tmp-create-plan'
 import { Route as ApiPublicPinchWebhookRouteImport } from './routes/api/public/pinch-webhook'
 
 const TrainerCapacityRoute = TrainerCapacityRouteImport.update({
@@ -119,6 +120,11 @@ const ConfirmSessionDemoRoute = ConfirmSessionDemoRouteImport.update({
   path: '/confirm-session/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTmpCreatePlanRoute = ApiPublicTmpCreatePlanRouteImport.update({
+  id: '/api/public/tmp-create-plan',
+  path: '/api/public/tmp-create-plan',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPinchWebhookRoute = ApiPublicPinchWebhookRouteImport.update({
   id: '/api/public/pinch-webhook',
   path: '/api/public/pinch-webhook',
@@ -145,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/confirm-session/demo': typeof ConfirmSessionDemoRoute
   '/journey/alex': typeof JourneyAlexRoute
   '/api/public/pinch-webhook': typeof ApiPublicPinchWebhookRoute
+  '/api/public/tmp-create-plan': typeof ApiPublicTmpCreatePlanRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -166,6 +173,7 @@ export interface FileRoutesByTo {
   '/confirm-session/demo': typeof ConfirmSessionDemoRoute
   '/journey/alex': typeof JourneyAlexRoute
   '/api/public/pinch-webhook': typeof ApiPublicPinchWebhookRoute
+  '/api/public/tmp-create-plan': typeof ApiPublicTmpCreatePlanRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -188,6 +196,7 @@ export interface FileRoutesById {
   '/confirm-session/demo': typeof ConfirmSessionDemoRoute
   '/journey/alex': typeof JourneyAlexRoute
   '/api/public/pinch-webhook': typeof ApiPublicPinchWebhookRoute
+  '/api/public/tmp-create-plan': typeof ApiPublicTmpCreatePlanRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -211,6 +220,7 @@ export interface FileRouteTypes {
     | '/confirm-session/demo'
     | '/journey/alex'
     | '/api/public/pinch-webhook'
+    | '/api/public/tmp-create-plan'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -232,6 +242,7 @@ export interface FileRouteTypes {
     | '/confirm-session/demo'
     | '/journey/alex'
     | '/api/public/pinch-webhook'
+    | '/api/public/tmp-create-plan'
   id:
     | '__root__'
     | '/'
@@ -253,6 +264,7 @@ export interface FileRouteTypes {
     | '/confirm-session/demo'
     | '/journey/alex'
     | '/api/public/pinch-webhook'
+    | '/api/public/tmp-create-plan'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -275,6 +287,7 @@ export interface RootRouteChildren {
   ConfirmSessionDemoRoute: typeof ConfirmSessionDemoRoute
   JourneyAlexRoute: typeof JourneyAlexRoute
   ApiPublicPinchWebhookRoute: typeof ApiPublicPinchWebhookRoute
+  ApiPublicTmpCreatePlanRoute: typeof ApiPublicTmpCreatePlanRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -405,6 +418,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConfirmSessionDemoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/tmp-create-plan': {
+      id: '/api/public/tmp-create-plan'
+      path: '/api/public/tmp-create-plan'
+      fullPath: '/api/public/tmp-create-plan'
+      preLoaderRoute: typeof ApiPublicTmpCreatePlanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/pinch-webhook': {
       id: '/api/public/pinch-webhook'
       path: '/api/public/pinch-webhook'
@@ -435,7 +455,18 @@ const rootRouteChildren: RootRouteChildren = {
   ConfirmSessionDemoRoute: ConfirmSessionDemoRoute,
   JourneyAlexRoute: JourneyAlexRoute,
   ApiPublicPinchWebhookRoute: ApiPublicPinchWebhookRoute,
+  ApiPublicTmpCreatePlanRoute: ApiPublicTmpCreatePlanRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
